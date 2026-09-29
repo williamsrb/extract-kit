@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.bounded-contexts/v1",
+  "title": "bounded-contexts v1",
+  "type": "object",
+  "required": ["schema", "contexts"],
+  "properties": {
+    "schema": { "const": "99x.extract.bounded-contexts/v1" },
+    "contexts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "surfaces"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "kinds": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "surfaces": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "journeys": { "type": "array" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

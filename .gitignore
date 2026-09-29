@@ -1,0 +1,12 @@
+# Extract output (fixture runs inside this repo must not commit it)
+.extract/
+graphify-out/
+
+# Python
+__pycache__/
+*.pyc
+.ruff_cache/
+
+# Local scan / browser session artifacts
+.security-local/
+.playwright-cli/

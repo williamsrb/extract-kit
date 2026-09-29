@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.project-map/v1",
+  "title": "project-map v1",
+  "type": "object",
+  "required": ["schema", "surfaces"],
+  "$defs": {
+    "surface": {
+      "type": "object",
+      "required": ["id", "kind", "entry", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string" },
+        "entry": { "type": "string" },
+        "composition": { "type": "array" },
+        "contentTypes": { "type": "array" },
+        "states": { "type": "array" },
+        "integrations": { "type": "array" },
+        "evidence": { "type": "array" },
+        "status": {
+          "type": "string",
+          "enum": ["live", "dead", "conditional", "unverified-live"]
+        },
+        "stackRef": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "properties": {
+    "schema": { "const": "99x.extract.project-map/v1" },
+    "surfaces": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/surface" }
+    }
+  },
+  "additionalProperties": true
+}

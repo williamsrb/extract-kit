@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.manifest/v1",
+  "title": "extract run MANIFEST",
+  "type": "object",
+  "required": ["schema", "run_id", "source"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "const": "99x.extract.manifest/v1" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "required": ["path", "profile", "lineage", "tools"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha": { "type": ["string", "null"] },
+        "dirty": { "type": "boolean" },
+        "profile": { "type": "string" },
+        "lineage": { "type": "array", "items": { "type": "string" } },
+        "tools": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "maps": {
+      "type": "object",
+      "additionalProperties": { "type": ["string", "null"] }
+    },
+    "skips": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step", "reason", "fix"],
+        "properties": {
+          "step": { "type": "string" },
+          "reason": { "type": "string" },
+          "fix": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

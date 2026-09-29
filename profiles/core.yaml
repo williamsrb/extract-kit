@@ -1,0 +1,37 @@
+_comment:
+  - Core pipeline. Stack adapters stay unbound; enonic.yaml fills them.
+  - map.code / map.semantic skip with a named fix when the source has no index.
+name: core
+extends: null
+todo: []
+deps:
+  - provides: [python3]
+    apt: python3
+    dnf: python3
+    pacman: python
+pipeline:
+  - map.code
+  - map.semantic
+  - inventory.descriptors
+  - maps.normalize
+  - inventory.integrations
+  - inventory.runtime
+  - maps.merge
+  - inventory.docs
+  - product.impeccable
+  - docs.synthesize
+  - use_cases
+  - spec.kit
+adapters:
+  map.code: map.code
+  map.semantic: map.semantic
+  inventory.descriptors: null
+  maps.normalize: maps.normalize
+  inventory.integrations: null
+  inventory.runtime: null
+  maps.merge: maps.merge
+  inventory.docs: null
+  product.impeccable: product.impeccable
+  docs.synthesize: docs.synthesize
+  use_cases: use_cases
+  spec.kit: spec.kit

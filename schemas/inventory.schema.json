@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.inventory/v1",
+  "title": "static inventory",
+  "type": "object",
+  "required": ["schema", "resources"],
+  "properties": {
+    "schema": { "const": "99x.extract.inventory/v1" },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "name", "path"],
+        "properties": {
+          "kind": { "type": "string" },
+          "name": { "type": "string" },
+          "displayName": { "type": "string" },
+          "path": { "type": "string" },
+          "app": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

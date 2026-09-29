@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.profile/v1",
+  "title": "extractkit profile (composed)",
+  "type": "object",
+  "required": ["name", "pipeline", "adapters"],
+  "additionalProperties": true,
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "lineage": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "todo": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "deps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["provides"],
+        "properties": {
+          "provides": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1
+          },
+          "optional": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "pipeline": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "adapters": {
+      "type": "object",
+      "additionalProperties": {
+        "type": ["string", "null"]
+      }
+    }
+  }
+}

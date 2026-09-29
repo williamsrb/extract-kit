@@ -1,0 +1,8 @@
+<site>
+  <form/>
+  <mappings>
+    <mapping controller="/site/pages/mini-page/mini-page.js">
+      <match>type:'portal:site'</match>
+    </mapping>
+  </mappings>
+</site>

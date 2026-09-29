@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.route-map/v1",
+  "title": "route-map v1",
+  "type": "object",
+  "required": ["schema", "routes"],
+  "$defs": {
+    "surface": {
+      "type": "object",
+      "required": ["id", "kind", "entry", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string" },
+        "entry": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["live", "dead", "conditional", "unverified-live"]
+        },
+        "stackRef": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "properties": {
+    "schema": { "const": "99x.extract.route-map/v1" },
+    "routes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/surface" }
+    }
+  },
+  "additionalProperties": true
+}

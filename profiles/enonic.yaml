@@ -1,0 +1,29 @@
+_comment:
+  - Enonic XP7 adapter. Extends core and binds static inventory, integrations, CMS.
+  - Runtime CMS is local/review only. Guillotine URL is a run parameter.
+  - Production hosts are refused unless --allow-production (not used in the DoD).
+name: enonic
+extends: core
+adapters:
+  map.code: map.code
+  map.semantic: map.semantic
+  inventory.descriptors: enonic.descriptors
+  maps.normalize: maps.normalize
+  inventory.integrations: enonic.integrations
+  inventory.runtime: enonic.cms
+  maps.merge: maps.merge
+  inventory.docs: enonic.docs
+  product.impeccable: product.impeccable
+  docs.synthesize: docs.synthesize
+  use_cases: use_cases
+  spec.kit: spec.kit
+cms:
+  host: http://localhost:8080
+  project: en
+  site_key: /en
+  keys:
+    - /en
+round2: []
+deps:
+  - provides: [playwright-cli]
+    optional: true

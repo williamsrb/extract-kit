@@ -1,0 +1,5 @@
+<content-type>
+  <display-name>Mini article</display-name>
+  <super-type>base:structured</super-type>
+  <form/>
+</content-type>

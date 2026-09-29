@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Integration contracts (read-only)</title>
+    <style>
+      body { font-family: sans-serif; max-width: 72rem; margin: 2rem auto; }
+      pre { background: #111; color: #eee; padding: 1rem; overflow: auto; }
+      .banner { border: 1px solid #a00; padding: 0.75rem 1rem; }
+    </style>
+  </head>
+  <body>
+    <p class="banner">
+      Read-only viewer. Try it out against production is forbidden.
+      Production URLs in the spec are metadata only.
+    </p>
+    <pre id="spec">Loading ../openapi.yaml …</pre>
+    <script>
+      fetch("../openapi.yaml")
+        .then(function (r) { return r.text(); })
+        .then(function (t) {
+          document.getElementById("spec").textContent = t;
+        })
+        .catch(function (err) {
+          document.getElementById("spec").textContent = String(err);
+        });
+    </script>
+  </body>
+</html>

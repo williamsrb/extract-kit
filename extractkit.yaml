@@ -1,0 +1,4 @@
+# Kit identity. Profile types live under profiles/ as YAML.
+name: 99x Extract Kit
+fork_id: 99x
+schema_versions: [1]

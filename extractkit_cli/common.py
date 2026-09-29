@@ -1,0 +1,121 @@
+"""Paths, YAML/JSON helpers, and the dry-run Plan every command shares."""
+
+from __future__ import annotations
+
+import datetime as _dt
+import json
+from pathlib import Path
+
+import yaml
+
+from .errors import ExtractkitError
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+FILE_MODE = 0o644
+DIR_MODE = 0o755
+
+
+def ensure_dir(path: Path) -> None:
+    created = [p for p in (path, *path.parents) if not p.exists()]
+    path.mkdir(parents=True, exist_ok=True)
+    for directory in created:
+        try:
+            directory.chmod(DIR_MODE)
+        except OSError:
+            pass
+
+
+def repo_file(name: str) -> Path:
+    return REPO_ROOT / name
+
+
+def load_yaml(path: Path, what: str) -> dict:
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        raise ExtractkitError(
+            f"{what} not found at {path}",
+            "check out the kit again, or pass an explicit path",
+        ) from None
+    try:
+        data = yaml.safe_load(raw)
+    except yaml.YAMLError as exc:
+        raise ExtractkitError(f"{what} at {path} is not valid YAML: {exc}") from None
+    if data is None:
+        return {}
+    if not isinstance(data, dict):
+        raise ExtractkitError(
+            f"{what} at {path} must be a mapping, not {type(data).__name__}",
+            "fix the YAML so the document is an object",
+        )
+    return data
+
+
+def dump_yaml(payload: object) -> str:
+    return yaml.safe_dump(payload, sort_keys=False, allow_unicode=True)
+
+
+def write_text(path: Path, text: str) -> None:
+    ensure_dir(path.parent)
+    if not text.endswith("\n"):
+        text += "\n"
+    path.write_text(text, encoding="utf-8")
+    try:
+        path.chmod(FILE_MODE)
+    except OSError:
+        pass
+
+
+def write_yaml(path: Path, payload: object) -> None:
+    write_text(path, dump_yaml(payload))
+
+
+def write_json(path: Path, payload: object) -> None:
+    write_text(path, json.dumps(payload, indent=2, ensure_ascii=False))
+
+
+def load_json(path: Path, what: str) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise ExtractkitError(
+            f"{what} not found at {path}",
+            "run extractkit run --apply first, or pass --out",
+        ) from None
+    except ValueError as exc:
+        raise ExtractkitError(f"{what} at {path} is not valid JSON: {exc}") from None
+
+
+def timestamp() -> str:
+    return _dt.datetime.now(_dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def load_kit_identity() -> dict:
+    path = repo_file("extractkit.yaml")
+    return load_yaml(path, "kit identity")
+
+
+class Plan:
+    """Collects intended writes so every command can offer a real dry run."""
+
+    def __init__(self, apply: bool) -> None:
+        self.apply = apply
+        self.actions: list[str] = []
+        self.changed = False
+
+    def record(self, action: str) -> None:
+        self.actions.append(action)
+        self.changed = True
+
+    def report(self, noun: str) -> int:
+        if not self.actions:
+            print(f"{noun}: already up to date, nothing to do.")
+            return 0
+        verb = "Wrote" if self.apply else "Would write"
+        print(f"{verb} {len(self.actions)} change(s) for {noun}:")
+        for action in self.actions:
+            print(f"  {action}")
+        if not self.apply:
+            print("\nDry run. Re-run with --apply to write.")
+        return 0

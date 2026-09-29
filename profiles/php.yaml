@@ -1,0 +1,35 @@
+_comment:
+  - PHP profile SKELETON. Deliberately unfinished.
+  - A guessed Laravel/Symfony extractor is worse than an obviously empty one.
+  - doctor is green; run refuses with this todo list.
+name: php
+extends: core
+todo:
+  - Confirm the PHP framework (Laravel, Symfony, other) with the team. Do not guess.
+  - Bind inventory.descriptors to a real PHP adapter when the layout is known.
+  - Bind inventory.integrations to a PHP HTTP/client harvest when the layout is known.
+  - Decide whether composer and phpunit are profile deps or per-project.
+adapters:
+  map.code: map.code
+  map.semantic: map.semantic
+  inventory.descriptors: null
+  maps.normalize: maps.normalize
+  inventory.integrations: null
+  inventory.runtime: null
+  maps.merge: maps.merge
+  inventory.docs: null
+  product.impeccable: product.impeccable
+  docs.synthesize: docs.synthesize
+  use_cases: use_cases
+  spec.kit: spec.kit
+deps:
+  - provides: [php]
+    apt: php-cli
+    dnf: php-cli
+    pacman: php
+    optional: true
+  - provides: [composer]
+    apt: composer
+    dnf: composer
+    pacman: composer
+    optional: true

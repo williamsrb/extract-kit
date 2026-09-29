@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.runtime-inventory/v1",
+  "title": "runtime CMS inventory",
+  "type": "object",
+  "required": ["schema", "env", "host", "branch", "guillotine", "pages"],
+  "properties": {
+    "schema": { "const": "99x.extract.runtime-inventory/v1" },
+    "env": { "type": "string", "enum": ["local", "review", "production"] },
+    "host": { "type": "string", "minLength": 1 },
+    "branch": { "type": "string", "enum": ["draft", "master"] },
+    "project": { "type": "string" },
+    "guillotine": { "type": "string", "minLength": 1 },
+    "configenv": { "type": "string" },
+    "siteConfig": { "type": "array" },
+    "configEnv": { "type": "array" },
+    "endpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["provider", "url", "source"],
+        "properties": {
+          "provider": { "type": "string" },
+          "direction": { "type": "string" },
+          "url": { "type": "string" },
+          "source": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "round", "context"],
+        "properties": {
+          "key": { "type": "string" },
+          "round": { "type": "integer", "minimum": 1 },
+          "context": { "type": "string" },
+          "id": { "type": "string" },
+          "path": { "type": "string" },
+          "type": { "type": "string" },
+          "displayName": { "type": "string" },
+          "templateOrder": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "components": { "type": "array" },
+          "pageAsJson": {},
+          "error": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}
