@@ -17,7 +17,37 @@ write. Refusals name the fix, and flag fixes repeat your own command.
 | `resume --profile NAME --source DIR` | Continue from first incomplete slot |
 | `promote --source DIR [--out DIR] [--force]` | Copy Spec Kit + PRODUCT |
 
+Defaults:
+
+- `deps` checks the `core` profile unless `--profile` is given. Optional deps
+  print `skipped` and never fail.
+- `run` and `step` create a new sidecar unless `--out` names one. With
+  `--out`, they add to or overwrite files in that sidecar.
+- `status`, `resume` and `promote` use the latest sidecar under
+  `<source>/.extract/` (by run id) unless `--out` is given.
+- `status` reads the profile from `MANIFEST.yaml` `source.profile` when
+  `--profile` is omitted.
+- `resume` starts at the first slot that is not done (see
+  [steps](steps.md)) and runs to the end, or to `--until`. If that slot is
+  CMS, pass the CMS flags; to skip CMS, use `run --from merge` instead.
+- `check` only reads the sidecar.
+
+## Exit codes
+
+<!-- markdownlint-disable MD013 -->
+| Code | Meaning |
+| --- | --- |
+| 0 | Done, or `check` / `doctor` / `deps` clean |
+| 1 | Refused (`error:` + `fix:`), `check` or `doctor` problems, required dep missing |
+| 2 | Usage error: unknown command or flag |
+| 130 | Interrupted |
+<!-- markdownlint-enable MD013 -->
+
+Bare `extractkit` and any `--help` print help and exit 0.
+
 ## Phases
+
+The operator path and sidecar lineage are in [flow](flow.md).
 
 `profiles/core.yaml` groups the pipeline into seven phases. Every profile
 inherits them. `--from`, `--until` and `step` accept a phase id or number as
@@ -67,18 +97,55 @@ Colour appears only on a TTY and when `NO_COLOR` is unset. Glyphs fall back to
 Errors go to stderr as `error:` then `fix:   $ <your command with the fix>`
 when a flag fixes it (with the prose as `hint:`), or a prose `fix:` otherwise.
 
-## CMS flags (run / step / resume)
+## CMS flags
 
 `--branch draft|master` is required when `inventory.runtime` is in the slice.
 `--storage-state` is required whenever `enonic.cms` runs.
-`--xp-host`, `--guillotine`, `--project`, `--cms-key`,
-`--round2`, `--configenv`, `--allow-production` (unused in the DoD).
+
+| Flag | Effect |
+| --- | --- |
+| `--xp-host URL` | XP origin |
+| `--project NAME` | Content Studio project; builds the preview URL |
+| `--guillotine URL` | GraphQL POST URL |
+| `--cms-key KEY` | Content key to survey (repeatable) |
+| `--round2 CONTEXT` | Survey that context's keys a second time (repeatable) |
+| `--configenv URL` | Config Env HTML page |
+| `--allow-production` | Lift the production refusal (unused in the DoD) |
+
+Each flag falls back to the profile's `cms` key, then a built-in default;
+the table is in [profiles](profiles.md#enonic). A key given with `--cms-key`
+replaces the profile's `cms.keys`.
+
+`--xp-host`, `--guillotine` and `--configenv` must be local (`localhost`,
+`127.0.0.1`, `::1`, `0.0.0.0`, `*.localhost`) or review (`*.k8s.seeds.no`).
+Anything else is production and refused.
 
 `--cms-key` pins Site Config harvest. Enonic also samples
 `cms.sample_per_type` (default 3) contents per type without walking the
 tree.
 
-`--tasks` writes Spec Kit `tasks.md` (off by default).
+`--tasks` writes Spec Kit `tasks.md` (off by default). It is accepted by
+`run`, `step` and `resume` and only affects `spec.kit`.
+
+## Check
+
+`check --out DIR` fails closed, listing every problem, when:
+
+- `MANIFEST.yaml` or one of the four map files is missing or breaks its
+  schema
+- `inventory/static.json` is missing, or a resource in it is in neither the
+  maps (`entry` or `stackRef.enonic.descriptor`) nor
+  `hygiene/dead-code.md` (FR-10 coverage)
+- `integrations/openapi.yaml` is missing, is not YAML, or has an operation
+  without `x-source`
+- `inventory/runtime.json`, the Enonic extras, or
+  `map/bounded-contexts.json` exist and break their schema
+- a `spec-kit/specs/**/spec.md` has no `FR-N` heading, or an FR section
+  cites neither a project-map id in backticks nor an evidence ref (a
+  backticked `runtime:…`, `map:…`, `evidence:…` or `*.json`, or an
+  `Evidence:` line)
+
+Optional files that are absent are not problems.
 
 ## Static vs full
 

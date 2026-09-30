@@ -4,7 +4,8 @@ Read a legacy checkout and write a **stack-agnostic extract tree**. Enonic XP7
 is the first adapter. PHP is an empty placeholder. Spec Kit is an as-is sink
 of that tree, not an XP8/React4XP port. Every command writes on the first call.
 
-Docs: [profiles](docs/profiles.md), [CLI](docs/cli.md), [output](docs/output.md).
+Docs: [flow](docs/flow.md), [CLI](docs/cli.md), [steps](docs/steps.md),
+[profiles](docs/profiles.md), [output](docs/output.md).
 
 ## Install
 
@@ -35,17 +36,19 @@ No bootstrap, no desktop forks, no writes into `~/.agents-profiles`.
 `run` writes `<source>/.extract/<run-id>/`. Each run prints the phases it
 touched and ends with a `next` block holding the command to paste next.
 `status` (alias `next`) shows every phase as done, current, or pending. See
-[CLI](docs/cli.md) for phases, `-v` / `-q`, and the promote guard. The kit
-never edits the source `.gitignore` or `.git/`. `.extract/.gitignore`
-contains `*` so the sidecar is self-ignored.
+[flow](docs/flow.md) for the path, [CLI](docs/cli.md) for phases, `-v` / `-q`,
+and the promote guard. The kit never edits the source `.gitignore` or
+`.git/`. `.extract/.gitignore` contains `*` so the sidecar is self-ignored.
+
+![Operator path](docs/diagrams/operator-path.png)
 
 `./extractkit run --profile php --source …` exits non-zero with the unfinished
 work list. It does not parse PHP.
 
 ## Static extract
 
-A full pipeline includes live CMS and requires `--branch`. For descriptors,
-maps, and OpenAPI only:
+A full pipeline includes live CMS and requires `--branch` and
+`--storage-state`. For descriptors, maps, and OpenAPI only:
 
 ```bash
 ./extractkit run --profile enonic --source /path/to/legacy --until static

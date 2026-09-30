@@ -28,6 +28,8 @@ the kit tree.
 
 ## Graph
 
+Diagrams: `docs/flow.md` and `docs/diagrams/*.png`.
+
 1. `extractkit doctor` and `extractkit deps --profile enonic`
 2. Static: `extractkit run --profile enonic --source <legacy> --until static`
 3. `extractkit status --source <legacy>` — every phase as done / current /
@@ -52,5 +54,6 @@ already wrote. Do not invent an XP8 visual world.
 
 ## Artifacts
 
-See `docs/output.md`. Constitution promote path is
+See `docs/output.md`. What each slot reads, writes, and skips is in
+`docs/steps.md`. Constitution promote path is
 `.specify/memory/constitution.md`.

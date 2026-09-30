@@ -29,6 +29,44 @@ Canonical extract tree (stack-agnostic). Enonic details live only under `stackRe
   hygiene/dead-code.md
 ```
 
+Which step writes each file is in [steps](steps.md). How those files move
+from checkout to sidecar to promote is in [flow](flow.md).
+
+## MANIFEST.yaml
+
+Rewritten at the end of every `run`, `step` and `resume`:
+
+- `schema`: `99x.extract.manifest/v1`
+- `run_id`: sidecar directory name (UTC timestamp)
+- `source`: `path`, git `sha` and `dirty` (null / false outside git),
+  `profile`, `lineage`, and `tools` (extractkit and Python versions)
+- `maps`: `code` / `semantic` pointers to reused source indexes, or null
+- `skips`: `step`, `reason`, `fix` for each slot skipped in that run
+
+## Schemas
+
+`schemas/` holds JSON Schema 2020-12 files. Every map surface uses
+`surface.schema.json`.
+
+<!-- markdownlint-disable MD013 -->
+| File | Schema |
+| --- | --- |
+| `MANIFEST.yaml` | `manifest.schema.json` |
+| `map/project-map.json`, `component-map.json`, `content-model.json`, `route-map.json` | same-named `*.schema.json` |
+| `map/bounded-contexts.json` | `bounded-contexts.schema.json` |
+| `inventory/static.json` | `inventory.schema.json` |
+| `inventory/runtime.json` | `runtime-inventory.schema.json` |
+| `inventory/content-survey.json`, `content-survey-resolved.json`, `page-templates.json` | same-named `*.schema.json` |
+| composed profiles | `profile.schema.json` |
+<!-- markdownlint-enable MD013 -->
+
+## Hygiene
+
+`hygiene/dead-code.md` is report-only. The kit never deletes source.
+`check` accepts a descriptor named there as covered.
+
+## Promote
+
 `extractkit promote` maps the files below. It refuses, writing nothing, when an
 existing destination holds changes git cannot restore (modified, staged,
 untracked, ignored, or a source outside git). `--force` overwrites anyway.
@@ -39,8 +77,14 @@ untracked, ignored, or a source outside git). `--force` overwrites anyway.
 - `design/DESIGN.md` → `DESIGN.md`
 - `design/design.json` → `.impeccable/design.json`
 
-Status on surfaces: `live` | `dead` | `conditional` | `unverified-live`.
-Runtime beats static. Round 2 beats round 1. Contradictions stay in the merge report.
+Only files present in the sidecar are copied; `promote` refuses when there
+is nothing to copy.
+
+## Surface status
+
+`live` | `dead` | `conditional` | `unverified-live`.
+Runtime beats static. Round 2 beats round 1. Contradictions stay in the merge
+report. The rules are in [steps](steps.md#mapsmerge).
 
 No `PLAN.md`, `DECISIONS.md`, or `IMPLEMENTATION.md` in this tree. Mode is as-is.
 

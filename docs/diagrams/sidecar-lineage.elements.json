@@ -1,0 +1,475 @@
+[
+  {
+    "type": "cameraUpdate",
+    "width": 1200,
+    "height": 900,
+    "x": 0,
+    "y": 0
+  },
+  {
+    "type": "text",
+    "id": "t",
+    "x": 40,
+    "y": 20,
+    "text": "Sidecar lineage",
+    "fontSize": 28,
+    "strokeColor": "#1e1e1e",
+    "fontFamily": 5
+  },
+  {
+    "type": "text",
+    "id": "s",
+    "x": 40,
+    "y": 54,
+    "text": "Checkout is read-only until promote. runtime.json is optional.",
+    "fontSize": 16,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
+    "type": "ellipse",
+    "id": "src",
+    "x": 40,
+    "y": 320,
+    "width": 210,
+    "height": 90,
+    "backgroundColor": "#a5d8ff",
+    "fillStyle": "solid",
+    "label": {
+      "text": "legacy checkout",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a1",
+        "type": "arrow"
+      },
+      {
+        "id": "a2",
+        "type": "arrow"
+      },
+      {
+        "id": "a3",
+        "type": "arrow"
+      }
+    ]
+  },
+  {
+    "type": "rectangle",
+    "id": "stj",
+    "x": 340,
+    "y": 150,
+    "width": 200,
+    "height": 76,
+    "backgroundColor": "#c3fae8",
+    "fillStyle": "solid",
+    "roundness": {
+      "type": 3
+    },
+    "label": {
+      "text": "static.json",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a1",
+        "type": "arrow"
+      },
+      {
+        "id": "a4",
+        "type": "arrow"
+      }
+    ]
+  },
+  {
+    "type": "rectangle",
+    "id": "maps",
+    "x": 340,
+    "y": 327,
+    "width": 200,
+    "height": 76,
+    "backgroundColor": "#c3fae8",
+    "fillStyle": "solid",
+    "roundness": {
+      "type": 3
+    },
+    "label": {
+      "text": "map/*.json",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a2",
+        "type": "arrow"
+      },
+      {
+        "id": "a4",
+        "type": "arrow"
+      },
+      {
+        "id": "a5",
+        "type": "arrow"
+      }
+    ]
+  },
+  {
+    "type": "rectangle",
+    "id": "oas",
+    "x": 340,
+    "y": 500,
+    "width": 200,
+    "height": 76,
+    "backgroundColor": "#c3fae8",
+    "fillStyle": "solid",
+    "roundness": {
+      "type": 3
+    },
+    "label": {
+      "text": "openapi.yaml",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a3",
+        "type": "arrow"
+      }
+    ]
+  },
+  {
+    "type": "rectangle",
+    "id": "rt",
+    "x": 640,
+    "y": 150,
+    "width": 210,
+    "height": 76,
+    "backgroundColor": "#d0bfff",
+    "fillStyle": "solid",
+    "roundness": {
+      "type": 3
+    },
+    "label": {
+      "text": "runtime.json",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a6",
+        "type": "arrow"
+      }
+    ]
+  },
+  {
+    "type": "rectangle",
+    "id": "syn",
+    "x": 640,
+    "y": 320,
+    "width": 230,
+    "height": 90,
+    "backgroundColor": "#b2f2bb",
+    "fillStyle": "hachure",
+    "roundness": {
+      "type": 3
+    },
+    "label": {
+      "text": "merge + spec-kit",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a5",
+        "type": "arrow"
+      },
+      {
+        "id": "a6",
+        "type": "arrow"
+      },
+      {
+        "id": "a7",
+        "type": "arrow"
+      }
+    ]
+  },
+  {
+    "type": "rectangle",
+    "id": "dest",
+    "x": 960,
+    "y": 320,
+    "width": 200,
+    "height": 90,
+    "backgroundColor": "#b2f2bb",
+    "fillStyle": "solid",
+    "roundness": {
+      "type": 3
+    },
+    "label": {
+      "text": "promoted files",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a7",
+        "type": "arrow"
+      }
+    ]
+  },
+  {
+    "type": "arrow",
+    "id": "a1",
+    "x": 187.0,
+    "y": 320,
+    "width": 153.0,
+    "height": -132.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        153.0,
+        -132.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "src",
+      "fixedPoint": [
+        0.7,
+        0
+      ]
+    },
+    "endBinding": {
+      "elementId": "stj",
+      "fixedPoint": [
+        0,
+        0.5
+      ]
+    }
+  },
+  {
+    "type": "arrow",
+    "id": "a2",
+    "x": 250,
+    "y": 365.0,
+    "width": 90,
+    "height": 0.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        90,
+        0.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "src",
+      "fixedPoint": [
+        1,
+        0.5
+      ]
+    },
+    "endBinding": {
+      "elementId": "maps",
+      "fixedPoint": [
+        0,
+        0.5
+      ]
+    }
+  },
+  {
+    "type": "arrow",
+    "id": "a3",
+    "x": 187.0,
+    "y": 410,
+    "width": 153.0,
+    "height": 128.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        153.0,
+        128.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "src",
+      "fixedPoint": [
+        0.7,
+        1
+      ]
+    },
+    "endBinding": {
+      "elementId": "oas",
+      "fixedPoint": [
+        0,
+        0.5
+      ]
+    }
+  },
+  {
+    "type": "arrow",
+    "id": "a4",
+    "x": 440.0,
+    "y": 226,
+    "width": 0.0,
+    "height": 101,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.0,
+        101
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "stj",
+      "fixedPoint": [
+        0.5,
+        1
+      ]
+    },
+    "endBinding": {
+      "elementId": "maps",
+      "fixedPoint": [
+        0.5,
+        0
+      ]
+    },
+    "label": {
+      "text": "surfaces",
+      "fontSize": 14,
+      "fontFamily": 5
+    }
+  },
+  {
+    "type": "arrow",
+    "id": "a5",
+    "x": 540,
+    "y": 365.0,
+    "width": 100,
+    "height": 0.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        100,
+        0.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "maps",
+      "fixedPoint": [
+        1,
+        0.5
+      ]
+    },
+    "endBinding": {
+      "elementId": "syn",
+      "fixedPoint": [
+        0,
+        0.5
+      ]
+    },
+    "label": {
+      "text": "project-map",
+      "fontSize": 14,
+      "fontFamily": 5
+    }
+  },
+  {
+    "type": "arrow",
+    "id": "a6",
+    "x": 745.0,
+    "y": 226,
+    "width": 10.0,
+    "height": 94,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        10.0,
+        94
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "rt",
+      "fixedPoint": [
+        0.5,
+        1
+      ]
+    },
+    "endBinding": {
+      "elementId": "syn",
+      "fixedPoint": [
+        0.5,
+        0
+      ]
+    },
+    "label": {
+      "text": "live / dead",
+      "fontSize": 14,
+      "fontFamily": 5
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#7048e8"
+  },
+  {
+    "type": "arrow",
+    "id": "a7",
+    "x": 870,
+    "y": 365.0,
+    "width": 90,
+    "height": 0.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        90,
+        0.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "syn",
+      "fixedPoint": [
+        1,
+        0.5
+      ]
+    },
+    "endBinding": {
+      "elementId": "dest",
+      "fixedPoint": [
+        0,
+        0.5
+      ]
+    },
+    "label": {
+      "text": "promote",
+      "fontSize": 14,
+      "fontFamily": 5
+    }
+  }
+]
