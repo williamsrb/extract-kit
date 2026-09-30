@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.page-templates/v1",
+  "title": "Enonic XP7 /_templates folder dump (adapter extra)",
+  "type": "object",
+  "required": ["schema", "total", "templates"],
+  "properties": {
+    "schema": { "const": "99x.extract.page-templates/v1" },
+    "templatesFolder": { "type": "string" },
+    "total": { "type": "integer", "minimum": 0 },
+    "templates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["_path"],
+        "properties": {
+          "_path": { "type": "string" },
+          "displayName": { "type": "string" },
+          "supports": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "folderIndex": { "type": "integer", "minimum": 0 },
+          "page": {},
+          "components": { "type": "array" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

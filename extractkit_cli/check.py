@@ -180,6 +180,18 @@ def check_tree(out: Path) -> list[str]:
         except ExtractkitError as exc:
             problems.append(str(exc))
 
+    for rel, stem in (
+        ("inventory/content-survey.json", "content-survey"),
+        ("inventory/content-survey-resolved.json", "content-survey-resolved"),
+        ("inventory/page-templates.json", "page-templates"),
+    ):
+        extra = out / rel
+        if extra.is_file():
+            try:
+                schema.validate(load_json(extra, rel), stem, what=rel)
+            except ExtractkitError as exc:
+                problems.append(str(exc))
+
     contexts_path = out / "map" / "bounded-contexts.json"
     if contexts_path.is_file():
         try:

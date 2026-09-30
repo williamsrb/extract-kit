@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import shutil
 from pathlib import Path
@@ -144,23 +145,39 @@ def build_openapi(source: Path, title: str) -> dict:
     }
 
 
-def _copy_swagger_ui(ctx: object) -> None:
+def spec_js_body(spec: object) -> str:
+    payload = json.dumps(spec, ensure_ascii=False)
+    payload = payload.replace("<", "\\u003c")
+    return "window.EXTRACTKIT_SPEC = " + payload + ";\n"
+
+
+def write_swagger_spec(dest_dir: Path, spec: object) -> None:
+    write_text(dest_dir / "spec.js", spec_js_body(spec))
+
+
+def _copy_swagger_ui(ctx: object, spec: object) -> None:
     dest: Path = ctx.rel("integrations/swagger-ui")  # type: ignore[attr-defined]
     ctx.plan.record(f"write {dest}/ (read-only swagger-ui)")  # type: ignore[attr-defined]
+    ctx.plan.record(f"write {dest / 'spec.js'}")  # type: ignore[attr-defined]
     if not ctx.apply:  # type: ignore[attr-defined]
         return
     dest.mkdir(parents=True, exist_ok=True)
     if TEMPLATE_DIR.is_dir():
         for item in TEMPLATE_DIR.iterdir():
+            if item.name == "spec.js":
+                continue
             target = dest / item.name
             if item.is_file():
                 shutil.copy2(item, target)
             elif item.is_dir():
                 shutil.copytree(item, target, dirs_exist_ok=True)
+    write_swagger_spec(dest, spec)
     readme = dest / "README.md"
     write_text(
         readme,
-        "Read-only integration viewer. Try it out against production is forbidden.\n",
+        "Read-only Swagger UI. Try it out is disabled. Open index.html "
+        "(spec is inlined in spec.js so file:// works). Production URLs "
+        "are metadata only.\n",
     )
 
 
@@ -178,7 +195,7 @@ class EnonicIntegrationsStep:
         title = f"{ctx.profile.get('name', 'extract')} integration contracts"  # type: ignore[attr-defined]
         spec = build_openapi(source, title)
         ctx.write_yaml("integrations/openapi.yaml", spec)  # type: ignore[attr-defined]
-        _copy_swagger_ui(ctx)
+        _copy_swagger_ui(ctx, spec)
 
     def check(self, _ctx: object) -> list[str]:
         return []

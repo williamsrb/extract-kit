@@ -141,20 +141,32 @@ def graphql_server(page: dict) -> Iterator[tuple[list, str]]:
             length = int(self.headers.get("Content-Length") or "0")
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             hits.append({"body": body, "cookie": self.headers.get("Cookie")})
-            payload = {
-                "data": {
-                    "guillotine": {
-                        "get": {
-                            "_id": "id-1",
-                            "_path": "/en",
-                            "type": "portal:site",
-                            "displayName": "EN",
-                            "pageAsJson": page,
-                            "components": [{"path": "/", "type": "page"}],
+            query = body.get("query") or ""
+            if "queryConnection" in query:
+                payload = {
+                    "data": {
+                        "guillotine": {
+                            "queryConnection": {"totalCount": 0, "edges": []},
                         }
                     }
                 }
-            }
+            elif "getChildren" in query:
+                payload = {"data": {"guillotine": {"getChildren": []}}}
+            else:
+                payload = {
+                    "data": {
+                        "guillotine": {
+                            "get": {
+                                "_id": "id-1",
+                                "_path": "/en",
+                                "type": "portal:site",
+                                "displayName": "EN",
+                                "pageAsJson": page,
+                                "components": [{"path": "/", "type": "page"}],
+                            }
+                        }
+                    }
+                }
             raw = json.dumps(payload).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -234,6 +246,7 @@ class CmsTargetTests(unittest.TestCase):
     def test_shipped_enonic_cms_is_localhost(self) -> None:
         enonic = manifest.load("enonic")
         self.assertEqual(enonic["cms"]["host"], "http://localhost:8080")
+        self.assertEqual(enonic["cms"]["sample_per_type"], 3)
         self.assertNotIn("authentic-scandinavia", json.dumps(enonic))
         self.assertEqual(enonic["adapters"]["inventory.runtime"], "enonic.cms")
         self.assertIn("inventory.runtime", enonic["pipeline"])
@@ -312,9 +325,13 @@ class CmsCliTests(unittest.TestCase):
                     "--round2", "page",
                 )
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
-            self.assertEqual(len(hits), 2)
-            self.assertEqual(hits[0]["cookie"], "JSESSIONID=test-session")
-            self.assertIn("/en", hits[0]["body"]["query"])
+            gets = [
+                hit for hit in hits
+                if "get(key" in ((hit["body"] or {}).get("query") or "")
+            ]
+            self.assertEqual(len(gets), 2)
+            self.assertEqual(gets[0]["cookie"], "JSESSIONID=test-session")
+            self.assertIn("/en", gets[0]["body"]["query"])
             out = sidecar_run_dir(source)
             runtime_path = out / "inventory" / "runtime.json"
             payload = json.loads(runtime_path.read_text(encoding="utf-8"))
@@ -346,6 +363,25 @@ class CmsCliTests(unittest.TestCase):
             self.assertIn(
                 "https://api-platform-sandbox.flywire.com", urls,
             )
+            survey_path = out / "inventory" / "content-survey.json"
+            survey = json.loads(survey_path.read_text(encoding="utf-8"))
+            validate(survey, "content-survey")
+            self.assertEqual(survey["samplePerType"], 3)
+            types = {row["type"] for row in survey["types"]}
+            self.assertIn("com.example.mini:mini-article", types)
+            self.assertIn("portal:site", types)
+            resolved = json.loads(
+                (out / "inventory" / "content-survey-resolved.json").read_text(
+                    encoding="utf-8",
+                )
+            )
+            validate(resolved, "content-survey-resolved")
+            self.assertEqual(len(resolved["rule"]), 3)
+            self.assertTrue((out / "inventory" / "content-survey.md").is_file())
+            self.assertTrue(
+                (out / "inventory" / "content-survey-resolved.md").is_file(),
+            )
+            self.assertEqual(pages[0]["resolve"], "customized")
 
     def test_missing_guillotine_and_project_refuses(self) -> None:
         ctx = SimpleNamespace(
@@ -371,6 +407,7 @@ class CmsCliTests(unittest.TestCase):
         )
         cfg = resolve_cms(ctx)
         self.assertEqual(cfg.round2, ["home"])
+        self.assertEqual(cfg.sample_per_type, 3)
         self.assertTrue(cfg.guillotine.endswith("/admin/site/preview/en/draft"))
         self.assertNotIn("no.seeds.as/graphql", cfg.guillotine)
         self.assertTrue(
@@ -405,6 +442,11 @@ class CmsCliTests(unittest.TestCase):
             self.assertIn("https://tourplan.example.test/api", spec)
             self.assertIn("x-production-endpoints", spec)
             self.assertNotIn("do-not-store", spec)
+            spec_js = (
+                out / "integrations" / "swagger-ui" / "spec.js"
+            ).read_text(encoding="utf-8")
+            self.assertIn("https://tourplan.example.test/api", spec_js)
+            self.assertNotIn("do-not-store", spec_js)
 
 
 if __name__ == "__main__":

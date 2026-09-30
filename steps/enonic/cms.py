@@ -17,7 +17,8 @@ from urllib import request as urlrequest
 from extractkit_cli import cms_target, schema
 from extractkit_cli.common import load_json
 from extractkit_cli.errors import ExtractkitError
-from steps.enonic import live_config
+from steps.enonic import live_config, page_templates
+from steps.enonic.integrations import write_swagger_spec
 
 PAGE_QUERY = """\
 query {{
@@ -29,6 +30,37 @@ query {{
       displayName
       pageAsJson
       components {{ path type }}
+    }}
+  }}
+}}
+"""
+
+CHILDREN_QUERY = """\
+query {{
+  guillotine {{
+    getChildren(key: "{key}", first: 100) {{
+      _id
+      _path
+      _name
+      type
+      displayName
+    }}
+  }}
+}}
+"""
+
+TEMPLATE_QUERY = """\
+query {{
+  guillotine {{
+    get(key: "{key}") {{
+      _id
+      _path
+      _name
+      type
+      displayName
+      dataAsJson
+      pageAsJson
+      components {{ path type descriptor }}
     }}
   }}
 }}
@@ -48,6 +80,7 @@ class CmsConfig:
     allow_production: bool
     context_by_key: dict[str, str]
     configenv: str
+    sample_per_type: int
 
 
 def _unique(items: list[str]) -> list[str]:
@@ -149,6 +182,7 @@ def resolve_cms(ctx: Any) -> CmsConfig:
         allow_production=allow,
         context_by_key=context_by_key,
         configenv=configenv,
+        sample_per_type=page_templates.sample_per_type(profile, cli),
     )
 
 
@@ -265,15 +299,6 @@ def http_get(
         ) from None
 
 
-def as_mapping(value: object) -> dict:
-    if isinstance(value, str):
-        try:
-            value = json.loads(value)
-        except ValueError:
-            return {}
-    return value if isinstance(value, dict) else {}
-
-
 def template_order(page: dict) -> list[str]:
     order: list[str] = []
 
@@ -359,7 +384,7 @@ def _page_record(
             "context": context_by_key.get(key) or "uncategorized",
             "error": "guillotine.get returned null",
         }
-    page = as_mapping(got.get("pageAsJson"))
+    page = page_templates.as_mapping(got.get("pageAsJson"))
     components = got.get("components") if isinstance(got.get("components"), list) else []
     context = context_for(key, page, index, context_by_key)
     record: dict[str, Any] = {
@@ -375,6 +400,189 @@ def _page_record(
         "pageAsJson": page,
     }
     return record
+
+
+def _gql_field(payload: dict, field: str) -> object:
+    data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+    gql = data.get("guillotine") if isinstance(data, dict) else None
+    if not isinstance(gql, dict):
+        return None
+    return gql.get(field)
+
+
+def _graphql_optional(url: str, query: str, cookie: str) -> dict:
+    try:
+        return post_graphql(url, query, cookie)
+    except ExtractkitError as exc:
+        if "GraphQL errors" in str(exc):
+            return {"data": {"guillotine": {}}, "errors": [str(exc)]}
+        raise
+
+
+def _type_query(type_id: str, limit: int) -> str:
+    return (
+        'query { guillotine { queryConnection(query: "", first: '
+        + str(int(limit))
+        + ", contentTypes: ["
+        + json.dumps(type_id)
+        + "]) { totalCount edges { node { "
+        "_id _path displayName type pageAsJson } } } } }"
+    )
+
+
+def load_page_templates(
+    url: str,
+    cookie: str,
+    folder_key: str,
+) -> list[page_templates.PageTemplate]:
+    payload = _graphql_optional(
+        url, CHILDREN_QUERY.format(key=_escape_key(folder_key)), cookie,
+    )
+    children = _gql_field(payload, "getChildren")
+    missing = children is None
+    if not isinstance(children, list):
+        children = []
+    templates: list[page_templates.PageTemplate] = []
+    index = 0
+    for child in children:
+        if not isinstance(child, dict):
+            continue
+        typ = child.get("type")
+        if typ and typ != "portal:page-template":
+            continue
+        path = str(child.get("_path") or "")
+        if not path:
+            continue
+        got_payload = _graphql_optional(
+            url, TEMPLATE_QUERY.format(key=_escape_key(path)), cookie,
+        )
+        got = _gql_field(got_payload, "get")
+        node = dict(child)
+        if isinstance(got, dict):
+            node.update(got)
+        templates.append(page_templates.parse_template(node, index))
+        index += 1
+    if templates or not missing:
+        return templates
+    fallback = _graphql_optional(url, _type_query("portal:page-template", 100), cookie)
+    conn = _gql_field(fallback, "queryConnection")
+    if not isinstance(conn, dict):
+        return []
+    for i, edge in enumerate(conn.get("edges") or []):
+        node = edge.get("node") if isinstance(edge, dict) else None
+        if not isinstance(node, dict):
+            continue
+        path = str(node.get("_path") or "")
+        if path:
+            got_payload = _graphql_optional(
+                url, TEMPLATE_QUERY.format(key=_escape_key(path)), cookie,
+            )
+            got = _gql_field(got_payload, "get")
+            if isinstance(got, dict):
+                node = {**node, **got}
+        templates.append(page_templates.parse_template(node, i))
+    return templates
+
+
+def fetch_type_nodes(
+    url: str,
+    cookie: str,
+    type_id: str,
+    limit: int,
+) -> dict:
+    payload = _graphql_optional(url, _type_query(type_id, limit), cookie)
+    conn = _gql_field(payload, "queryConnection")
+    if not isinstance(conn, dict):
+        return {"type": type_id, "totalCount": 0, "nodes": []}
+    total = conn.get("totalCount")
+    if not isinstance(total, int):
+        total = 0
+    nodes: list[dict] = []
+    for edge in conn.get("edges") or []:
+        node = edge.get("node") if isinstance(edge, dict) else None
+        if isinstance(node, dict):
+            nodes.append(node)
+    return {
+        "type": type_id,
+        "totalCount": total,
+        "nodes": page_templates.cap_nodes(nodes, limit),
+    }
+
+
+def _annotate_record(
+    record: dict,
+    templates: list[page_templates.PageTemplate],
+) -> dict:
+    if record.get("error"):
+        return record
+    page = record.get("pageAsJson") if isinstance(record.get("pageAsJson"), dict) else {}
+    typ = str(record.get("type") or "")
+    result = page_templates.resolve_page(typ, page, templates)
+    record["pageCustomized"] = result.customized
+    record["pageTemplateField"] = result.explicit
+    record["resolve"] = result.source
+    record["resolvedTemplate"] = result.template_path
+    record["implicitWouldBe"] = result.implicit_path
+    record["implicitMatches"] = list(result.implicit_paths)
+    effective = result.effective if isinstance(result.effective, dict) else {}
+    record["templateOrder"] = template_order(effective)
+    record["pageTree"] = page_templates.compact_page(effective)
+    return record
+
+
+def _sample_runtime_page(
+    node: dict,
+    templates: list[page_templates.PageTemplate],
+    index: dict[str, dict],
+    context_by_key: dict[str, str],
+) -> dict:
+    path = str(node.get("_path") or "")
+    fake = {"data": {"guillotine": {"get": node}}}
+    record = _page_record(path, 1, fake, index, context_by_key)
+    record["survey"] = True
+    typ = str(node.get("type") or "")
+    if typ:
+        record["context"] = typ.split(":")[-1]
+    return _annotate_record(record, templates)
+
+
+def _write_enonic_survey(
+    ctx: object,
+    cfg: CmsConfig,
+    folder_key: str,
+    templates: list[page_templates.PageTemplate],
+    type_rows: list[dict],
+) -> None:
+    raw = page_templates.build_raw_survey(
+        host=cfg.host,
+        branch=cfg.branch,
+        sample_limit=cfg.sample_per_type,
+        types=type_rows,
+    )
+    resolved = page_templates.build_resolved_survey(
+        sample_limit=cfg.sample_per_type,
+        folder_key=folder_key,
+        templates=templates,
+        types=type_rows,
+    )
+    pages_doc = page_templates.build_page_templates_doc(folder_key, templates)
+    schema.validate(raw, "content-survey", what="inventory/content-survey.json")
+    schema.validate(
+        resolved, "content-survey-resolved",
+        what="inventory/content-survey-resolved.json",
+    )
+    schema.validate(pages_doc, "page-templates", what="inventory/page-templates.json")
+    ctx.write_json("inventory/content-survey.json", raw)  # type: ignore[attr-defined]
+    ctx.write_json("inventory/content-survey-resolved.json", resolved)  # type: ignore[attr-defined]
+    ctx.write_json("inventory/page-templates.json", pages_doc)  # type: ignore[attr-defined]
+    ctx.write_text(  # type: ignore[attr-defined]
+        "inventory/content-survey.md",
+        page_templates.render_survey_md(raw),
+    )
+    ctx.write_text(  # type: ignore[attr-defined]
+        "inventory/content-survey-resolved.md",
+        page_templates.render_resolved_md(resolved),
+    )
 
 
 def _require_storage_state(cfg: CmsConfig) -> Path:
@@ -396,26 +604,50 @@ def _require_storage_state(cfg: CmsConfig) -> Path:
 class EnonicCmsStep:
     id = "enonic.cms"
     requires = ("inventory/static.json",)
-    produces = ("inventory/runtime.json",)
+    produces = (
+        "inventory/runtime.json",
+        "inventory/content-survey.json",
+        "inventory/content-survey-resolved.json",
+        "inventory/page-templates.json",
+        "inventory/content-survey.md",
+        "inventory/content-survey-resolved.md",
+    )
     required = True
 
     def plan(self, ctx: object) -> list[str]:
         cfg = resolve_cms(ctx)
+        folder = page_templates.templates_folder_key(cfg.keys[0])
         actions = [
             (
                 f"Playwright storage-state -> POST {cfg.guillotine} "
                 f"branch={cfg.branch} keys={cfg.keys}"
             ),
+            (
+                f"sample {cfg.sample_per_type} contents per type "
+                f"(queryConnection first={cfg.sample_per_type}, no tree walk)"
+            ),
+            (
+                f"resolve pages: customized > explicit page.template > "
+                f"implicit data.supports in {folder} folder order"
+            ),
         ]
         if cfg.round2:
             actions.append(f"round2 contexts: {cfg.round2}")
-        actions.append(f"GET Content Studio siteConfig + Config Env {cfg.configenv}")
+        actions.append(
+            f"GET Content Studio siteConfig for pinned keys only + "
+            f"Config Env {cfg.configenv}"
+        )
         return actions
 
     def run(self, ctx: object) -> None:
         cfg = resolve_cms(ctx)
-        index = descriptor_index(_static_resources(ctx))
+        resources = _static_resources(ctx)
+        index = descriptor_index(resources)
+        type_ids = page_templates.content_type_ids(resources)
+        folder_key = page_templates.templates_folder_key(cfg.keys[0])
         pages: list[dict] = []
+        templates: list[page_templates.PageTemplate] = []
+        type_rows: list[dict] = []
         cookie = ""
         if ctx.apply:  # type: ignore[attr-defined]
             state = _require_storage_state(cfg)
@@ -425,18 +657,48 @@ class EnonicCmsStep:
                     f"storage-state {state} has no cookies",
                     "export a Playwright storage-state after logging into XP",
                 )
+            templates = load_page_templates(cfg.guillotine, cookie, folder_key)
+            for type_id in type_ids:
+                type_rows.append(
+                    fetch_type_nodes(
+                        cfg.guillotine, cookie, type_id, cfg.sample_per_type,
+                    )
+                )
             for key in cfg.keys:
                 query = PAGE_QUERY.format(key=_escape_key(key))
                 payload = post_graphql(cfg.guillotine, query, cookie)
                 pages.append(_page_record(key, 1, payload, index, cfg.context_by_key))
+            for row in pages:
+                _annotate_record(row, templates)
             round2_keys = [
                 row["key"] for row in pages
-                if row.get("round") == 1 and row.get("context") in cfg.round2
+                if row.get("round") == 1
+                and row.get("key") in cfg.keys
+                and row.get("context") in cfg.round2
             ]
             for key in _unique(round2_keys):
                 query = PAGE_QUERY.format(key=_escape_key(key))
                 payload = post_graphql(cfg.guillotine, query, cookie)
-                pages.append(_page_record(key, 2, payload, index, cfg.context_by_key))
+                pages.append(
+                    _annotate_record(
+                        _page_record(key, 2, payload, index, cfg.context_by_key),
+                        templates,
+                    )
+                )
+            seen_keys = {str(row.get("key") or "") for row in pages}
+            for item in type_rows:
+                for node in item.get("nodes") or []:
+                    if not isinstance(node, dict):
+                        continue
+                    path = str(node.get("_path") or "")
+                    if not path or path in seen_keys:
+                        continue
+                    pages.append(
+                        _sample_runtime_page(
+                            node, templates, index, cfg.context_by_key,
+                        )
+                    )
+                    seen_keys.add(path)
             site_configs, config_env, endpoints = _harvest_live_config(
                 cfg, pages, cookie,
             )
@@ -447,6 +709,10 @@ class EnonicCmsStep:
                     "round": 1,
                     "context": cfg.context_by_key.get(key) or "uncategorized",
                 })
+            type_rows = [
+                {"type": type_id, "totalCount": 0, "nodes": []}
+                for type_id in type_ids
+            ]
             site_configs, config_env, endpoints = [], [], []
         payload = {
             "schema": "99x.extract.runtime-inventory/v1",
@@ -463,6 +729,7 @@ class EnonicCmsStep:
         }
         schema.validate(payload, "runtime-inventory", what="inventory/runtime.json")
         ctx.write_json("inventory/runtime.json", payload)  # type: ignore[attr-defined]
+        _write_enonic_survey(ctx, cfg, folder_key, templates, type_rows)
         _patch_openapi(ctx, endpoints)
 
     def check(self, _ctx: object) -> list[str]:
@@ -478,9 +745,12 @@ def _harvest_live_config(
     endpoints: list[dict] = []
     seen_ids: set[str] = set()
     project = cfg.project or "en"
+    pinned = set(cfg.keys)
     for page in pages:
         content_id = str(page.get("id") or "")
         key = str(page.get("key") or "")
+        if key not in pinned:
+            continue
         if not content_id or content_id in seen_ids:
             continue
         seen_ids.add(content_id)
@@ -531,3 +801,8 @@ def _patch_openapi(ctx: object, endpoints: list[dict]) -> None:
     if spec is None:
         return
     ctx.write_yaml("integrations/openapi.yaml", spec)  # type: ignore[attr-defined]
+    dest = ctx.rel("integrations/swagger-ui")  # type: ignore[attr-defined]
+    if dest.is_dir():
+        ctx.plan.record(f"write {dest / 'spec.js'}")  # type: ignore[attr-defined]
+        if ctx.apply:  # type: ignore[attr-defined]
+            write_swagger_spec(dest, spec)

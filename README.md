@@ -61,12 +61,22 @@ Then merge, docs, and Spec Kit without CMS:
 `extractkit check` validates schemas, FR-10 descriptor coverage, OpenAPI
 `x-source`, optional runtime inventory, bounded contexts, and spec.md FR cites.
 
+Static harvest writes `integrations/openapi.yaml` and a **read-only**
+Swagger UI under `integrations/swagger-ui/` (`swagger-ui-dist` 5.30.2).
+Try it out is disabled. The spec is inlined in `spec.js` so `index.html`
+works from `file://`. Live CMS then patches `x-production-endpoints` and
+refreshes `spec.js`. Those URLs are never fetched.
+
 ## Runtime CMS
 
 `enonic.cms` surveys a **local or review** XP only. Pass `--branch draft|master`.
 The Guillotine GraphQL URL is a run parameter (`--guillotine`); production
 hosts are refused. Auth is a Playwright storage-state file (`--storage-state`).
-Pin keys with `--cms-key`; do not walk the tree.
+Pin keys with `--cms-key`; do not walk the tree. Enonic still samples
+**3 contents per type** (`queryConnection` `first=3`) and resolves pages
+as customized > explicit `page.template` > implicit `data.supports` in
+`/_templates` folder order. That logic is XP7-only
+(`steps/enonic/page_templates.py`). PHP has no equivalent.
 
 After the page survey, the same session reads **Site Config** (Content Studio
 REST) and **Config Env** (`--configenv`, default XP7

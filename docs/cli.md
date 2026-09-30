@@ -22,6 +22,10 @@ Dry-run is the default. `--apply` writes. Refusals name the fix.
 `--xp-host`, `--guillotine`, `--project`, `--storage-state`, `--cms-key`,
 `--round2`, `--configenv`, `--allow-production` (unused in the DoD).
 
+`--cms-key` pins Site Config harvest. Enonic also samples
+`cms.sample_per_type` (default 3) contents per type without walking the
+tree.
+
 `--tasks` writes Spec Kit `tasks.md` (off by default).
 
 ## Static vs full

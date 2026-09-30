@@ -1,0 +1,6 @@
+swagger-ui-dist 5.30.2 (Apache-2.0)
+https://www.npmjs.com/package/swagger-ui-dist
+
+Vendored files: swagger-ui-bundle.js, swagger-ui.css, plus upstream LICENSE/NOTICE.
+spec.js is generated per extract from integrations/openapi.yaml (not vendored).
+Try it out is disabled by swagger-initializer.js (supportedSubmitMethods: []).

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.content-survey-resolved/v1",
+  "title": "Enonic XP7 page-template resolution (adapter extra)",
+  "type": "object",
+  "required": ["schema", "samplePerType", "rule", "templates", "types"],
+  "properties": {
+    "schema": { "const": "99x.extract.content-survey-resolved/v1" },
+    "samplePerType": { "type": "integer", "minimum": 1 },
+    "templatesFolder": { "type": "string" },
+    "rule": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "templatesFolderOrder": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "templates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "supports", "folderIndex"],
+        "properties": {
+          "path": { "type": "string" },
+          "supports": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "folderIndex": { "type": "integer", "minimum": 0 },
+          "page": {}
+        },
+        "additionalProperties": true
+      }
+    },
+    "types": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "sampled"],
+        "properties": {
+          "type": { "type": "string" },
+          "totalCount": { "type": "integer", "minimum": 0 },
+          "sampled": { "type": "array" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "component_edges": { "type": "array" }
+  },
+  "additionalProperties": true
+}

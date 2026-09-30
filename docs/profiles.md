@@ -19,7 +19,7 @@ Unknown adapter ids fail `extractkit doctor` / `profile show`.
 2. `map.semantic` — reuse source `graphify-out/` or skip
 3. `inventory.descriptors` — stack adapter (Enonic: FR-10 folders)
 4. `maps.normalize` — static `map/*.json`
-5. `inventory.integrations` — OpenAPI harvest
+5. `inventory.integrations` — OpenAPI harvest + read-only Swagger UI
 6. `inventory.runtime` — live CMS (Enonic: Guillotine + Site Config + Config Env)
 7. `maps.merge` — runtime vs static, `bounded-contexts.json`, merge-report
 8. `inventory.docs` — harvest source README/`docs/`
@@ -32,6 +32,11 @@ Unknown adapter ids fail `extractkit doctor` / `profile show`.
 
 Binds `enonic.descriptors`, `enonic.integrations`, `enonic.cms`, `enonic.docs`.
 Default CMS host is `http://localhost:8080`. Production hosts are refused.
+
+`enonic.cms` is where XP7 detection rules live (not core, not PHP):
+`sample_per_type: 3`, `/_templates` folder order, and
+customized > explicit `page.template` > implicit `data.supports`.
+See `docs/output.md` (Enonic extras).
 
 ## PHP
 

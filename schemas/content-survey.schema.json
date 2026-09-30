@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.content-survey/v1",
+  "title": "Enonic XP7 per-type content sample (adapter extra)",
+  "type": "object",
+  "required": ["schema", "host", "branch", "samplePerType", "types"],
+  "properties": {
+    "schema": { "const": "99x.extract.content-survey/v1" },
+    "host": { "type": "string" },
+    "branch": { "type": "string" },
+    "samplePerType": { "type": "integer", "minimum": 1 },
+    "types": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "totalCount", "sampled"],
+        "properties": {
+          "type": { "type": "string" },
+          "totalCount": { "type": "integer", "minimum": 0 },
+          "sampled": { "type": "array" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "component_edges": { "type": "array" },
+    "empty_types": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

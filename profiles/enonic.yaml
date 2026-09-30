@@ -23,6 +23,7 @@ cms:
   site_key: /en
   keys:
     - /en
+  sample_per_type: 3
 round2: []
 deps:
   - provides: [playwright-cli]

@@ -21,7 +21,7 @@ Canonical extract tree (stack-agnostic). Enonic details live only under `stackRe
   docs/guide/
   use-cases/<context>.md
   integrations/openapi.yaml
-  integrations/swagger-ui/
+  integrations/swagger-ui/        # read-only Swagger UI; Try it out disabled
   spec-kit/constitution.md
   spec-kit/constitution/          # optional fragments
   spec-kit/specs/<context>/spec.md
@@ -41,3 +41,30 @@ Status on surfaces: `live` | `dead` | `conditional` | `unverified-live`.
 Runtime beats static. Round 2 beats round 1. Contradictions stay in the merge report.
 
 No `PLAN.md`, `DECISIONS.md`, or `IMPLEMENTATION.md` in this tree. Mode is as-is.
+
+## Enonic extras (not a PHP/core contract)
+
+`enonic.cms` also writes XP7-only files next to `runtime.json`. Other
+profiles do not produce them. `maps.merge` still only reads
+`runtime.json` `pages[].templateOrder`.
+
+```text
+  inventory/content-survey.json
+  inventory/content-survey.md
+  inventory/content-survey-resolved.json
+  inventory/content-survey-resolved.md
+  inventory/page-templates.json
+```
+
+Detection rules live in `steps/enonic/page_templates.py`:
+
+- Sample **3** contents per type (`cms.sample_per_type`, Guillotine
+  `queryConnection` `first=N`). That is not a tree walk (FR-14).
+- Site Config REST stays on `--cms-key` pins.
+- Page resolve order: customized `pageAsJson` (descriptor/regions, no
+  `page.template`) > explicit `pageAsJson.template` > implicit first
+  `/_templates` child whose `data.supports` lists the content type
+  (folder order). A catch-all last in the folder loses to an earlier
+  match.
+- Guillotine `pageTemplate` is already resolved; the kit does not treat
+  it as the editor field.

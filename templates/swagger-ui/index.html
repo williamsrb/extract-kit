@@ -2,28 +2,31 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Integration contracts (read-only)</title>
+    <link rel="stylesheet" href="./swagger-ui.css">
     <style>
-      body { font-family: sans-serif; max-width: 72rem; margin: 2rem auto; }
-      pre { background: #111; color: #eee; padding: 1rem; overflow: auto; }
-      .banner { border: 1px solid #a00; padding: 0.75rem 1rem; }
+      html { box-sizing: border-box; overflow-y: scroll; }
+      *, *::before, *::after { box-sizing: inherit; }
+      body { margin: 0; background: #fafafa; }
+      .extractkit-banner {
+        margin: 0;
+        padding: 0.75rem 1.25rem;
+        border-bottom: 2px solid #a00;
+        background: #fff5f5;
+        font-family: sans-serif;
+      }
+      .try-out, .execute-wrapper, .btn.try-out__btn { display: none !important; }
     </style>
   </head>
   <body>
-    <p class="banner">
-      Read-only viewer. Try it out against production is forbidden.
-      Production URLs in the spec are metadata only.
+    <p class="extractkit-banner">
+      Read-only Swagger UI. Try it out is disabled. Production URLs in the
+      spec are metadata only and must not be called from this page.
     </p>
-    <pre id="spec">Loading ../openapi.yaml …</pre>
-    <script>
-      fetch("../openapi.yaml")
-        .then(function (r) { return r.text(); })
-        .then(function (t) {
-          document.getElementById("spec").textContent = t;
-        })
-        .catch(function (err) {
-          document.getElementById("spec").textContent = String(err);
-        });
-    </script>
+    <div id="swagger-ui"></div>
+    <script src="./swagger-ui-bundle.js"></script>
+    <script src="./spec.js"></script>
+    <script src="./swagger-initializer.js"></script>
   </body>
 </html>

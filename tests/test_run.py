@@ -46,6 +46,13 @@ class RunTests(unittest.TestCase):
             self.assertTrue((out / "inventory" / "static.json").is_file())
             self.assertTrue((out / "integrations" / "openapi.yaml").is_file())
             self.assertTrue((out / "integrations" / "swagger-ui" / "index.html").is_file())
+            self.assertTrue(
+                (out / "integrations" / "swagger-ui" / "swagger-ui-bundle.js").is_file(),
+            )
+            spec_js = (
+                out / "integrations" / "swagger-ui" / "spec.js"
+            ).read_text(encoding="utf-8")
+            self.assertIn("inbound_mini-service", spec_js)
             ignore = source / ".extract" / ".gitignore"
             self.assertEqual(ignore.read_text(encoding="utf-8"), "*\n")
             manifest = yaml.safe_load((out / "MANIFEST.yaml").read_text())

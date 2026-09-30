@@ -30,8 +30,11 @@ the kit tree.
    --until inventory.integrations`
 3. `extractkit next --source <legacy>` — first missing artifact + skill
    name
-4. Optional live CMS: `extractkit step enonic.cms ... --branch draft
-   --storage-state <file> --guillotine <url> --cms-key /en`
+4. Optional live CMS (Enonic profile only): `extractkit step enonic.cms
+   ... --branch draft --storage-state <file> --guillotine <url>
+   --cms-key /en`. Writes `inventory/runtime.json` plus XP7 extras
+   (`content-survey*.json`, `page-templates.json`). Resolve order and
+   the 3-per-type cap are Enonic-only; do not invent them for PHP.
 5. Maps, docs, spec-kit: `extractkit resume --profile enonic --source
    <legacy> --apply --until spec.kit`
 6. `extractkit check --out <sidecar>`

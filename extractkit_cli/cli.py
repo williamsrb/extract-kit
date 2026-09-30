@@ -70,7 +70,9 @@ def _add_cms_flags(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--cms-key", dest="cms_keys", action="append", metavar="KEY",
-        help="Content key to survey (repeatable). Pins keys; does not walk.",
+        help="Content key for Site Config harvest (repeatable). Pins keys; "
+             "does not walk. Enonic still samples N contents per type via "
+             "queryConnection.",
     )
     parser.add_argument(
         "--round2", dest="round2", action="append", metavar="CONTEXT",
