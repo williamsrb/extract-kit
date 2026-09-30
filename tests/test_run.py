@@ -1,4 +1,4 @@
-"""Sidecar run: dry-run writes nothing; --apply is self-ignored; source stays clean."""
+"""Sidecar run: every run writes a self-ignored sidecar; source stays clean."""
 
 from __future__ import annotations
 
@@ -19,25 +19,24 @@ from tests.support import (
 
 
 class RunTests(unittest.TestCase):
-    def test_dry_run_writes_nothing(self) -> None:
+    def test_apply_flag_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             source = copy_fixture(Path(raw))
-            git_init(source)
-            before = {p.relative_to(source) for p in source.rglob("*") if p.is_file()}
-            result = run("run", "--profile", "enonic", "--source", str(source), *STATIC_UNTIL)
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("Dry run", result.stdout)
-            after = {p.relative_to(source) for p in source.rglob("*") if p.is_file()}
-            self.assertEqual(before, after)
-            self.assertEqual(porcelain(source), "")
+            result = run(
+                "run", "--profile", "enonic", "--source", str(source),
+                "--apply", *STATIC_UNTIL,
+            )
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("unrecognized arguments", result.stderr)
+            self.assertFalse((source / ".extract").exists())
 
-    def test_apply_writes_sidecar_and_leaves_git_clean(self) -> None:
+    def test_run_writes_sidecar_and_leaves_git_clean(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             source = copy_fixture(Path(raw))
             git_init(source)
             result = run(
                 "run", "--profile", "enonic", "--source", str(source),
-                "--apply", *STATIC_UNTIL,
+                *STATIC_UNTIL,
             )
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             self.assertEqual(porcelain(source), "")
@@ -75,7 +74,7 @@ class RunTests(unittest.TestCase):
             (graft / "INDEX.md").write_text("# graft\n", encoding="utf-8")
             result = run(
                 "run", "--profile", "enonic", "--source", str(source),
-                "--apply", *STATIC_UNTIL,
+                *STATIC_UNTIL,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             out = sidecar_run_dir(source)

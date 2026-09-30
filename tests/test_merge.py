@@ -34,7 +34,7 @@ RUNTIME = {
 def _static(source: Path) -> Path:
     result = run(
         "run", "--profile", "enonic", "--source", str(source),
-        "--apply", *STATIC_UNTIL,
+        *STATIC_UNTIL,
     )
     if result.returncode != 0:
         raise AssertionError(result.stderr + result.stdout)
@@ -48,7 +48,7 @@ class MergeTests(unittest.TestCase):
             out = _static(source)
             result = run(
                 "run", "--profile", "enonic", "--source", str(source),
-                "--out", str(out), "--apply",
+                "--out", str(out),
                 "--from", "maps.merge", "--until", "maps.merge",
             )
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
@@ -73,7 +73,7 @@ class MergeTests(unittest.TestCase):
             )
             result = run(
                 "run", "--profile", "enonic", "--source", str(source),
-                "--out", str(out), "--apply",
+                "--out", str(out),
                 "--from", "maps.merge", "--until", "maps.merge",
             )
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)

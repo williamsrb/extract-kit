@@ -22,6 +22,28 @@ pipeline:
   - docs.synthesize
   - use_cases
   - spec.kit
+phases:
+  - id: preflight
+    title: Preflight
+    command: doctor
+  - id: static
+    title: Static inventory
+    slots: [map.code, map.semantic, inventory.descriptors, maps.normalize, inventory.integrations]
+  - id: cms
+    title: CMS
+    slots: [inventory.runtime]
+  - id: merge
+    title: Merge
+    slots: [maps.merge, inventory.docs]
+  - id: synthesis
+    title: Synthesis
+    slots: [product.impeccable, docs.synthesize, use_cases, spec.kit]
+  - id: check
+    title: Check
+    command: check
+  - id: promote
+    title: Promote
+    command: promote
 adapters:
   map.code: map.code
   map.semantic: map.semantic

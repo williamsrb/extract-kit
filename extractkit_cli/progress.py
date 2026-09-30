@@ -1,11 +1,11 @@
-"""`extractkit next` and `resume` — first incomplete pipeline slot."""
+"""`extractkit status` (alias `next`) and `resume` — phase state of a sidecar."""
 
 from __future__ import annotations
 
 from argparse import Namespace
 from pathlib import Path
 
-from . import registry, runner
+from . import guide, registry, runner
 from .common import load_yaml
 from .errors import ExtractkitError
 from .outtree import EXTRACT_DIRNAME, latest_run, resolve_source
@@ -70,7 +70,7 @@ def resolve_out_dir(args: Namespace, source: Path | None) -> Path:
     if latest is None:
         raise ExtractkitError(
             f"no extract run under {source / EXTRACT_DIRNAME}",
-            "run extractkit run --apply first, or pass --out",
+            "run extractkit run first, or pass --out",
         )
     return latest
 
@@ -99,34 +99,80 @@ def _profile_from_args(args: Namespace, out: Path) -> dict:
     raise ExtractkitError(
         "no --profile and MANIFEST.yaml has no source.profile",
         "pass --profile enonic (or php)",
+        fix_args={"--profile": "enonic"},
     )
 
 
-def cmd_next(args: Namespace) -> int:
+def pipeline_state(profile: dict, out: Path) -> str:
+    """`complete`, `cms`, `offline` (only CMS missing) or `other:<slot>`."""
+    incomplete = [
+        slot for slot, plugin_id in runner._bound_pipeline(profile)
+        if not step_complete(out, plugin_id)
+    ]
+    if not incomplete:
+        return "complete"
+    if incomplete[0] == guide.CMS_SLOT:
+        return "offline" if len(incomplete) == 1 else "cms"
+    return f"other:{incomplete[0]}"
+
+
+def _missing(out: Path, plugin_id: str) -> list[str]:
+    marks = DISTINCTIVE.get(plugin_id) or registry.instantiate(plugin_id).produces
+    return [rel for rel in marks if rel and not _produced(out, rel)]
+
+
+def status_rows(profile: dict, out: Path, style: guide.Style) -> list[str]:
+    bound = dict(runner._bound_pipeline(profile))
+    state = pipeline_state(profile, out)
+    all_phases = guide.phases(profile)
+    width = max((len(p.id) for p in all_phases), default=0) + 2
+    current_seen = False
+    lines: list[str] = []
+    for phase in all_phases:
+        plugins = [bound[s] for s in phase.slots if s in bound]
+        skills = list(dict.fromkeys(SKILL_FOR[p] for p in plugins if p in SKILL_FOR))
+        label = f"{phase.number} {phase.id:<{width}}"
+        note = ""
+        if phase.command == "doctor":
+            mark = style.blank()
+        elif phase.command:
+            is_current = not current_seen and state in ("complete", "offline") \
+                and phase.command == "check"
+            mark = style.glyph("current" if is_current else "pending")
+            current_seen = current_seen or is_current
+        elif state == "offline" and guide.CMS_SLOT in phase.slots:
+            mark, note = style.glyph("skip"), "not captured (optional)"
+        elif all(step_complete(out, p) for p in plugins):
+            mark = style.glyph("done")
+        elif not current_seen:
+            current_seen = True
+            mark = style.glyph("current")
+            missing = [rel for p in plugins for rel in _missing(out, p)]
+            parts = []
+            if missing:
+                shown = missing[:guide.MAX_ARTIFACTS]
+                extra = len(missing) - len(shown)
+                parts.append("missing " + ", ".join(shown) + (f" +{extra} more" if extra else ""))
+            if skills:
+                parts.append("skills: " + ", ".join(skills))
+            note = " · ".join(parts)
+        else:
+            mark = style.glyph("pending")
+            note = f"skills: {', '.join(skills)}" if skills else ""
+        lines.append(f"  {mark} {label}{note}".rstrip())
+    return lines
+
+
+def cmd_status(args: Namespace) -> int:
     source = None
     if getattr(args, "source", None):
         source = resolve_source(args.source)
     out = resolve_out_dir(args, source)
     profile = _profile_from_args(args, out)
-    pending = first_incomplete(profile, out)
-    if pending is None:
-        print(f"next: done ({out})")
-        return 0
-    slot, plugin_id = pending
-    skill = SKILL_FOR.get(plugin_id)
-    step = registry.instantiate(plugin_id)
-    print(f"next: {plugin_id}")
-    print(f"slot: {slot}")
-    if skill:
-        print(f"skill: {skill}")
-    print("artifacts:")
-    marks = DISTINCTIVE.get(plugin_id) or step.produces
-    for rel in marks:
-        print(f"  {out / rel}")
-    print(
-        f"run: extractkit step {plugin_id} --profile {profile.get('name')} "
-        f"--source {source or '<source>'} --out {out} --apply"
-    )
+    style = guide.style_for()
+    header = [f"extractkit status · {profile.get('name')} · sidecar {guide.rel_to_cwd(out)}"]
+    suggestion = guide.next_for("status", pipeline_state(profile, out), args, profile, out)
+    guide.emit(header + status_rows(profile, out, style), guide.render_next(suggestion, style))
     return 0
 
 
@@ -139,13 +185,19 @@ def cmd_resume(args: Namespace) -> int:
     ctx = runner._context_from_args(args)
     pending = first_incomplete(ctx.profile, ctx.out)
     if pending is None:
-        print(f"resume: already complete ({ctx.out})")
+        style = guide.style_for()
+        suggestion = guide.next_for("resume", "complete", args, ctx.profile, ctx.out)
+        guide.emit(
+            [f"resume: nothing left to run ({guide.rel_to_cwd(ctx.out)})"],
+            guide.render_next(suggestion, style),
+        )
         return 0
-    slot, plugin_id = pending
+    slot, _plugin_id = pending
     rows = runner._slice_pipeline(
         runner._bound_pipeline(ctx.profile),
         from_id=slot,
         until_id=getattr(args, "until", None),
+        profile=ctx.profile,
     )
     runner._execute(ctx, rows)
-    return ctx.plan.report(f"resume {plugin_id} -> {ctx.out}")
+    return runner.report_run(ctx, rows, args)

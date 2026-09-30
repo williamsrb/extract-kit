@@ -13,10 +13,13 @@ the kit tree.
 
 ## Rules
 
-- Source is read-only until the operator runs `extractkit promote --apply`.
+- Source is read-only until the operator runs `extractkit promote`. Promote
+  refuses files git cannot restore; pass `--force` only when the operator says so.
 - Never edit source `.gitignore` or `.git/`. Never run `graft build` or graphify
   inside the source.
-- Dry-run first. `--apply` writes `<source>/.extract/<run-id>/`.
+- Every command writes on the first call. `run` writes
+  `<source>/.extract/<run-id>/`. Each run ends with a `next` block: the
+  command to run next.
 - Production CMS is deny-by-default. Local (`localhost` / `127.0.0.1`) or
   review (`*.k8s.seeds.no`) only.
 - Spec Kit mode is **as-is**. Do not write port plans, `DECISIONS.md`, or
@@ -26,22 +29,22 @@ the kit tree.
 ## Graph
 
 1. `extractkit doctor` and `extractkit deps --profile enonic`
-2. Static: `extractkit run --profile enonic --source <legacy> --apply
-   --until inventory.integrations`
-3. `extractkit next --source <legacy>` — first missing artifact + skill
-   name
+2. Static: `extractkit run --profile enonic --source <legacy> --until static`
+3. `extractkit status --source <legacy>` — every phase as done / current /
+   pending, the current phase's missing artifacts, and skill names
 4. Optional live CMS (Enonic profile only): `extractkit step enonic.cms
    ... --branch draft --storage-state <file> --guillotine <url>
    --cms-key /en`. Writes `inventory/runtime.json` plus XP7 extras
    (`content-survey*.json`, `page-templates.json`). Resolve order and
    the 3-per-type cap are Enonic-only; do not invent them for PHP.
-5. Maps, docs, spec-kit: `extractkit resume --profile enonic --source
-   <legacy> --apply --until spec.kit`
+5. Merge and synthesis: `extractkit resume --profile enonic --source
+   <legacy> --until synthesis` (or, without CMS, `extractkit run --profile
+   enonic --source <legacy> --out <sidecar> --from merge --until synthesis`)
 6. `extractkit check --out <sidecar>`
 7. Promote only when asked: `extractkit promote --source <legacy>
-   --out <sidecar> --apply`
+   --out <sidecar>`
 
-`next` prints a skill of `impeccable` when PRODUCT/DESIGN are missing, and
+`status` prints a skill of `impeccable` when PRODUCT/DESIGN are missing, and
 `extract-legacy` for deterministic kit steps (including CMS HTTP).
 
 Impeccable `init` / `document` may replace the as-is PRODUCT/DESIGN the kit

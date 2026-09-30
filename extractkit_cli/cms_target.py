@@ -58,4 +58,5 @@ def assert_branch(branch: str | None) -> str:
     raise ExtractkitError(
         "enonic.cms requires --branch draft|master",
         "pass --branch draft (or master) when inventory.runtime runs",
+        fix_args={"--branch": "draft"},
     )

@@ -341,7 +341,7 @@ class ImplicitSurveyCliTests(unittest.TestCase):
             with implicit_survey_server() as (_posts, gets, url):
                 result = run(
                     "step", "enonic.cms", "--profile", "enonic",
-                    "--source", str(source), "--apply",
+                    "--source", str(source),
                     "--branch", "draft",
                     "--xp-host", url,
                     "--guillotine", url,

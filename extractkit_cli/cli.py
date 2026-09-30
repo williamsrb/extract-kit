@@ -11,7 +11,7 @@ import argparse
 import sys
 from collections.abc import Callable
 
-from . import check, deps, profiles, progress, promote, runner
+from . import check, deps, guide, profiles, progress, promote, runner
 from .errors import ExtractkitError
 
 DESCRIPTION = """\
@@ -19,28 +19,30 @@ Read a legacy checkout and write a stack-agnostic extract tree.
 
 extractkit is profile-driven: YAML types under profiles/ declare a pipeline
 and bind stack adapters. Enonic XP7 is the first adapter. PHP is an empty
-placeholder. Dry-run is the default; --apply writes a sidecar under
-<source>/.extract/<run-id>/ and never mutates the source tree.
+placeholder. Every command writes on the first call: run writes a sidecar
+under <source>/.extract/<run-id>/ and never mutates the source tree.
 
-Runtime CMS (enonic.cms) is local or review XP only. Pass --branch and a
-Guillotine URL; production hosts are refused.
+The pipeline is grouped into seven phases: 1 preflight, 2 static, 3 cms,
+4 merge, 5 synthesis, 6 check, 7 promote. --from, --until and step accept a
+phase id or number. Every run ends with the next command to paste.
+
+Runtime CMS (enonic.cms) is local or review XP only. Pass --branch,
+--storage-state and a Guillotine URL; production hosts are refused.
 
 Common examples:
   extractkit profile list
   extractkit profile show enonic
   extractkit doctor --profile php
   extractkit deps --profile enonic
-  extractkit run --profile enonic --source ./legacy
-  extractkit run --profile enonic --source ./legacy --apply
-  extractkit run --profile enonic --source ./legacy --apply \\
-      --until inventory.integrations
-  extractkit run --profile enonic --source ./legacy --apply \\
+  extractkit run --profile enonic --source ./legacy --until static
+  extractkit status --source ./legacy
+  extractkit resume --profile enonic --source ./legacy \\
       --branch draft --storage-state ~/.agents/.auth/xp7-localhost.json \\
       --guillotine http://localhost:8080/admin/site/preview/en/draft
+  extractkit run --profile enonic --source ./legacy \\
+      --out ./legacy/.extract/<run-id> --from merge --until synthesis
   extractkit check --out ./legacy/.extract/<run-id>
-  extractkit next --source ./legacy
-  extractkit resume --profile enonic --source ./legacy --apply
-  extractkit promote --source ./legacy --out ./legacy/.extract/<run-id> --apply
+  extractkit promote --source ./legacy --out ./legacy/.extract/<run-id>
 
 Run 'extractkit GROUP --help' or 'extractkit GROUP COMMAND --help' for details.
 """
@@ -66,7 +68,7 @@ def _add_cms_flags(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--storage-state", dest="storage_state", metavar="FILE",
-        help="Playwright storage-state JSON. Required with --apply for cms.",
+        help="Playwright storage-state JSON. Required when enonic.cms runs.",
     )
     parser.add_argument(
         "--cms-key", dest="cms_keys", action="append", metavar="KEY",
@@ -91,6 +93,13 @@ def _add_cms_flags(parser: argparse.ArgumentParser) -> None:
         "--tasks", action="store_true",
         help="Write Spec Kit tasks.md (off by default).",
     )
+
+
+def _add_output_flags(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="List every recorded action with its path.")
+    parser.add_argument("-q", "--quiet", action="store_true",
+                        help="Suppress tips.")
 
 
 def _help_action(parser: argparse.ArgumentParser) -> Callable[[argparse.Namespace], int]:
@@ -136,6 +145,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     doc = flat("doctor", "Validate kit identity and profile YAML (empty PHP is allowed).")
     doc.add_argument("--profile", metavar="NAME", help="Check only this profile.")
+    _add_output_flags(doc)
     doc.set_defaults(func=profiles.cmd_doctor)
 
     dep = flat("deps", "Check that every binary a profile declares is on PATH.")
@@ -143,46 +153,53 @@ def build_parser() -> argparse.ArgumentParser:
         "--profile", default="core", metavar="TYPE",
         help="Profile type whose deps to check (default: core).",
     )
+    _add_output_flags(dep)
     dep.set_defaults(func=deps.cmd_deps)
 
-    run = flat("run", "Execute a profile pipeline. Default: dry run.")
+    run = flat("run", "Execute a profile pipeline and write the sidecar.")
     run.add_argument("--profile", required=True, metavar="NAME")
     run.add_argument("--source", required=True, metavar="DIR",
                      help="Legacy checkout (read-only).")
     run.add_argument("--out", metavar="DIR",
                      help="Extract tree. Default: <source>/.extract/<run-id>/.")
     run.add_argument("--from", dest="from_step", metavar="STEP",
-                     help="Start at this pipeline slot or plugin id.")
+                     help="Start at this phase (id or number), slot, or plugin id.")
     run.add_argument("--until", metavar="STEP",
-                     help="Stop after this pipeline slot or plugin id.")
-    run.add_argument("--apply", action="store_true",
-                     help="Write the sidecar. Without it, this is a dry run.")
+                     help="Stop after this phase (id or number), slot, or plugin id.")
     _add_cms_flags(run)
+    _add_output_flags(run)
     run.set_defaults(func=runner.cmd_run)
 
-    step = flat("step", "Execute one pipeline slot. Default: dry run.")
-    step.add_argument("step_id")
+    step = flat("step", "Execute one phase or pipeline slot and write its artifacts.")
+    step.add_argument("step_id", metavar="STEP",
+                      help="Phase id or number (runs its slots), slot, or plugin id.")
     step.add_argument("--profile", required=True, metavar="NAME")
     step.add_argument("--source", required=True, metavar="DIR")
     step.add_argument("--out", metavar="DIR")
-    step.add_argument("--apply", action="store_true",
-                      help="Write. Default: dry run.")
     _add_cms_flags(step)
+    _add_output_flags(step)
     step.set_defaults(func=runner.cmd_step)
 
     chk = flat("check", "Fail closed on schema, descriptor coverage, missing x-source, or spec FR cites.")
     chk.add_argument("--out", required=True, metavar="DIR",
                      help="Extract tree to validate.")
+    _add_output_flags(chk)
     chk.set_defaults(func=check.cmd_check)
 
-    nxt = flat("next", "Print the next incomplete step, skill name, and artifact paths.")
+    nxt = top.add_parser(
+        "status", aliases=["next"],
+        help="Show every phase as done, current, or pending, then the next command.",
+        description="Show every phase as done, current, or pending, then the next command.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     nxt.add_argument("--profile", metavar="NAME",
                      help="Profile type. Default: MANIFEST.yaml source.profile.")
     nxt.add_argument("--source", metavar="DIR",
                      help="Legacy checkout. Used to find the latest sidecar.")
     nxt.add_argument("--out", metavar="DIR",
                      help="Extract tree. Default: latest <source>/.extract/<run-id>/.")
-    nxt.set_defaults(func=progress.cmd_next)
+    _add_output_flags(nxt)
+    nxt.set_defaults(func=progress.cmd_status)
 
     res = flat("resume", "Continue a sidecar from the first incomplete pipeline slot.")
     res.add_argument("--profile", required=True, metavar="NAME")
@@ -190,19 +207,19 @@ def build_parser() -> argparse.ArgumentParser:
     res.add_argument("--out", metavar="DIR",
                      help="Extract tree. Default: latest <source>/.extract/<run-id>/.")
     res.add_argument("--until", metavar="STEP",
-                     help="Stop after this pipeline slot or plugin id.")
-    res.add_argument("--apply", action="store_true",
-                     help="Write. Default: dry run.")
+                     help="Stop after this phase (id or number), slot, or plugin id.")
     _add_cms_flags(res)
+    _add_output_flags(res)
     res.set_defaults(func=progress.cmd_resume)
 
-    promo = flat("promote", "Copy constitution, PRODUCT/DESIGN, and specs into the source tree.")
+    promo = flat("promote", "Copy constitution, PRODUCT/DESIGN, and specs into the source tree. Never edits .gitignore or .git/.")
     promo.add_argument("--source", required=True, metavar="DIR",
                        help="Legacy checkout to copy into.")
     promo.add_argument("--out", metavar="DIR",
                        help="Extract sidecar. Default: latest <source>/.extract/<run-id>/.")
-    promo.add_argument("--apply", action="store_true",
-                       help="Write. Default: dry run. Never edits .gitignore or .git/.")
+    promo.add_argument("--force", action="store_true",
+                       help="Overwrite destinations git cannot restore.")
+    _add_output_flags(promo)
     promo.set_defaults(func=promote.cmd_promote)
 
     return parser
@@ -210,7 +227,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
-    args, unknown = parser.parse_known_args(argv)
+    raw = list(argv if argv is not None else sys.argv[1:])
+    args, unknown = parser.parse_known_args(raw)
 
     if unknown:
         parser.error("unrecognized arguments: " + " ".join(unknown))
@@ -218,6 +236,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 0
 
+    args.argv = raw
+    args.prog_display = guide.prog_display()
     try:
         return int(args.func(args))
     except KeyboardInterrupt:
@@ -225,6 +245,11 @@ def main(argv: list[str] | None = None) -> int:
         return 130
     except ExtractkitError as exc:
         print(f"error: {exc}", file=sys.stderr)
-        if exc.fix:
+        if exc.fix_args:
+            command = guide.join([args.prog_display, *guide.rewrite(raw, set=exc.fix_args)])
+            print(f"fix:   $ {command}", file=sys.stderr)
+            if exc.fix:
+                print(f"hint:  {exc.fix}", file=sys.stderr)
+        elif exc.fix:
             print(f"fix:   {exc.fix}", file=sys.stderr)
         return 1

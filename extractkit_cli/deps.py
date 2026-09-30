@@ -5,7 +5,7 @@ from __future__ import annotations
 import shutil
 from argparse import Namespace
 
-from . import manifest
+from . import guide, manifest
 
 
 def cmd_deps(args: Namespace) -> int:
@@ -32,4 +32,7 @@ def cmd_deps(args: Namespace) -> int:
     if missing:
         print(f"\n{len(missing)} required tool(s) missing: {', '.join(missing)}")
         return 1
+    suggestion = guide.next_for("deps", "clean", args)
+    print()
+    guide.emit(guide.render_next(suggestion, guide.style_for()))
     return 0

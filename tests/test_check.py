@@ -15,7 +15,7 @@ from tests.support import STATIC_UNTIL, copy_fixture, run, sidecar_run_dir
 def _apply(source: Path) -> Path:
     result = run(
         "run", "--profile", "enonic", "--source", str(source),
-        "--apply", *STATIC_UNTIL,
+        *STATIC_UNTIL,
     )
     if result.returncode != 0:
         raise AssertionError(result.stderr + result.stdout)

@@ -36,6 +36,28 @@
       "items": { "type": "string", "minLength": 1 },
       "minItems": 1
     },
+    "phases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "slots": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "minItems": 1
+          },
+          "command": { "enum": ["doctor", "check", "promote"] }
+        },
+        "oneOf": [
+          { "required": ["slots"], "not": { "required": ["command"] } },
+          { "required": ["command"], "not": { "required": ["slots"] } }
+        ],
+        "additionalProperties": false
+      }
+    },
     "adapters": {
       "type": "object",
       "additionalProperties": {

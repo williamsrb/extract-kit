@@ -1,4 +1,4 @@
-"""Paths, YAML/JSON helpers, and the dry-run Plan every command shares."""
+"""Paths, YAML/JSON helpers, and the Plan of recorded writes every command shares."""
 
 from __future__ import annotations
 
@@ -81,7 +81,7 @@ def load_json(path: Path, what: str) -> dict:
     except FileNotFoundError:
         raise ExtractkitError(
             f"{what} not found at {path}",
-            "run extractkit run --apply first, or pass --out",
+            "run extractkit run first, or pass --out",
         ) from None
     except ValueError as exc:
         raise ExtractkitError(f"{what} at {path} is not valid JSON: {exc}") from None
@@ -97,25 +97,13 @@ def load_kit_identity() -> dict:
 
 
 class Plan:
-    """Collects intended writes so every command can offer a real dry run."""
+    """Records every write a command makes so its output can report them."""
 
-    def __init__(self, apply: bool) -> None:
-        self.apply = apply
-        self.actions: list[str] = []
+    def __init__(self) -> None:
+        self.step: str | None = None
+        self.entries: list[tuple[str | None, str]] = []
         self.changed = False
 
     def record(self, action: str) -> None:
-        self.actions.append(action)
+        self.entries.append((self.step, action))
         self.changed = True
-
-    def report(self, noun: str) -> int:
-        if not self.actions:
-            print(f"{noun}: already up to date, nothing to do.")
-            return 0
-        verb = "Wrote" if self.apply else "Would write"
-        print(f"{verb} {len(self.actions)} change(s) for {noun}:")
-        for action in self.actions:
-            print(f"  {action}")
-        if not self.apply:
-            print("\nDry run. Re-run with --apply to write.")
-        return 0

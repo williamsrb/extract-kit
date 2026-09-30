@@ -2,7 +2,7 @@
 
 Read a legacy checkout and write a **stack-agnostic extract tree**. Enonic XP7
 is the first adapter. PHP is an empty placeholder. Spec Kit is an as-is sink
-of that tree, not an XP8/React4XP port. Dry-run is the default.
+of that tree, not an XP8/React4XP port. Every command writes on the first call.
 
 Docs: [profiles](docs/profiles.md), [CLI](docs/cli.md), [output](docs/output.md).
 
@@ -25,17 +25,19 @@ No bootstrap, no desktop forks, no writes into `~/.agents-profiles`.
 ./extractkit profile show php
 ./extractkit doctor --profile php          # empty PHP is allowed
 ./extractkit deps --profile enonic
-./extractkit run --profile enonic --source /path/to/legacy
-./extractkit run --profile enonic --source /path/to/legacy --apply
+./extractkit run --profile enonic --source /path/to/legacy --until static
+./extractkit status --source /path/to/legacy
+./extractkit resume --profile enonic --source /path/to/legacy
 ./extractkit check --out /path/to/legacy/.extract/<run-id>
-./extractkit next --source /path/to/legacy
-./extractkit resume --profile enonic --source /path/to/legacy --apply
-./extractkit promote --source /path/to/legacy --apply
+./extractkit promote --source /path/to/legacy
 ```
 
-`--apply` writes `<source>/.extract/<run-id>/`. The kit never edits the source
-`.gitignore` or `.git/`. `.extract/.gitignore` contains `*` so the sidecar is
-self-ignored.
+`run` writes `<source>/.extract/<run-id>/`. Each run prints the phases it
+touched and ends with a `next` block holding the command to paste next.
+`status` (alias `next`) shows every phase as done, current, or pending. See
+[CLI](docs/cli.md) for phases, `-v` / `-q`, and the promote guard. The kit
+never edits the source `.gitignore` or `.git/`. `.extract/.gitignore`
+contains `*` so the sidecar is self-ignored.
 
 `./extractkit run --profile php --source …` exits non-zero with the unfinished
 work list. It does not parse PHP.
@@ -46,16 +48,15 @@ A full pipeline includes live CMS and requires `--branch`. For descriptors,
 maps, and OpenAPI only:
 
 ```bash
-./extractkit run --profile enonic --source /path/to/legacy --apply \
-  --until inventory.integrations
+./extractkit run --profile enonic --source /path/to/legacy --until static
 ```
 
 Then merge, docs, and Spec Kit without CMS:
 
 ```bash
 ./extractkit run --profile enonic --source /path/to/legacy \
-  --out /path/to/legacy/.extract/<run-id> --apply \
-  --from maps.merge --until spec.kit
+  --out /path/to/legacy/.extract/<run-id> \
+  --from merge --until synthesis
 ```
 
 `extractkit check` validates schemas, FR-10 descriptor coverage, OpenAPI
@@ -86,7 +87,7 @@ to `inventory/runtime.json` `endpoints` and merged into OpenAPI
 never fetched.
 
 ```bash
-./extractkit step enonic.cms --profile enonic --source /path/to/legacy --apply \
+./extractkit step enonic.cms --profile enonic --source /path/to/legacy \
   --out /path/to/legacy/.extract/<run-id> \
   --branch draft \
   --storage-state ~/.agents/.auth/xp7-localhost.json \
@@ -103,6 +104,9 @@ never fetched.
 Explicit. Copies as-is Spec Kit constitution to
 `.specify/memory/constitution.md` (the path Spec Kit reads), plus PRODUCT,
 DESIGN, and `specs/<context>/spec.md`. Does not copy the sidecar into git.
+Refuses, writing nothing, when an existing destination has changes git cannot
+restore (modified, staged, untracked, ignored, or a source outside git). Pass
+`--force` to overwrite anyway.
 
 ## Tests
 

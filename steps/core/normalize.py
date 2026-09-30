@@ -36,7 +36,7 @@ def _load_resources(ctx: object) -> list[dict]:
     if path.is_file():
         payload = load_json(path, "inventory/static.json")
         return list(payload.get("resources") or [])
-    # Dry-run: inventory is not on disk yet. Re-scan source.
+    # `step maps.normalize` on a sidecar without inventory: re-scan source.
     from steps.enonic.descriptors import collect_resources
 
     return collect_resources(ctx.source)  # type: ignore[attr-defined]

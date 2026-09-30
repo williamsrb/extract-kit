@@ -21,14 +21,14 @@ DOCS_UNTIL = ("--from", "maps.merge", "--until", "spec.kit")
 def _docs_tree(source: Path) -> Path:
     static = run(
         "run", "--profile", "enonic", "--source", str(source),
-        "--apply", *STATIC_UNTIL,
+        *STATIC_UNTIL,
     )
     if static.returncode != 0:
         raise AssertionError(static.stderr + static.stdout)
     out = sidecar_run_dir(source)
     result = run(
         "run", "--profile", "enonic", "--source", str(source),
-        "--out", str(out), "--apply", *DOCS_UNTIL,
+        "--out", str(out), *DOCS_UNTIL,
     )
     if result.returncode != 0:
         raise AssertionError(result.stderr + result.stdout)
@@ -85,13 +85,13 @@ class DocsSpeckitTests(unittest.TestCase):
             source = copy_fixture(Path(raw))
             static = run(
                 "run", "--profile", "enonic", "--source", str(source),
-                "--apply", *STATIC_UNTIL,
+                *STATIC_UNTIL,
             )
             self.assertEqual(static.returncode, 0, static.stderr + static.stdout)
             out = sidecar_run_dir(source)
             result = run(
                 "run", "--profile", "enonic", "--source", str(source),
-                "--out", str(out), "--apply", "--tasks", *DOCS_UNTIL,
+                "--out", str(out), "--tasks", *DOCS_UNTIL,
             )
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             self.assertTrue(list((out / "spec-kit" / "specs").glob("*/tasks.md")))

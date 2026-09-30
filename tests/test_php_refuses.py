@@ -38,8 +38,7 @@ class PhpRefuseTests(unittest.TestCase):
             source=REPO,
             out=REPO / ".extract" / "unused",
             profile=manifest.load("php"),
-            apply=False,
-            plan=Plan(False),
+            plan=Plan(),
             run_id="test",
         )
         with self.assertRaises(NotImplementedError) as caught:

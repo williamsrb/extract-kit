@@ -29,7 +29,9 @@ Canonical extract tree (stack-agnostic). Enonic details live only under `stackRe
   hygiene/dead-code.md
 ```
 
-`extractkit promote --apply` maps:
+`extractkit promote` maps the files below. It refuses, writing nothing, when an
+existing destination holds changes git cannot restore (modified, staged,
+untracked, ignored, or a source outside git). `--force` overwrites anyway.
 
 - `spec-kit/constitution.md` → `.specify/memory/constitution.md`
 - `spec-kit/specs/<ctx>/spec.md` → `specs/<ctx>/spec.md`

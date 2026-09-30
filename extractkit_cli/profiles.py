@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from argparse import Namespace
 
-from . import manifest, registry, schema
+from . import guide, manifest, registry, schema
 from .common import load_kit_identity, load_yaml
 from .errors import ExtractkitError
 
@@ -80,14 +80,20 @@ def cmd_doctor(args: Namespace) -> int:
     for name in names:
         checked += 1
         try:
-            validate_profile(name)
+            composed = validate_profile(name)
         except ExtractkitError as exc:
             line = f"{name}: {exc}"
             if exc.fix:
                 line += f"\n    fix: {exc.fix}"
             problems.append(line)
+            continue
+        problems.extend(f"{name}: {problem}" for problem in guide.phase_problems(composed))
     if not problems:
-        print(f"doctor: clean ({checked} profile(s) checked).")
+        suggestion = guide.next_for("doctor", "clean", args)
+        guide.emit(
+            [f"doctor: clean ({checked} profile(s) checked)."],
+            guide.render_next(suggestion, guide.style_for()),
+        )
         return 0
     for problem in problems:
         print(f"  {problem}")

@@ -1,4 +1,4 @@
-"""Hybrid step runner: `run` (--from / --until, --apply) and `step`."""
+"""Hybrid step runner: `run` (--from / --until) and `step`. Every run writes."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from argparse import Namespace
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import manifest, registry, schema
+from . import guide, manifest, registry, schema
 from .common import Plan, timestamp, write_json, write_text, write_yaml
 from .errors import ExtractkitError
 from .hygiene import after_step
@@ -26,7 +26,6 @@ class RunContext:
     source: Path
     out: Path
     profile: dict
-    apply: bool
     plan: Plan
     run_id: str
     skips: list[dict] = field(default_factory=list)
@@ -34,6 +33,7 @@ class RunContext:
     hygiene_notes: list[str] = field(default_factory=list)
     cms: dict = field(default_factory=dict)
     tasks: bool = False
+    out_existed: bool = False
 
     def rel(self, *parts: str) -> Path:
         return self.out.joinpath(*parts)
@@ -41,20 +41,17 @@ class RunContext:
     def write_text(self, rel: str, text: str) -> None:
         path = self.rel(rel)
         self.plan.record(f"write {path}")
-        if self.apply:
-            write_text(path, text)
+        write_text(path, text)
 
     def write_json(self, rel: str, payload: object) -> None:
         path = self.rel(rel)
         self.plan.record(f"write {path}")
-        if self.apply:
-            write_json(path, payload)
+        write_json(path, payload)
 
     def write_yaml(self, rel: str, payload: object) -> None:
         path = self.rel(rel)
         self.plan.record(f"write {path}")
-        if self.apply:
-            write_yaml(path, payload)
+        write_yaml(path, payload)
 
     def record_skip(self, step_id: str, reason: str, fix: str) -> None:
         self.skips.append({"step": step_id, "reason": reason, "fix": fix})
@@ -98,34 +95,69 @@ def _slice_pipeline(
     from_id: str | None,
     until_id: str | None,
     only: str | None = None,
+    profile: dict | None = None,
 ) -> list[tuple[str, str]]:
     ids = [slot for slot, _ in rows]
+    known = f"pipeline: {', '.join(ids) or 'empty'}"
+    if profile:
+        slot_phases = [p for p in guide.phases(profile) if p.slots]
+        if slot_phases:
+            known += "; phases: " + ", ".join(f"{p.id} ({p.number})" for p in slot_phases)
     if only:
         matches = [(s, p) for s, p in rows if s == only or p == only]
+        if matches:
+            return matches
+        phase = _slot_phase(profile, only, "step", known)
+        matches = [(s, p) for s, p in rows if s in phase.slots]
         if not matches:
             raise ExtractkitError(
-                f"step {only!r} is not in this profile's pipeline",
-                f"pipeline: {', '.join(ids) or 'empty'}",
+                f"phase {phase.id!r} has no bound slots in this profile",
+                known,
             )
         return matches
     start = 0
     end = len(rows)
     if from_id:
-        start = next((i for i, (s, p) in enumerate(rows) if s == from_id or p == from_id), None)
+        start = _index(rows, from_id)
         if start is None:
-            raise ExtractkitError(
-                f"--from {from_id!r} is not in this pipeline",
-                f"pipeline: {', '.join(ids) or 'empty'}",
-            )
+            phase = _slot_phase(profile, from_id, "--from", known)
+            start = next((i for i, (s, _) in enumerate(rows) if s in phase.slots), None)
+            if start is None:
+                raise ExtractkitError(f"--from phase {phase.id!r} has no bound slots", known)
     if until_id:
-        idx = next((i for i, (s, p) in enumerate(rows) if s == until_id or p == until_id), None)
+        idx = _index(rows, until_id)
         if idx is None:
-            raise ExtractkitError(
-                f"--until {until_id!r} is not in this pipeline",
-                f"pipeline: {', '.join(ids) or 'empty'}",
-            )
+            phase = _slot_phase(profile, until_id, "--until", known)
+            hits = [i for i, (s, _) in enumerate(rows) if s in phase.slots]
+            if not hits:
+                raise ExtractkitError(f"--until phase {phase.id!r} has no bound slots", known)
+            idx = hits[-1]
         end = idx + 1
     return rows[start:end]
+
+
+COMMAND_FIX = {
+    "doctor": "extractkit doctor",
+    "check": "extractkit check --out <sidecar>",
+    "promote": "extractkit promote --source <legacy-checkout> --out <sidecar>",
+}
+
+
+def _index(rows: list[tuple[str, str]], token: str) -> int | None:
+    return next((i for i, (s, p) in enumerate(rows) if token in (s, p)), None)
+
+
+def _slot_phase(profile: dict | None, token: str, flag: str, known: str) -> guide.Phase:
+    phase = guide.resolve_phase(profile or {}, token)
+    label = f"step {token!r}" if flag == "step" else f"{flag} {token!r}"
+    if phase is None:
+        raise ExtractkitError(f"{label} is not in this profile's pipeline", known)
+    if phase.command:
+        raise ExtractkitError(
+            f"{label} is the {phase.id} phase, which is a command, not pipeline slots",
+            f"run {COMMAND_FIX.get(phase.command, 'extractkit ' + phase.command)}",
+        )
+    return phase
 
 
 def _preflight(ctx: RunContext, rows: list[tuple[str, str]]) -> None:
@@ -138,11 +170,11 @@ def _preflight(ctx: RunContext, rows: list[tuple[str, str]]) -> None:
 def _execute(ctx: RunContext, rows: list[tuple[str, str]]) -> None:
     _preflight(ctx, rows)
     ensure_self_ignore(ctx.source, ctx.plan.record)
-    if ctx.apply:
-        write_self_ignore(ctx.source)
+    write_self_ignore(ctx.source)
 
     for slot, plugin_id in rows:
         step = registry.instantiate(plugin_id)
+        ctx.plan.step = plugin_id
         try:
             planned = step.plan(ctx) or []
             for action in planned:
@@ -154,6 +186,7 @@ def _execute(ctx: RunContext, rows: list[tuple[str, str]]) -> None:
                 "bind a real adapter, or wait for that stack's placeholder to be filled",
             ) from None
         after_step(ctx, plugin_id)
+        ctx.plan.step = None
 
     flush_hygiene(ctx)
     payload = build_manifest(
@@ -178,9 +211,9 @@ def _context_from_args(args: Namespace) -> RunContext:
     return RunContext(
         source=source,
         out=out,
+        out_existed=out.is_dir(),
         profile=profile,
-        apply=bool(getattr(args, "apply", False)),
-        plan=Plan(bool(getattr(args, "apply", False))),
+        plan=Plan(),
         run_id=run_id,
         cms={
             "branch": getattr(args, "branch", None),
@@ -197,19 +230,44 @@ def _context_from_args(args: Namespace) -> RunContext:
     )
 
 
+def report_run(ctx: RunContext, rows: list[tuple[str, str]], args: Namespace) -> int:
+    from . import progress
+
+    style = guide.style_for()
+    report = guide.Report(
+        profile=ctx.profile,
+        out=ctx.out,
+        out_existed=ctx.out_existed,
+        rows=rows,
+        actions=[guide.Action(step, text) for step, text in ctx.plan.entries],
+        skips=ctx.skips,
+    )
+    body, truncated = guide.render_body(
+        report, verbose=bool(getattr(args, "verbose", False)), style=style,
+    )
+    found = [] if getattr(args, "quiet", False) else guide.tips(report, truncated)
+    state = progress.pipeline_state(ctx.profile, ctx.out)
+    suggestion = guide.next_for("run", state, args, ctx.profile, ctx.out)
+    guide.emit(body, guide.render_tips(found, style), guide.render_next(suggestion, style))
+    return 0
+
+
 def cmd_run(args: Namespace) -> int:
     ctx = _context_from_args(args)
     rows = _slice_pipeline(
         _bound_pipeline(ctx.profile),
         getattr(args, "from_step", None),
         getattr(args, "until", None),
+        profile=ctx.profile,
     )
     _execute(ctx, rows)
-    return ctx.plan.report(f"extract {ctx.profile['name']} -> {ctx.out}")
+    return report_run(ctx, rows, args)
 
 
 def cmd_step(args: Namespace) -> int:
     ctx = _context_from_args(args)
-    rows = _slice_pipeline(_bound_pipeline(ctx.profile), None, None, only=args.step_id)
+    rows = _slice_pipeline(
+        _bound_pipeline(ctx.profile), None, None, only=args.step_id, profile=ctx.profile,
+    )
     _execute(ctx, rows)
-    return ctx.plan.report(f"step {args.step_id} -> {ctx.out}")
+    return report_run(ctx, rows, args)

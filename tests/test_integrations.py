@@ -30,7 +30,7 @@ class SwaggerUiApplyTests(unittest.TestCase):
             source = copy_fixture(Path(tmp))
             result = run(
                 "run", "--profile", "enonic", "--source", str(source),
-                "--apply", *STATIC_UNTIL,
+                *STATIC_UNTIL,
             )
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             ui = sidecar_run_dir(source) / "integrations" / "swagger-ui"

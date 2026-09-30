@@ -6,7 +6,7 @@
     return;
   }
   if (!spec) {
-    root.textContent = "Missing spec.js. Re-run extractkit integrations / cms --apply.";
+    root.textContent = "Missing spec.js. Re-run extractkit step inventory.integrations (or enonic.cms).";
     return;
   }
   window.ui = SwaggerUIBundle({

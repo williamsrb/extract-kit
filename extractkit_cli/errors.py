@@ -9,8 +9,17 @@ class ExtractkitError(Exception):
     Raise this for anything the operator can act on: a missing profile, an
     unbound adapter, a failed check gate. Programming errors stay as ordinary
     exceptions so they keep their traceback.
+
+    `fix_args` maps a flag to its value (`None` for a boolean flag). When set,
+    the CLI prints the operator's own command with those flags applied.
     """
 
-    def __init__(self, message: str, fix: str | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        fix: str | None = None,
+        fix_args: dict[str, str | None] | None = None,
+    ) -> None:
         super().__init__(message)
         self.fix = fix
+        self.fix_args = fix_args

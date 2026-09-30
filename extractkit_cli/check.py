@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from . import schema
+from . import guide, schema
 from .common import load_json, load_yaml
 from .errors import ExtractkitError
 
@@ -33,7 +33,7 @@ def _out_dir(raw: str | None) -> Path:
     if not path.is_dir():
         raise ExtractkitError(
             f"--out {path} is not a directory",
-            "run extractkit run --apply first, then pass that sidecar path",
+            "run extractkit run first, then pass that sidecar path",
         )
     return path
 
@@ -74,7 +74,7 @@ def _descriptor_coverage(out: Path) -> list[str]:
     if not inventory_path.is_file():
         raise ExtractkitError(
             f"missing {inventory_path}",
-            "run extractkit run --profile enonic --apply so inventory/static.json exists",
+            "run extractkit run --profile enonic so inventory/static.json exists",
         )
     inventory = load_json(inventory_path, "inventory/static.json")
     schema.validate(inventory, "inventory", what="inventory/static.json")
@@ -271,10 +271,15 @@ def _spec_fr_gaps(out: Path) -> list[str]:
 def cmd_check(args: Namespace) -> int:
     out = _out_dir(getattr(args, "out", None))
     problems = check_tree(out)
+    style = guide.style_for()
     if not problems:
-        print(f"check: clean ({out})")
+        suggestion = guide.next_for("check", "clean", args, out=out)
+        guide.emit([f"check: clean ({guide.rel_to_cwd(out)})"], guide.render_next(suggestion, style))
         return 0
-    for problem in problems:
-        print(f"  {problem}")
-    print(f"\ncheck: {len(problems)} problem(s).")
+    suggestion = guide.next_for("check", "problems", args, out=out)
+    guide.emit(
+        [f"  {problem}" for problem in problems],
+        [f"check: {len(problems)} problem(s)."],
+        guide.render_next(suggestion, style),
+    )
     return 1

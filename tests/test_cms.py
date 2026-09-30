@@ -302,7 +302,7 @@ class CmsCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             source = copy_fixture(Path(raw))
             result = run(
-                "run", "--profile", "enonic", "--source", str(source), "--apply",
+                "run", "--profile", "enonic", "--source", str(source),
             )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("--branch", result.stdout + result.stderr)
@@ -316,7 +316,7 @@ class CmsCliTests(unittest.TestCase):
             with graphql_server(PAGE_AS_JSON) as (hits, url):
                 result = run(
                     "step", "enonic.cms", "--profile", "enonic",
-                    "--source", str(source), "--apply",
+                    "--source", str(source),
                     "--branch", "draft",
                     "--xp-host", url,
                     "--guillotine", url,
@@ -422,13 +422,13 @@ class CmsCliTests(unittest.TestCase):
             _storage_state(state)
             static = run(
                 "run", "--profile", "enonic", "--source", str(source),
-                "--apply", *STATIC_UNTIL,
+                *STATIC_UNTIL,
             )
             self.assertEqual(static.returncode, 0, static.stderr + static.stdout)
             with graphql_server(PAGE_AS_JSON) as (_hits, url):
                 result = run(
                     "step", "enonic.cms", "--profile", "enonic",
-                    "--source", str(source), "--apply",
+                    "--source", str(source),
                     "--out", str(sidecar_run_dir(source)),
                     "--branch", "draft",
                     "--xp-host", url,

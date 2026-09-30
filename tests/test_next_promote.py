@@ -1,4 +1,4 @@
-"""S14 next / resume / promote."""
+"""status (alias next) / resume / promote."""
 
 from __future__ import annotations
 
@@ -22,13 +22,17 @@ class NextPromoteTests(unittest.TestCase):
             source = copy_fixture(Path(raw))
             applied = run(
                 "run", "--profile", "enonic", "--source", str(source),
-                "--apply", *STATIC_UNTIL,
+                *STATIC_UNTIL,
             )
             self.assertEqual(applied.returncode, 0, applied.stderr + applied.stdout)
-            result = run("next", "--source", str(source))
+            result = run("status", "--source", str(source))
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
-            self.assertIn("enonic.cms", result.stdout)
-            self.assertIn("skill: extract-legacy", result.stdout)
+            self.assertIn("✓ 2 static", result.stdout)
+            self.assertIn("→ 3 cms", result.stdout)
+            self.assertIn("skills: extract-legacy", result.stdout)
+            alias = run("next", "--source", str(source))
+            self.assertEqual(alias.returncode, 0, alias.stderr + alias.stdout)
+            self.assertEqual(alias.stdout, result.stdout)
 
     def test_resume_from_static_runs_merge_when_runtime_present(self) -> None:
         import json
@@ -39,7 +43,7 @@ class NextPromoteTests(unittest.TestCase):
             source = copy_fixture(Path(raw))
             applied = run(
                 "run", "--profile", "enonic", "--source", str(source),
-                "--apply", *STATIC_UNTIL,
+                *STATIC_UNTIL,
             )
             self.assertEqual(applied.returncode, 0, applied.stderr + applied.stdout)
             out = sidecar_run_dir(source)
@@ -48,40 +52,36 @@ class NextPromoteTests(unittest.TestCase):
             )
             nxt = run("next", "--source", str(source), "--out", str(out))
             self.assertEqual(nxt.returncode, 0, nxt.stderr + nxt.stdout)
-            self.assertIn("maps.merge", nxt.stdout)
+            self.assertIn("→ 4 merge", nxt.stdout)
             resumed = run(
                 "resume", "--profile", "enonic", "--source", str(source),
-                "--out", str(out), "--apply", "--until", "spec.kit",
+                "--out", str(out), "--until", "spec.kit",
             )
             self.assertEqual(resumed.returncode, 0, resumed.stderr + resumed.stdout)
             self.assertTrue((out / "spec-kit" / "constitution.md").is_file())
             done = run("next", "--source", str(source), "--out", str(out))
             self.assertEqual(done.returncode, 0, done.stderr + done.stdout)
-            self.assertIn("next: done", done.stdout)
+            self.assertIn("→ 6 check", done.stdout)
+            self.assertIn("check --out", done.stdout)
 
-    def test_promote_maps_constitution_and_leaves_git_dirty_only_when_applied(self) -> None:
+    def test_promote_maps_constitution_into_source(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             source = copy_fixture(Path(raw))
             git_init(source)
             static = run(
                 "run", "--profile", "enonic", "--source", str(source),
-                "--apply", *STATIC_UNTIL,
+                *STATIC_UNTIL,
             )
             self.assertEqual(static.returncode, 0, static.stderr + static.stdout)
             out = sidecar_run_dir(source)
             docs = run(
                 "run", "--profile", "enonic", "--source", str(source),
-                "--out", str(out), "--apply",
+                "--out", str(out),
                 "--from", "maps.merge", "--until", "spec.kit",
             )
             self.assertEqual(docs.returncode, 0, docs.stderr + docs.stdout)
-            dry = run("promote", "--source", str(source), "--out", str(out))
-            self.assertEqual(dry.returncode, 0, dry.stderr + dry.stdout)
-            self.assertIn("Dry run", dry.stdout)
-            self.assertFalse((source / ".specify" / "memory" / "constitution.md").is_file())
-            self.assertEqual(porcelain(source), "")
             applied = run(
-                "promote", "--source", str(source), "--out", str(out), "--apply",
+                "promote", "--source", str(source), "--out", str(out),
             )
             self.assertEqual(applied.returncode, 0, applied.stderr + applied.stdout)
             dest = source / ".specify" / "memory" / "constitution.md"

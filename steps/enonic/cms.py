@@ -126,6 +126,7 @@ def resolve_cms(ctx: Any) -> CmsConfig:
                 "<project>/<branch>, or the as app-own service when that is "
                 "the intended endpoint) or set cms.project so a preview URL "
                 "can be built",
+                fix_args={"--guillotine": "<preview-graphql-url>"},
             )
         guillotine = f"{host}/admin/site/preview/{project}/{branch}"
     host_env = cms_target.assert_allowed(
@@ -156,6 +157,7 @@ def resolve_cms(ctx: Any) -> CmsConfig:
             "enonic.cms has no content keys to survey",
             "pass --cms-key /en (repeatable) or set cms.keys in the profile; "
             "do not walk the whole tree",
+            fix_args={"--cms-key": "/en"},
         )
     profile_round2 = ctx.profile.get("round2") if isinstance(ctx.profile, dict) else []
     if not isinstance(profile_round2, list):
@@ -194,6 +196,7 @@ def cookies_from_storage_state(path: Path) -> str:
             f"Playwright storage-state not found at {path}",
             "pass --storage-state at a harness file (see find-auth-storage.py); "
             "user.json can be stale",
+            fix_args={"--storage-state": "<playwright-state.json>"},
         ) from None
     except ValueError as exc:
         raise ExtractkitError(
@@ -244,6 +247,7 @@ def post_graphql(
             "pass --guillotine at the preview GraphQL URL "
             "(POST /admin/site/preview/<project>/<branch>); do not assume "
             "the as app-own /_/service/no.seeds.as/graphql endpoint",
+            fix_args={"--guillotine": "<preview-graphql-url>"},
         ) from None
     except urlerror.URLError as exc:
         raise ExtractkitError(
@@ -588,15 +592,17 @@ def _write_enonic_survey(
 def _require_storage_state(cfg: CmsConfig) -> Path:
     if cfg.storage_state is None:
         raise ExtractkitError(
-            "enonic.cms --apply needs a Playwright storage-state",
+            "enonic.cms needs a Playwright storage-state",
             "pass --storage-state at a harness JSON (find-auth-storage.py / "
             "playwright-cli codegen --save-storage); do not put secrets in the kit",
+            fix_args={"--storage-state": "<playwright-state.json>"},
         )
     path = cfg.storage_state.expanduser().resolve()
     if not path.is_file():
         raise ExtractkitError(
             f"Playwright storage-state not found at {path}",
             "pass --storage-state at an existing JSON file; user.json can be stale",
+            fix_args={"--storage-state": "<playwright-state.json>"},
         )
     return path
 
@@ -646,74 +652,59 @@ class EnonicCmsStep:
         type_ids = page_templates.content_type_ids(resources)
         folder_key = page_templates.templates_folder_key(cfg.keys[0])
         pages: list[dict] = []
-        templates: list[page_templates.PageTemplate] = []
         type_rows: list[dict] = []
-        cookie = ""
-        if ctx.apply:  # type: ignore[attr-defined]
-            state = _require_storage_state(cfg)
-            cookie = cookies_from_storage_state(state)
-            if not cookie:
-                raise ExtractkitError(
-                    f"storage-state {state} has no cookies",
-                    "export a Playwright storage-state after logging into XP",
-                )
-            templates = load_page_templates(cfg.guillotine, cookie, folder_key)
-            for type_id in type_ids:
-                type_rows.append(
-                    fetch_type_nodes(
-                        cfg.guillotine, cookie, type_id, cfg.sample_per_type,
-                    )
-                )
-            for key in cfg.keys:
-                query = PAGE_QUERY.format(key=_escape_key(key))
-                payload = post_graphql(cfg.guillotine, query, cookie)
-                pages.append(_page_record(key, 1, payload, index, cfg.context_by_key))
-            for row in pages:
-                _annotate_record(row, templates)
-            round2_keys = [
-                row["key"] for row in pages
-                if row.get("round") == 1
-                and row.get("key") in cfg.keys
-                and row.get("context") in cfg.round2
-            ]
-            for key in _unique(round2_keys):
-                query = PAGE_QUERY.format(key=_escape_key(key))
-                payload = post_graphql(cfg.guillotine, query, cookie)
-                pages.append(
-                    _annotate_record(
-                        _page_record(key, 2, payload, index, cfg.context_by_key),
-                        templates,
-                    )
-                )
-            seen_keys = {str(row.get("key") or "") for row in pages}
-            for item in type_rows:
-                for node in item.get("nodes") or []:
-                    if not isinstance(node, dict):
-                        continue
-                    path = str(node.get("_path") or "")
-                    if not path or path in seen_keys:
-                        continue
-                    pages.append(
-                        _sample_runtime_page(
-                            node, templates, index, cfg.context_by_key,
-                        )
-                    )
-                    seen_keys.add(path)
-            site_configs, config_env, endpoints = _harvest_live_config(
-                cfg, pages, cookie,
+        state = _require_storage_state(cfg)
+        cookie = cookies_from_storage_state(state)
+        if not cookie:
+            raise ExtractkitError(
+                f"storage-state {state} has no cookies",
+                "export a Playwright storage-state after logging into XP",
             )
-        else:
-            for key in cfg.keys:
-                pages.append({
-                    "key": key,
-                    "round": 1,
-                    "context": cfg.context_by_key.get(key) or "uncategorized",
-                })
-            type_rows = [
-                {"type": type_id, "totalCount": 0, "nodes": []}
-                for type_id in type_ids
-            ]
-            site_configs, config_env, endpoints = [], [], []
+        templates = load_page_templates(cfg.guillotine, cookie, folder_key)
+        for type_id in type_ids:
+            type_rows.append(
+                fetch_type_nodes(
+                    cfg.guillotine, cookie, type_id, cfg.sample_per_type,
+                )
+            )
+        for key in cfg.keys:
+            query = PAGE_QUERY.format(key=_escape_key(key))
+            payload = post_graphql(cfg.guillotine, query, cookie)
+            pages.append(_page_record(key, 1, payload, index, cfg.context_by_key))
+        for row in pages:
+            _annotate_record(row, templates)
+        round2_keys = [
+            row["key"] for row in pages
+            if row.get("round") == 1
+            and row.get("key") in cfg.keys
+            and row.get("context") in cfg.round2
+        ]
+        for key in _unique(round2_keys):
+            query = PAGE_QUERY.format(key=_escape_key(key))
+            payload = post_graphql(cfg.guillotine, query, cookie)
+            pages.append(
+                _annotate_record(
+                    _page_record(key, 2, payload, index, cfg.context_by_key),
+                    templates,
+                )
+            )
+        seen_keys = {str(row.get("key") or "") for row in pages}
+        for item in type_rows:
+            for node in item.get("nodes") or []:
+                if not isinstance(node, dict):
+                    continue
+                path = str(node.get("_path") or "")
+                if not path or path in seen_keys:
+                    continue
+                pages.append(
+                    _sample_runtime_page(
+                        node, templates, index, cfg.context_by_key,
+                    )
+                )
+                seen_keys.add(path)
+        site_configs, config_env, endpoints = _harvest_live_config(
+            cfg, pages, cookie,
+        )
         payload = {
             "schema": "99x.extract.runtime-inventory/v1",
             "env": cfg.env,
@@ -791,6 +782,7 @@ def _harvest_live_config(
             "pass --configenv at the XP7 tool "
             "/admin/tool/no.seeds.configenv/module-config, or skip if that "
             "app is not installed",
+            fix_args={"--configenv": "<config-env-url>"},
         )
     return site_configs, config_env, live_config.dedupe_endpoints(endpoints)
 
@@ -804,5 +796,4 @@ def _patch_openapi(ctx: object, endpoints: list[dict]) -> None:
     dest = ctx.rel("integrations/swagger-ui")  # type: ignore[attr-defined]
     if dest.is_dir():
         ctx.plan.record(f"write {dest / 'spec.js'}")  # type: ignore[attr-defined]
-        if ctx.apply:  # type: ignore[attr-defined]
-            write_swagger_spec(dest, spec)
+        write_swagger_spec(dest, spec)

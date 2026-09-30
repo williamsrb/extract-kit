@@ -159,8 +159,6 @@ def _copy_swagger_ui(ctx: object, spec: object) -> None:
     dest: Path = ctx.rel("integrations/swagger-ui")  # type: ignore[attr-defined]
     ctx.plan.record(f"write {dest}/ (read-only swagger-ui)")  # type: ignore[attr-defined]
     ctx.plan.record(f"write {dest / 'spec.js'}")  # type: ignore[attr-defined]
-    if not ctx.apply:  # type: ignore[attr-defined]
-        return
     dest.mkdir(parents=True, exist_ok=True)
     if TEMPLATE_DIR.is_dir():
         for item in TEMPLATE_DIR.iterdir():
