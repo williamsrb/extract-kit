@@ -1863,7 +1863,7 @@
     "id": "ln_sub",
     "x": 116,
     "y": 2190,
-    "text": "Checkout is read-only until promote. runtime.json is optional.",
+    "text": "Checkout is read-only until promote. Purple = CMS only. Grey dashed = optional, never promoted.",
     "fontSize": 17,
     "strokeColor": "#5f6368",
     "fontFamily": 5
@@ -1891,10 +1891,40 @@
     "roughness": 1
   },
   {
+    "type": "text",
+    "id": "ph_n2",
+    "x": 357,
+    "y": 1612,
+    "text": "+ controllers",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
+    "type": "text",
+    "id": "ph_n3",
+    "x": 524,
+    "y": 1612,
+    "text": "+ baseline (optional)",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
+    "type": "text",
+    "id": "ph_n5",
+    "x": 858,
+    "y": 1612,
+    "text": "+ compat (optional)",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
     "type": "ellipse",
     "id": "ln_src",
     "x": 200,
-    "y": 2580,
+    "y": 2570,
     "width": 210,
     "height": 90,
     "backgroundColor": "#a5d8ff",
@@ -1921,18 +1951,15 @@
   },
   {
     "type": "rectangle",
-    "id": "ln_stj",
+    "id": "ln_oas",
     "x": 500,
-    "y": 2410,
-    "width": 200,
+    "y": 2380,
+    "width": 220,
     "height": 76,
     "backgroundColor": "#c3fae8",
     "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
     "label": {
-      "text": "static.json",
+      "text": "openapi.yaml",
       "fontSize": 16,
       "fontFamily": 5
     },
@@ -1940,25 +1967,21 @@
       {
         "id": "ln_a1",
         "type": "arrow"
-      },
-      {
-        "id": "ln_a4",
-        "type": "arrow"
       }
-    ]
+    ],
+    "roundness": {
+      "type": 3
+    }
   },
   {
     "type": "rectangle",
     "id": "ln_maps",
     "x": 500,
-    "y": 2587,
-    "width": 200,
+    "y": 2577,
+    "width": 220,
     "height": 76,
     "backgroundColor": "#c3fae8",
     "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
     "label": {
       "text": "map/*.json",
       "fontSize": 16,
@@ -1977,22 +2000,22 @@
         "id": "ln_a5",
         "type": "arrow"
       }
-    ]
+    ],
+    "roundness": {
+      "type": 3
+    }
   },
   {
     "type": "rectangle",
-    "id": "ln_oas",
+    "id": "ln_inv",
     "x": 500,
-    "y": 2760,
-    "width": 200,
-    "height": 76,
+    "y": 2770,
+    "width": 220,
+    "height": 90,
     "backgroundColor": "#c3fae8",
     "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
     "label": {
-      "text": "openapi.yaml",
+      "text": "static.json\ncontrollers.json",
       "fontSize": 16,
       "fontFamily": 5
     },
@@ -2000,21 +2023,29 @@
       {
         "id": "ln_a3",
         "type": "arrow"
+      },
+      {
+        "id": "ln_a4",
+        "type": "arrow"
+      },
+      {
+        "id": "ln_a9",
+        "type": "arrow"
       }
-    ]
+    ],
+    "roundness": {
+      "type": 3
+    }
   },
   {
     "type": "rectangle",
     "id": "ln_rt",
-    "x": 800,
-    "y": 2410,
-    "width": 210,
+    "x": 860,
+    "y": 2380,
+    "width": 230,
     "height": 76,
     "backgroundColor": "#d0bfff",
     "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
     "label": {
       "text": "runtime.json",
       "fontSize": 16,
@@ -2024,21 +2055,51 @@
       {
         "id": "ln_a6",
         "type": "arrow"
+      },
+      {
+        "id": "ln_a8",
+        "type": "arrow"
       }
-    ]
+    ],
+    "roundness": {
+      "type": 3
+    }
+  },
+  {
+    "type": "rectangle",
+    "id": "ln_base",
+    "x": 1180,
+    "y": 2380,
+    "width": 210,
+    "height": 76,
+    "backgroundColor": "#e9ecef",
+    "fillStyle": "solid",
+    "label": {
+      "text": "baseline/",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "ln_a8",
+        "type": "arrow"
+      }
+    ],
+    "roundness": {
+      "type": 3
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#868e96"
   },
   {
     "type": "rectangle",
     "id": "ln_syn",
-    "x": 800,
-    "y": 2580,
+    "x": 860,
+    "y": 2570,
     "width": 230,
     "height": 90,
     "backgroundColor": "#b2f2bb",
     "fillStyle": "hachure",
-    "roundness": {
-      "type": 3
-    },
     "label": {
       "text": "merge + spec-kit",
       "fontSize": 16,
@@ -2057,20 +2118,20 @@
         "id": "ln_a7",
         "type": "arrow"
       }
-    ]
+    ],
+    "roundness": {
+      "type": 3
+    }
   },
   {
     "type": "rectangle",
     "id": "ln_dest",
-    "x": 1120,
-    "y": 2580,
-    "width": 200,
+    "x": 1180,
+    "y": 2570,
+    "width": 210,
     "height": 90,
     "backgroundColor": "#b2f2bb",
     "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
     "label": {
       "text": "promoted files",
       "fontSize": 16,
@@ -2081,15 +2142,44 @@
         "id": "ln_a7",
         "type": "arrow"
       }
-    ]
+    ],
+    "roundness": {
+      "type": 3
+    }
+  },
+  {
+    "type": "rectangle",
+    "id": "ln_comp",
+    "x": 860,
+    "y": 2777,
+    "width": 230,
+    "height": 76,
+    "backgroundColor": "#e9ecef",
+    "fillStyle": "solid",
+    "label": {
+      "text": "reports/xp8-compat.md",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "ln_a9",
+        "type": "arrow"
+      }
+    ],
+    "roundness": {
+      "type": 3
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#868e96"
   },
   {
     "type": "arrow",
     "id": "ln_a1",
     "x": 347.0,
-    "y": 2580,
+    "y": 2570,
     "width": 153.0,
-    "height": -132.0,
+    "height": -152.0,
     "points": [
       [
         0,
@@ -2097,7 +2187,7 @@
       ],
       [
         153.0,
-        -132.0
+        -152.0
       ]
     ],
     "endArrowhead": "arrow",
@@ -2109,7 +2199,7 @@
       ]
     },
     "endBinding": {
-      "elementId": "ln_stj",
+      "elementId": "ln_oas",
       "fixedPoint": [
         0,
         0.5
@@ -2120,7 +2210,7 @@
     "type": "arrow",
     "id": "ln_a2",
     "x": 410,
-    "y": 2625.0,
+    "y": 2615.0,
     "width": 90,
     "height": 0.0,
     "points": [
@@ -2153,9 +2243,9 @@
     "type": "arrow",
     "id": "ln_a3",
     "x": 347.0,
-    "y": 2670,
+    "y": 2660,
     "width": 153.0,
-    "height": 128.0,
+    "height": 155.0,
     "points": [
       [
         0,
@@ -2163,7 +2253,7 @@
       ],
       [
         153.0,
-        128.0
+        155.0
       ]
     ],
     "endArrowhead": "arrow",
@@ -2175,7 +2265,7 @@
       ]
     },
     "endBinding": {
-      "elementId": "ln_oas",
+      "elementId": "ln_inv",
       "fixedPoint": [
         0,
         0.5
@@ -2185,10 +2275,10 @@
   {
     "type": "arrow",
     "id": "ln_a4",
-    "x": 600.0,
-    "y": 2486,
+    "x": 610.0,
+    "y": 2770,
     "width": 0.0,
-    "height": 101,
+    "height": -117,
     "points": [
       [
         0,
@@ -2196,36 +2286,31 @@
       ],
       [
         0.0,
-        101
+        -117
       ]
     ],
     "endArrowhead": "arrow",
     "startBinding": {
-      "elementId": "ln_stj",
+      "elementId": "ln_inv",
       "fixedPoint": [
         0.5,
-        1
+        0
       ]
     },
     "endBinding": {
       "elementId": "ln_maps",
       "fixedPoint": [
         0.5,
-        0
+        1
       ]
-    },
-    "label": {
-      "text": "surfaces",
-      "fontSize": 14,
-      "fontFamily": 5
     }
   },
   {
     "type": "arrow",
     "id": "ln_a5",
-    "x": 700,
-    "y": 2625.0,
-    "width": 100,
+    "x": 720,
+    "y": 2615.0,
+    "width": 140,
     "height": 0.0,
     "points": [
       [
@@ -2233,7 +2318,7 @@
         0
       ],
       [
-        100,
+        140,
         0.0
       ]
     ],
@@ -2251,28 +2336,23 @@
         0,
         0.5
       ]
-    },
-    "label": {
-      "text": "project-map",
-      "fontSize": 14,
-      "fontFamily": 5
     }
   },
   {
     "type": "arrow",
     "id": "ln_a6",
-    "x": 905.0,
-    "y": 2486,
-    "width": 10.0,
-    "height": 94,
+    "x": 975.0,
+    "y": 2456,
+    "width": 0.0,
+    "height": 114,
     "points": [
       [
         0,
         0
       ],
       [
-        10.0,
-        94
+        0.0,
+        114
       ]
     ],
     "endArrowhead": "arrow",
@@ -2290,19 +2370,14 @@
         0
       ]
     },
-    "label": {
-      "text": "live / dead / unobserved",
-      "fontSize": 14,
-      "fontFamily": 5
-    },
     "strokeStyle": "dashed",
     "strokeColor": "#7048e8"
   },
   {
     "type": "arrow",
     "id": "ln_a7",
-    "x": 1030,
-    "y": 2625.0,
+    "x": 1090,
+    "y": 2615.0,
     "width": 90,
     "height": 0.0,
     "points": [
@@ -2329,41 +2404,136 @@
         0,
         0.5
       ]
-    },
-    "label": {
-      "text": "promote",
-      "fontSize": 14,
-      "fontFamily": 5
     }
   },
   {
-    "type": "text",
-    "id": "ph_n2",
-    "x": 357,
-    "y": 1612,
-    "text": "+ controllers",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
+    "type": "arrow",
+    "id": "ln_a8",
+    "x": 1090,
+    "y": 2418.0,
+    "width": 90,
+    "height": 0.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        90,
+        0.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "ln_rt",
+      "fixedPoint": [
+        1,
+        0.5
+      ]
+    },
+    "endBinding": {
+      "elementId": "ln_base",
+      "fixedPoint": [
+        0,
+        0.5
+      ]
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#868e96"
+  },
+  {
+    "type": "arrow",
+    "id": "ln_a9",
+    "x": 720,
+    "y": 2815.0,
+    "width": 140,
+    "height": 0.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        140,
+        0.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "ln_inv",
+      "fixedPoint": [
+        1,
+        0.5
+      ]
+    },
+    "endBinding": {
+      "elementId": "ln_comp",
+      "fixedPoint": [
+        0,
+        0.5
+      ]
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#868e96"
   },
   {
     "type": "text",
-    "id": "ph_n3",
-    "x": 524,
-    "y": 1612,
-    "text": "+ baseline (optional)",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
+    "id": "ln_a4_lbl",
+    "x": 622.0,
+    "y": 2702.5,
+    "text": "surfaces + behavior",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
   },
   {
     "type": "text",
-    "id": "ph_n5",
-    "x": 858,
-    "y": 1612,
-    "text": "+ compat (optional)",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
+    "id": "ln_a5_lbl",
+    "x": 751.5,
+    "y": 2591.0,
+    "text": "project-map",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "ln_a6_lbl",
+    "x": 987.0,
+    "y": 2504.0,
+    "text": "live / dead / unobserved",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "ln_a7_lbl",
+    "x": 1110.5,
+    "y": 2591.0,
+    "text": "promote",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "ln_a8_lbl",
+    "x": 1100.0,
+    "y": 2394.0,
+    "text": "page paths",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "ln_a9_lbl",
+    "x": 755.0,
+    "y": 2791.0,
+    "text": "XP8 report",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
   }
 ]

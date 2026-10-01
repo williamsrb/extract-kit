@@ -112,8 +112,9 @@ Per file it records, each with its `line`:
   including destructured names)
 - `calls`: `<alias>.<fn>(` for each import
 - `queries`: string-literal `query` and `contentTypes` values
-- `methods`: exported `get|post|put|delete|patch|head|options|all`,
-  `filter`, `run`, `responseProcessor`, `canRender`, `handle*`
+- `methods`: exported
+  `get|post|put|delete|patch|head|options|all|connect|trace`, `filter`,
+  `run`, `responseProcessor`, `canRender`, `handle*`
 - `views`: `resolve('…')`, `new React4xp('…')`, and `render` calls on a
   thymeleaf, mustache, freemarker, handlebars, react4xp or pebble import
 - `i18n`: `localize({ key: '…' })` keys
@@ -269,10 +270,12 @@ list (`requests --static`). Page URL:
 `<host>/admin/site/preview/<project>/<branch><content-path>`, or
 `<--site-url><content-path>`.
 
-**Refuse.** A production host, for `--xp-host`, `--guillotine` or
+**Refuse.** It resolves the same CMS settings as `enonic.cms` and refuses
+on the same gaps: no `--branch`, no Guillotine URL or project, no content
+keys. A production host, for `--xp-host`, `--guillotine`, `--configenv` or
 `--site-url`, is refused before any browser starts.
 
-**Skip.** No `playwright-cli` on PATH, no `runtime.json`, or no readable
+**Skip.** No `runtime.json`, no `playwright-cli` on PATH, or no readable
 storage-state records a skip with a fix. A command that fails still keeps
 what was captured; the missing file is a skip and a `missing` cell in the
 index.
@@ -299,8 +302,8 @@ Surface status, for `page`, `layout`, `part` and `macro` only:
 
 - `live`: seen in a runtime page's `templateOrder`; `composition` is
   taken from the highest-round page that lists it
-- `live` with evidence `usage:<app>:<name>:<n>`: not sampled, but the usage
-  probe counted `n` > 0
+- `live` with evidence `usage:<app>:<kind>:<name>:<n>`: not sampled, but
+  the usage probe counted `n` > 0
 - `dead`: not sampled and the usage count is exactly 0
 - `unobserved`: not sampled and no count (probe unsupported, or a macro)
 - `conditional`: seen in round 1, absent in round 2; also listed as a
@@ -389,8 +392,9 @@ Without `map/bounded-contexts.json` it writes only `use-cases/README.md`.
 - fragment `spec-kit/constitution/as-is.md`
 - `spec-kit/specs/<context>/spec.md` with one `FR-N` per surface
 
-Each FR has a heading, one sentence, `Acceptance:` bullets and an
-`Evidence:` line. The bullets come from the surface only:
+Each FR has a heading, one sentence, `Acceptance:` bullets when any
+were extracted, and an `Evidence:` line. The bullets come from the
+surface only:
 
 - content model: a field per input (type, occurrences, `allowContentType`,
   option values, `fromMixin`)
@@ -424,6 +428,9 @@ and `inventory/controllers.json`. Not a plan and not part of `spec-kit/`.
 Every row cites the XP8 offline doc page it was checked against. No row
 says an API is removed unless that page does. `promote` does not copy
 `reports/`.
+
+**Skip.** No `inventory/static.json` records a skip that points at
+`run --until static`.
 
 ## PHP
 

@@ -58,7 +58,15 @@ Without it, `maps.merge` leaves page, layout, part, and macro as
 `unobserved`, or `conditional`. A component the survey did not sample is
 `dead` only when the usage probe counted exactly 0.
 
+`controllers.json` comes from the static phase. `maps.normalize` copies
+each controller's entry into its surface's `behavior`.
+
 CMS also patches `openapi.yaml` `x-production-endpoints`. Those URLs are
 never fetched.
+
+The two optional slots stay in the sidecar. `inventory.baseline` takes
+page paths from `runtime.json` and writes `baseline/`.
+`report.compat` reads `static.json` and `controllers.json` and writes
+`reports/xp8-compat.md`. `promote` copies neither.
 
 What each file is, and the promote map, is in [output](output.md).

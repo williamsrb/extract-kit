@@ -14,7 +14,7 @@ Canonical extract tree. Enonic details live only under `stackRef`.
   inventory/controllers.json
   inventory/runtime.json          # optional
   inventory/content-volume.json   # optional, with runtime
-  inventory/content-volume.md
+  inventory/content-volume.md     # optional, with runtime
   baseline/INDEX.md               # optional
   baseline/<slug>/                # desktop.png, mobile.png, page.html, network.json
   reports/xp8-compat.md           # optional; never promoted
@@ -116,7 +116,7 @@ Applies to `page`, `layout`, `part`, and `macro` when runtime exists.
 
 | Status | Meaning |
 | --- | --- |
-| `live` | Seen in a runtime page's `templateOrder`, or the usage probe counted more than 0 (evidence `usage:<app>:<name>:<n>`) |
+| `live` | Seen in a runtime page's `templateOrder`, or the usage probe counted more than 0 (evidence `usage:<app>:<kind>:<name>:<n>`) |
 | `dead` | Not seen, and the usage probe counted exactly 0 |
 | `unobserved` | Not seen, and no count: the probe was unsupported, or the kind has no indexed field (macro). It is not `dead`; a port should keep it |
 | `conditional` | Seen in round 1, absent in round 2 |

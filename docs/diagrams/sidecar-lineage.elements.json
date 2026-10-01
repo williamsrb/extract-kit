@@ -1,8 +1,8 @@
 [
   {
     "type": "cameraUpdate",
-    "width": 1200,
-    "height": 900,
+    "width": 1280,
+    "height": 700,
     "x": 0,
     "y": 0
   },
@@ -21,7 +21,7 @@
     "id": "s",
     "x": 40,
     "y": 54,
-    "text": "Checkout is read-only until promote. runtime.json is optional.",
+    "text": "Checkout is read-only until promote. Purple = CMS only. Grey dashed = optional, never promoted.",
     "fontSize": 16,
     "strokeColor": "#5f6368",
     "fontFamily": 5
@@ -30,7 +30,7 @@
     "type": "ellipse",
     "id": "src",
     "x": 40,
-    "y": 320,
+    "y": 330,
     "width": 210,
     "height": 90,
     "backgroundColor": "#a5d8ff",
@@ -57,18 +57,15 @@
   },
   {
     "type": "rectangle",
-    "id": "stj",
+    "id": "oas",
     "x": 340,
-    "y": 150,
-    "width": 200,
+    "y": 140,
+    "width": 220,
     "height": 76,
     "backgroundColor": "#c3fae8",
     "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
     "label": {
-      "text": "static.json",
+      "text": "openapi.yaml",
       "fontSize": 16,
       "fontFamily": 5
     },
@@ -76,25 +73,21 @@
       {
         "id": "a1",
         "type": "arrow"
-      },
-      {
-        "id": "a4",
-        "type": "arrow"
       }
-    ]
+    ],
+    "roundness": {
+      "type": 3
+    }
   },
   {
     "type": "rectangle",
     "id": "maps",
     "x": 340,
-    "y": 327,
-    "width": 200,
+    "y": 337,
+    "width": 220,
     "height": 76,
     "backgroundColor": "#c3fae8",
     "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
     "label": {
       "text": "map/*.json",
       "fontSize": 16,
@@ -113,22 +106,22 @@
         "id": "a5",
         "type": "arrow"
       }
-    ]
+    ],
+    "roundness": {
+      "type": 3
+    }
   },
   {
     "type": "rectangle",
-    "id": "oas",
+    "id": "inv",
     "x": 340,
-    "y": 500,
-    "width": 200,
-    "height": 76,
+    "y": 530,
+    "width": 220,
+    "height": 90,
     "backgroundColor": "#c3fae8",
     "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
     "label": {
-      "text": "openapi.yaml",
+      "text": "static.json\ncontrollers.json",
       "fontSize": 16,
       "fontFamily": 5
     },
@@ -136,21 +129,29 @@
       {
         "id": "a3",
         "type": "arrow"
+      },
+      {
+        "id": "a4",
+        "type": "arrow"
+      },
+      {
+        "id": "a9",
+        "type": "arrow"
       }
-    ]
+    ],
+    "roundness": {
+      "type": 3
+    }
   },
   {
     "type": "rectangle",
     "id": "rt",
-    "x": 640,
-    "y": 150,
-    "width": 210,
+    "x": 700,
+    "y": 140,
+    "width": 230,
     "height": 76,
     "backgroundColor": "#d0bfff",
     "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
     "label": {
       "text": "runtime.json",
       "fontSize": 16,
@@ -160,21 +161,51 @@
       {
         "id": "a6",
         "type": "arrow"
+      },
+      {
+        "id": "a8",
+        "type": "arrow"
       }
-    ]
+    ],
+    "roundness": {
+      "type": 3
+    }
+  },
+  {
+    "type": "rectangle",
+    "id": "base",
+    "x": 1020,
+    "y": 140,
+    "width": 210,
+    "height": 76,
+    "backgroundColor": "#e9ecef",
+    "fillStyle": "solid",
+    "label": {
+      "text": "baseline/",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a8",
+        "type": "arrow"
+      }
+    ],
+    "roundness": {
+      "type": 3
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#868e96"
   },
   {
     "type": "rectangle",
     "id": "syn",
-    "x": 640,
-    "y": 320,
+    "x": 700,
+    "y": 330,
     "width": 230,
     "height": 90,
     "backgroundColor": "#b2f2bb",
     "fillStyle": "hachure",
-    "roundness": {
-      "type": 3
-    },
     "label": {
       "text": "merge + spec-kit",
       "fontSize": 16,
@@ -193,20 +224,20 @@
         "id": "a7",
         "type": "arrow"
       }
-    ]
+    ],
+    "roundness": {
+      "type": 3
+    }
   },
   {
     "type": "rectangle",
     "id": "dest",
-    "x": 960,
-    "y": 320,
-    "width": 200,
+    "x": 1020,
+    "y": 330,
+    "width": 210,
     "height": 90,
     "backgroundColor": "#b2f2bb",
     "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
     "label": {
       "text": "promoted files",
       "fontSize": 16,
@@ -217,15 +248,44 @@
         "id": "a7",
         "type": "arrow"
       }
-    ]
+    ],
+    "roundness": {
+      "type": 3
+    }
+  },
+  {
+    "type": "rectangle",
+    "id": "comp",
+    "x": 700,
+    "y": 537,
+    "width": 230,
+    "height": 76,
+    "backgroundColor": "#e9ecef",
+    "fillStyle": "solid",
+    "label": {
+      "text": "reports/xp8-compat.md",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a9",
+        "type": "arrow"
+      }
+    ],
+    "roundness": {
+      "type": 3
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#868e96"
   },
   {
     "type": "arrow",
     "id": "a1",
     "x": 187.0,
-    "y": 320,
+    "y": 330,
     "width": 153.0,
-    "height": -132.0,
+    "height": -152.0,
     "points": [
       [
         0,
@@ -233,7 +293,7 @@
       ],
       [
         153.0,
-        -132.0
+        -152.0
       ]
     ],
     "endArrowhead": "arrow",
@@ -245,7 +305,7 @@
       ]
     },
     "endBinding": {
-      "elementId": "stj",
+      "elementId": "oas",
       "fixedPoint": [
         0,
         0.5
@@ -256,7 +316,7 @@
     "type": "arrow",
     "id": "a2",
     "x": 250,
-    "y": 365.0,
+    "y": 375.0,
     "width": 90,
     "height": 0.0,
     "points": [
@@ -289,9 +349,9 @@
     "type": "arrow",
     "id": "a3",
     "x": 187.0,
-    "y": 410,
+    "y": 420,
     "width": 153.0,
-    "height": 128.0,
+    "height": 155.0,
     "points": [
       [
         0,
@@ -299,7 +359,7 @@
       ],
       [
         153.0,
-        128.0
+        155.0
       ]
     ],
     "endArrowhead": "arrow",
@@ -311,7 +371,7 @@
       ]
     },
     "endBinding": {
-      "elementId": "oas",
+      "elementId": "inv",
       "fixedPoint": [
         0,
         0.5
@@ -321,10 +381,10 @@
   {
     "type": "arrow",
     "id": "a4",
-    "x": 440.0,
-    "y": 226,
+    "x": 450.0,
+    "y": 530,
     "width": 0.0,
-    "height": 101,
+    "height": -117,
     "points": [
       [
         0,
@@ -332,36 +392,31 @@
       ],
       [
         0.0,
-        101
+        -117
       ]
     ],
     "endArrowhead": "arrow",
     "startBinding": {
-      "elementId": "stj",
+      "elementId": "inv",
       "fixedPoint": [
         0.5,
-        1
+        0
       ]
     },
     "endBinding": {
       "elementId": "maps",
       "fixedPoint": [
         0.5,
-        0
+        1
       ]
-    },
-    "label": {
-      "text": "surfaces",
-      "fontSize": 14,
-      "fontFamily": 5
     }
   },
   {
     "type": "arrow",
     "id": "a5",
-    "x": 540,
-    "y": 365.0,
-    "width": 100,
+    "x": 560,
+    "y": 375.0,
+    "width": 140,
     "height": 0.0,
     "points": [
       [
@@ -369,7 +424,7 @@
         0
       ],
       [
-        100,
+        140,
         0.0
       ]
     ],
@@ -387,28 +442,23 @@
         0,
         0.5
       ]
-    },
-    "label": {
-      "text": "project-map",
-      "fontSize": 14,
-      "fontFamily": 5
     }
   },
   {
     "type": "arrow",
     "id": "a6",
-    "x": 745.0,
-    "y": 226,
-    "width": 10.0,
-    "height": 94,
+    "x": 815.0,
+    "y": 216,
+    "width": 0.0,
+    "height": 114,
     "points": [
       [
         0,
         0
       ],
       [
-        10.0,
-        94
+        0.0,
+        114
       ]
     ],
     "endArrowhead": "arrow",
@@ -426,19 +476,14 @@
         0
       ]
     },
-    "label": {
-      "text": "live / dead / unobserved",
-      "fontSize": 14,
-      "fontFamily": 5
-    },
     "strokeStyle": "dashed",
     "strokeColor": "#7048e8"
   },
   {
     "type": "arrow",
     "id": "a7",
-    "x": 870,
-    "y": 365.0,
+    "x": 930,
+    "y": 375.0,
     "width": 90,
     "height": 0.0,
     "points": [
@@ -465,11 +510,136 @@
         0,
         0.5
       ]
-    },
-    "label": {
-      "text": "promote",
-      "fontSize": 14,
-      "fontFamily": 5
     }
+  },
+  {
+    "type": "arrow",
+    "id": "a8",
+    "x": 930,
+    "y": 178.0,
+    "width": 90,
+    "height": 0.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        90,
+        0.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "rt",
+      "fixedPoint": [
+        1,
+        0.5
+      ]
+    },
+    "endBinding": {
+      "elementId": "base",
+      "fixedPoint": [
+        0,
+        0.5
+      ]
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#868e96"
+  },
+  {
+    "type": "arrow",
+    "id": "a9",
+    "x": 560,
+    "y": 575.0,
+    "width": 140,
+    "height": 0.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        140,
+        0.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "inv",
+      "fixedPoint": [
+        1,
+        0.5
+      ]
+    },
+    "endBinding": {
+      "elementId": "comp",
+      "fixedPoint": [
+        0,
+        0.5
+      ]
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#868e96"
+  },
+  {
+    "type": "text",
+    "id": "a4_lbl",
+    "x": 462.0,
+    "y": 462.5,
+    "text": "surfaces + behavior",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "a5_lbl",
+    "x": 591.5,
+    "y": 351.0,
+    "text": "project-map",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "a6_lbl",
+    "x": 827.0,
+    "y": 264.0,
+    "text": "live / dead / unobserved",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "a7_lbl",
+    "x": 950.5,
+    "y": 351.0,
+    "text": "promote",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "a8_lbl",
+    "x": 940.0,
+    "y": 154.0,
+    "text": "page paths",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "a9_lbl",
+    "x": 595.0,
+    "y": 551.0,
+    "text": "XP8 report",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
   }
 ]

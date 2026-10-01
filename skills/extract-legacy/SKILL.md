@@ -78,9 +78,10 @@ to read better, under this contract:
 
 - `inventory.baseline` (after `inventory.runtime`) captures desktop 1440 and
   mobile 390 screenshots, rendered HTML and the network list per surveyed
-  page into `baseline/`. It needs `playwright-cli` and `--storage-state`;
-  without them it records a skip and `status` prints the command. Local or
-  review hosts only; `--site-url` overrides the page base URL.
+  page into `baseline/`. It needs the CMS flags (`--branch` at least),
+  `playwright-cli` and `--storage-state`; without the last two it records a
+  skip and `status` prints the command. Local or review hosts only;
+  `--site-url` overrides the page base URL.
 - `report.compat` (after `spec.kit`) writes `reports/xp8-compat.md`, a factual
   XP7 to XP8 list outside `spec-kit/`. `promote` ignores it.
 

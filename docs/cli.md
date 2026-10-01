@@ -33,8 +33,9 @@ your own command with that flag added.
 | `check` | Reads the sidecar only |
 <!-- markdownlint-enable MD013 -->
 
-`resume` skips optional slots (`inventory.baseline`, `report.compat`). Run
-them with `step`; `status` prints the command.
+`resume` never starts at an optional slot (`inventory.baseline`,
+`report.compat`), but runs one that falls inside its range. To add one
+later, use `step`; `status` prints the command.
 
 If `resume` lands on CMS, pass the CMS flags. To skip CMS, use
 `run --from merge` instead. Done-markers are in [steps](steps.md).
