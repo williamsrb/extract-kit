@@ -21,7 +21,7 @@
     "id": "s",
     "x": 40,
     "y": 54,
-    "text": "--from / --until / step take a phase id. 1, 6 and 7 are commands.",
+    "text": "--from / --until / step take a phase id. 1, 6 and 7 are commands. Grey = optional or added slot.",
     "fontSize": 16,
     "strokeColor": "#5f6368",
     "fontFamily": 5
@@ -411,5 +411,35 @@
         0.5
       ]
     }
+  },
+  {
+    "type": "text",
+    "id": "n2",
+    "x": 197,
+    "y": 232,
+    "text": "+ controllers",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
+    "type": "text",
+    "id": "n3",
+    "x": 364,
+    "y": 232,
+    "text": "+ baseline (optional)",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
+    "type": "text",
+    "id": "n5",
+    "x": 698,
+    "y": 232,
+    "text": "+ compat (optional)",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
   }
 ]

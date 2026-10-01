@@ -1,0 +1,37 @@
+_comment:
+  - Authentic Scandinavia client profile. Extends enonic and adds the live_config rules
+    that were hard-coded in steps/enonic/live_config.py before O8.
+  - No adapters key. adapters is a child-replace key (extractkit_cli/manifest.py), so
+    omitting it keeps the enonic bindings.
+  - site_url_keys / hostmap_keys / providers match the casefolded leaf of a config key.
+  - env_endpoints rows pick an origin from a config value (origins, else default) and
+    append every entry of urls. path scopes the row to config keys containing it.
+name: as
+extends: enonic
+live_config:
+  configenv_path: /admin/tool/no.seeds.configenv/module-config
+  site_url_keys: [tourplanurl]
+  hostmap_keys: [env-hostmap, hostmap]
+  providers:
+    tourplan: Tourplan
+    netaxept: Netaxept
+    flywire: Flywire
+    travelspecialist: TravelSpecialist
+    hostmap: hostMap
+  env_endpoints:
+    - provider: Netaxept
+      key: netaxeptEnv
+      origins:
+        test: https://test.epayment.nets.eu
+      default: https://epayment.nets.eu
+      urls:
+        - /Netaxept/Register.aspx
+        - /Netaxept/Process.aspx
+        - /Netaxept/Query.aspx
+        - /terminal/default.aspx
+    - provider: Flywire
+      key: env
+      path: flywirePortal
+      origins:
+        demo: https://api-platform-sandbox.flywire.com
+      default: https://api-platform.flywire.com

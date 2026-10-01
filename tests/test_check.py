@@ -33,7 +33,9 @@ class CheckTests(unittest.TestCase):
             kinds = {row["kind"] for row in inventory["resources"]}
             for kind in (
                 "site", "content-type", "mixin", "x-data", "page",
-                "layout", "part", "macro", "service", "task",
+                "layout", "part", "macro", "service", "task", "filter",
+                "response-processor", "error", "admin-tool", "admin-widget", "webapp",
+                "id-provider", "i18n-bundle",
             ):
                 self.assertIn(kind, kinds, kinds)
 
@@ -72,6 +74,38 @@ class CheckTests(unittest.TestCase):
             result = run("check", "--out", str(out))
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("descriptor", result.stdout)
+
+    def test_dropped_new_kind_fails_coverage(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            source = copy_fixture(Path(raw))
+            out = _apply(source)
+            project = json.loads((out / "map" / "project-map.json").read_text())
+            project["surfaces"] = [
+                s for s in project["surfaces"] if s.get("kind") != "i18n-bundle"
+            ]
+            (out / "map" / "project-map.json").write_text(
+                json.dumps(project, indent=2), encoding="utf-8",
+            )
+            model = json.loads((out / "map" / "content-model.json").read_text())
+            model["types"] = [t for t in model["types"] if t.get("kind") != "i18n-bundle"]
+            (out / "map" / "content-model.json").write_text(
+                json.dumps(model, indent=2), encoding="utf-8",
+            )
+            result = run("check", "--out", str(out))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("phrases", result.stdout)
+
+    def test_invalid_controllers_json_fails_check(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            source = copy_fixture(Path(raw))
+            out = _apply(source)
+            path = out / "inventory" / "controllers.json"
+            payload = json.loads(path.read_text())
+            payload["controllers"][0].pop("calls")
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            result = run("check", "--out", str(out))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("controllers", result.stdout)
 
     def test_kit_repo_has_no_plan_md(self) -> None:
         from tests.support import REPO

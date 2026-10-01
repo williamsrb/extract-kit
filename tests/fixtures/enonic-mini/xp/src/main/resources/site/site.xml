@@ -1,8 +1,15 @@
 <site>
   <form/>
+  <x-data name="com.example.mini:mini-xdata" allowContentTypes="com\.example\.mini:mini-article"/>
+  <processors>
+    <response-processor name="mini-processor" order="10"/>
+  </processors>
   <mappings>
     <mapping controller="/site/pages/mini-page/mini-page.js">
       <match>type:'portal:site'</match>
+    </mapping>
+    <mapping filter="/site/filters/mini-filter.js" order="20">
+      <pattern>/api/.*</pattern>
     </mapping>
   </mappings>
 </site>

@@ -12,6 +12,11 @@
     "project": { "type": "string" },
     "guillotine": { "type": "string", "minLength": 1 },
     "configenv": { "type": "string" },
+    "usage": {
+      "type": "object",
+      "additionalProperties": { "type": ["integer", "null"] }
+    },
+    "usageProbe": { "type": "string", "enum": ["ok", "unsupported"] },
     "siteConfig": { "type": "array" },
     "configEnv": { "type": "array" },
     "endpoints": {

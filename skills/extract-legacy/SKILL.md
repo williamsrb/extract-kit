@@ -58,6 +58,32 @@ and `extract-legacy` for deterministic kit steps (including CMS HTTP).
 Impeccable `init` / `document` may replace the as-is PRODUCT/DESIGN the
 kit already wrote. Do not invent an XP8 visual world.
 
+## Spec enrich (optional, after `spec.kit`)
+
+The kit writes behavior text from extracted facts only and never infers. A
+model may rewrite the prose of a `spec.md` FR or a `use-cases/*.md` journey
+to read better, under this contract:
+
+- Every FR keeps its `Acceptance:` bullets and its `Evidence:` line. Do not
+  drop or reword a `file:line`, map id, `runtime:` or `baseline:` ref.
+- Every sentence the model adds beyond the extracted facts ends with
+  `_(inferred)_`, and the paragraph that holds it is followed by (or contains)
+  an `Evidence:` line.
+- Add no port plan, XP8 advice, or stack choice. Those stay out of
+  `spec-kit/` (as-is).
+- Run `extractkit check --out <sidecar>` afterwards. It fails an FR without
+  an `Evidence:` line and an `_(inferred)_` paragraph without one.
+
+## Optional slots
+
+- `inventory.baseline` (after `inventory.runtime`) captures desktop 1440 and
+  mobile 390 screenshots, rendered HTML and the network list per surveyed
+  page into `baseline/`. It needs `playwright-cli` and `--storage-state`;
+  without them it records a skip and `status` prints the command. Local or
+  review hosts only; `--site-url` overrides the page base URL.
+- `report.compat` (after `spec.kit`) writes `reports/xp8-compat.md`, a factual
+  XP7 to XP8 list outside `spec-kit/`. `promote` ignores it.
+
 ## Artifacts
 
 See `docs/output.md`. What each slot reads, writes, and skips is in

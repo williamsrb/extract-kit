@@ -20,5 +20,10 @@ All three panels on one board.
 | Phases | [phases.excalidraw](phases.excalidraw) | [phases.png](phases.png) | [excalidraw.com](https://excalidraw.com/#json=j5J82TCjXLe_Uo6PmGLnz,AKNMOM7bhLmjDci48WC36g) |
 | Sidecar lineage | [sidecar-lineage.excalidraw](sidecar-lineage.excalidraw) | [sidecar-lineage.png](sidecar-lineage.png) | [excalidraw.com](https://excalidraw.com/#json=kKbFm8pV1lJ6UdesJsZFA,T6FzGi0gW1NQF-RM2WCbDg) |
 
+The excalidraw.com links above open the version of 30 Sep. The local
+`.excalidraw` and `.png` files were rebuilt for the optional slots and the
+`unobserved` status. Re-export the links with `excalidraw-cli export` when
+you want them current; that uploads the drawing, so it is not done here.
+
 `*.elements.json` is the CLI input used to rebuild a `.excalidraw` file
 (`excalidraw-cli create <file>.elements.json -o <file>.excalidraw`).

@@ -8,6 +8,7 @@ Extractor types are YAML files under `profiles/`.
 | --- | --- |
 | `core` | Pipeline and phases. Stack adapters stay unbound |
 | `enonic` | Extends `core`. Binds XP7 descriptors, integrations, CMS, docs |
+| `as` | Extends `enonic`. Adds the Authentic Scandinavia `live_config` rules |
 | `php` | Extends `core`. Placeholder. `run` refuses; `doctor` is green |
 <!-- markdownlint-enable MD013 -->
 
@@ -23,7 +24,9 @@ Extractor types are YAML files under `profiles/`.
 | `adapters` | Slot → plugin id, or `null` for unbound. |
 | `deps` | Entries with `provides` (binaries on PATH), optional `optional: true`, and install hints `apt` / `dnf` / `pacman`. |
 | `todo` | Unfinished work, printed when `run` refuses. |
+| `optional_slots` | Slots that may stay unbound or empty without blocking `run`, `status` or `resume` (`inventory.baseline`, `report.compat`). |
 | `cms` | Enonic CMS defaults (below). |
+| `live_config` | Client rules for Site Config and Config Env endpoints (below). `{}` in `enonic`. |
 | `round2` | Bounded contexts to survey a second time. |
 | `_comment` | Free text; ignored. |
 <!-- markdownlint-enable MD013 -->
@@ -53,25 +56,30 @@ Each slot is described in [steps](steps.md). Phase grouping is in
 
 1. `map.code` — reuse source `graft/` or skip
 2. `map.semantic` — reuse source `graphify-out/` or skip
-3. `inventory.descriptors` — stack adapter (Enonic: FR-10 folders)
-4. `maps.normalize` — static `map/*.json`
-5. `inventory.integrations` — OpenAPI harvest + read-only Swagger UI
-6. `inventory.runtime` — live CMS (Enonic: Guillotine + Site Config + Config Env)
-7. `maps.merge` — runtime vs static, `bounded-contexts.json`, merge-report
-8. `inventory.docs` — harvest source README/`docs/`
-9. `product.impeccable` — as-is PRODUCT.md + DESIGN.md from maps
-10. `docs.synthesize` — `docs/technical/` vs `docs/guide/`
-11. `use_cases` — one markdown file per bounded context
-12. `spec.kit` — as-is constitution + per-context `spec.md`
+3. `inventory.descriptors` — stack adapter (Enonic: descriptors, forms, regions)
+4. `inventory.controllers` — controller facts with `file:line`
+5. `maps.normalize` — static `map/*.json`
+6. `inventory.integrations` — OpenAPI harvest + read-only Swagger UI
+7. `inventory.runtime` — live CMS (Enonic: Guillotine + Site Config + Config Env)
+8. `inventory.baseline` — optional screenshots, HTML, network list
+9. `maps.merge` — runtime vs static, `bounded-contexts.json`, merge-report
+10. `inventory.docs` — harvest source README/`docs/`
+11. `product.impeccable` — as-is PRODUCT.md + DESIGN.md from maps
+12. `docs.synthesize` — `docs/technical/` vs `docs/guide/`
+13. `use_cases` — Given/When/Then journeys from extracted facts
+14. `spec.kit` — as-is constitution + per-context `spec.md`
+15. `report.compat` — optional XP8 compatibility facts
 
 An unbound slot is dropped when the plugin of the same id is optional
-(`map.code`, `map.semantic`). Any other unbound slot makes `run` refuse
-with the `todo` list.
+(`map.code`, `map.semantic`) or the slot is in `optional_slots`
+(`inventory.baseline`, `report.compat`). Any other unbound slot makes `run`
+refuse with the `todo` list.
 
 ## Enonic
 
-Binds `enonic.descriptors`, `enonic.integrations`, `enonic.cms`,
-`enonic.docs`. Production hosts are refused.
+Binds `enonic.descriptors`, `enonic.controllers`, `enonic.integrations`,
+`enonic.cms`, `enonic.baseline`, `enonic.docs`, `enonic.compat`.
+Production hosts are refused.
 
 `cms` keys. A CLI flag beats the profile key; the profile key beats the
 built-in default.
@@ -85,7 +93,8 @@ built-in default.
 | `guillotine` | `--guillotine` | `{host}/admin/site/preview/{project}/{branch}` |
 | `keys` | `--cms-key` | `[/en]` in `enonic.yaml` |
 | `site_key` | — | used when `keys` is empty |
-| `configenv` | `--configenv` | `{host}/admin/tool/no.seeds.configenv/module-config` |
+| `configenv` | `--configenv` | `{host}` + `live_config.configenv_path`; none in `enonic`, so Config Env is skipped |
+| `site_url` | `--site-url` | `{host}/admin/site/preview/{project}/{branch}` (baseline only) |
 | `storage_state` | `--storage-state` | none; required |
 | `sample_per_type` | — | `3` |
 | `context_by_key` | — | map of content key → bounded context, used by `round2` |
@@ -98,10 +107,31 @@ built-in default.
 explicit `page.template` > implicit `data.supports`. See
 [output](output.md#enonic-extras-not-a-phpcore-contract).
 
+## live_config
+
+Client rules for what Site Config and Config Env imply. The generic
+adapter names no client; `profiles/as.yaml` holds today's values, and a
+run under `--profile as` produces the same `runtime.json` endpoints as
+before the split. A malformed table is refused with a fix.
+
+<!-- markdownlint-disable MD013 -->
+| Key | Meaning |
+| --- | --- |
+| `configenv_path` | Config Env tool path, appended to `{host}` when `--configenv` is absent |
+| `site_url_keys` | Site Config leaf keys (case-insensitive) whose `http(s)` value is an endpoint |
+| `hostmap_keys` | Config Env keys whose value is `/<path>=<host>,…`; also matched as a suffix |
+| `providers` | Leaf substring (case-insensitive) → provider name, in order; no match uses the leaf |
+| `env_endpoints` | List of rules: `provider`, `key` (leaf), optional `path` (substring of the full key), `origins` (value → origin), `default` origin, `urls` (suffixes appended to the origin; default one empty suffix) |
+<!-- markdownlint-enable MD013 -->
+
+A rule's `source` names the full key path when `path` is set, else the
+`key` as written. Keys ending in `endpoint` are always kept as a generic
+rule. Secrets are redacted before any rule runs.
+
 ## PHP
 
 Empty placeholder. `todo` lists unfinished work. Adapters for
-descriptors, integrations, runtime, and docs stay `null`.
+descriptors, controllers, integrations, runtime, and docs stay `null`.
 
 - `run --profile php` refuses
 - `doctor --profile php` is green

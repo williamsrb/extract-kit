@@ -1,4 +1,16 @@
 <part>
   <display-name>Mini part</display-name>
-  <form/>
+  <form>
+    <input name="heading" type="TextLine">
+      <label>Heading</label>
+      <occurrences minimum="1" maximum="1"/>
+    </input>
+    <input name="mode" type="ComboBox">
+      <label>Mode</label>
+      <config>
+        <option value="compact">Compact</option>
+        <option value="full">Full</option>
+      </config>
+    </input>
+  </form>
 </part>

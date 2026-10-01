@@ -64,6 +64,33 @@ class NextPromoteTests(unittest.TestCase):
             self.assertIn("→ 6 check", done.stdout)
             self.assertIn("check --out", done.stdout)
 
+    def test_status_names_optional_slots_that_were_not_captured(self) -> None:
+        import json
+
+        from tests.test_merge import RUNTIME
+
+        with tempfile.TemporaryDirectory() as raw:
+            source = copy_fixture(Path(raw))
+            run("run", "--profile", "enonic", "--source", str(source), *STATIC_UNTIL)
+            out = sidecar_run_dir(source)
+            (out / "inventory" / "runtime.json").write_text(
+                json.dumps(RUNTIME, indent=2), encoding="utf-8",
+            )
+            resumed = run(
+                "resume", "--profile", "enonic", "--source", str(source),
+                "--out", str(out),
+            )
+            self.assertEqual(resumed.returncode, 0, resumed.stderr + resumed.stdout)
+            result = run("status", "--source", str(source), "--out", str(out))
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertIn("optional, not captured: inventory.baseline", result.stdout)
+            self.assertIn("tip   inventory.baseline not captured (optional):", result.stdout)
+            self.assertIn("step inventory.baseline", result.stdout)
+            self.assertIn("--storage-state", result.stdout)
+            self.assertIn("Pipeline complete", result.stdout)
+            quiet = run("status", "--source", str(source), "--out", str(out), "-q")
+            self.assertNotIn("tip ", quiet.stdout)
+
     def test_promote_maps_constitution_into_source(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             source = copy_fixture(Path(raw))

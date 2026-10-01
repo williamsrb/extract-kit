@@ -66,6 +66,20 @@ class RunTests(unittest.TestCase):
             self.assertIn("x-source", openapi)
             self.assertIn("cdn.example.test", openapi)
 
+    def test_external_out_writes_nothing_into_the_source(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            source = copy_fixture(Path(raw))
+            git_init(source)
+            out = Path(raw) / "sidecar"
+            result = run(
+                "run", "--profile", "enonic", "--source", str(source),
+                "--out", str(out), *STATIC_UNTIL,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertTrue((out / "MANIFEST.yaml").is_file())
+            self.assertFalse((source / ".extract").exists())
+            self.assertEqual(porcelain(source), "")
+
     def test_code_map_records_existing_graft_pointer(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             source = copy_fixture(Path(raw))

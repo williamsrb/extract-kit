@@ -82,8 +82,13 @@ def _add_cms_flags(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--configenv", metavar="URL",
-        help="Config Env HTML (XP7 /admin/tool/no.seeds.configenv/module-config). "
-             "Default: {host}/admin/tool/no.seeds.configenv/module-config.",
+        help="Config Env admin-tool HTML. Default: {host}{live_config.configenv_path} "
+             "from the profile; with neither, Config Env is skipped.",
+    )
+    parser.add_argument(
+        "--site-url", dest="site_url", metavar="URL",
+        help="Base URL for baseline page captures. Default: "
+             "{host}/admin/site/preview/{project}/{branch}. Local or review hosts only.",
     )
     parser.add_argument(
         "--allow-production", dest="allow_production", action="store_true",

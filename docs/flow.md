@@ -25,6 +25,10 @@ A full Enonic run without `--until` includes CMS and needs `--branch` and
 | `other:<slot>` | First incomplete slot is not CMS | `resume` from that slot |
 <!-- markdownlint-enable MD013 -->
 
+Optional slots (`inventory.baseline`, `report.compat`) do not change
+these states. `status` marks a phase `optional, not captured` and prints
+the `step` command that would add it.
+
 `promote` is explicit. After a clean promote, `next` is `git status` in the
 checkout. The guard is in [CLI](cli.md#promote-guard).
 
@@ -50,8 +54,9 @@ The checkout is read-only until `promote`. Default `--out` is
 scanning the checkout.
 
 Without it, `maps.merge` leaves page, layout, part, and macro as
-`unverified-live`. With it, those kinds become `live`, `dead`, or
-`conditional`.
+`unverified-live`. With it, those kinds become `live`, `dead`,
+`unobserved`, or `conditional`. A component the survey did not sample is
+`dead` only when the usage probe counted exactly 0.
 
 CMS also patches `openapi.yaml` `x-production-endpoints`. Those URLs are
 never fetched.

@@ -7,6 +7,7 @@ consume.
 | Profile | What it does |
 | --- | --- |
 | `enonic` | XP7 inventory, OpenAPI harvest, optional live CMS |
+| `as` | `enonic` plus the Authentic Scandinavia `live_config` rules |
 | `php` | Placeholder. `doctor` is green; `run` refuses with the todo list |
 | `core` | Pipeline and phases only. No stack adapters |
 <!-- markdownlint-enable MD013 -->
@@ -62,8 +63,9 @@ guard are in [CLI](docs/cli.md).
 
 ## Source safety
 
-The kit never edits the source `.gitignore` or `.git/`.
-`.extract/.gitignore` contains `*` so the sidecar is self-ignored.
+The kit never edits the source `.gitignore` or `.git/`. A sidecar under
+`<source>/.extract/` is self-ignored: `.extract/.gitignore` contains `*`. With
+an `--out` outside the checkout a run writes nothing into the source.
 
 ## PHP
 
@@ -111,6 +113,34 @@ Survey rules and redaction are in
 [steps](docs/steps.md#inventoryruntime-enoniccms). After CMS, `maps.merge`
 updates page, layout, part, and macro status. The four values are in
 [output](docs/output.md#surface-status).
+
+## Baseline and XP8 report
+
+Two optional slots add what a port needs beyond the descriptors. Neither
+fails a run. A skip prints the command to run.
+
+```bash
+# desktop 1440 and mobile 390 screenshots, rendered HTML, network list
+./extractkit step inventory.baseline --profile enonic --source /path/to/legacy \
+  --out /path/to/legacy/.extract/<run-id> --branch draft \
+  --storage-state ~/.agents/.auth/xp7-localhost.json
+
+# factual XP7 to XP8 list, outside spec-kit/
+./extractkit step report.compat --profile enonic --source /path/to/legacy \
+  --out /path/to/legacy/.extract/<run-id>
+```
+
+`inventory.baseline` needs `playwright-cli` and the runtime pages. It
+refuses production hosts. `--site-url` replaces the preview base URL.
+`reports/xp8-compat.md` is never promoted.
+
+## What the spec holds
+
+`spec.md` states behavior from extracted facts only: fields, config
+inputs, regions, controller calls with `file:line`, and the composition
+runtime saw. Each FR has `Acceptance:` bullets and an `Evidence:` line.
+`check` fails an FR without that line. A model may enrich the prose under
+the contract in [the skill](skills/extract-legacy/SKILL.md).
 
 ## Promote
 

@@ -13,6 +13,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from urllib.parse import urlparse
 
+import yaml
+
 from extractkit_cli import cms_target, manifest
 from extractkit_cli.errors import ExtractkitError
 from extractkit_cli.schema import validate
@@ -133,7 +135,14 @@ def _storage_state(path: Path) -> None:
 
 
 @contextmanager
-def graphql_server(page: dict) -> Iterator[tuple[list, str]]:
+def graphql_server(
+    page: dict,
+    *,
+    usage: dict[str, int] | str | None = None,
+    volume: bool = False,
+    projects: list[dict] | None = None,
+) -> Iterator[tuple[list, str]]:
+    """`usage`: per-descriptor totalCount, or "error" to fail every usage probe."""
     hits: list[dict] = []
 
     class Handler(BaseHTTPRequestHandler):
@@ -142,7 +151,34 @@ def graphql_server(page: dict) -> Iterator[tuple[list, str]]:
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             hits.append({"body": body, "cookie": self.headers.get("Cookie")})
             query = body.get("query") or ""
-            if "queryConnection" in query:
+            if usage == "error" and "first: 0" in query:
+                payload = {"errors": [{"message": "Unknown field"}]}
+            elif volume and "aggregations:" in query:
+                buckets = (
+                    {"languages": {"buckets": [
+                        {"key": "en", "docCount": 4}, {"key": "no", "docCount": 2},
+                    ]}}
+                    if "languages" in query
+                    else {"types": {"buckets": [
+                        {"key": "media:image", "docCount": 7}, {"key": "media:document", "docCount": 1},
+                    ]}}
+                )
+                payload = {"data": {"guillotine": {"queryConnection": {
+                    "totalCount": 8 if "media" in query else 6,
+                    "aggregationsAsJson": json.dumps(buckets),
+                }}}}
+            elif volume and "type = 'com.example.mini:mini-article'" in query:
+                payload = {"data": {"guillotine": {"queryConnection": {"totalCount": 12}}}}
+            elif "components." in query and "queryConnection" in query:
+                if usage == "error":
+                    payload = {"errors": [{"message": "Unknown field components"}]}
+                else:
+                    key = query.split("descriptor = '")[1].split("'")[0]
+                    count = (usage or {}).get(key, 0)
+                    payload = {"data": {"guillotine": {
+                        "queryConnection": {"totalCount": count},
+                    }}}
+            elif "queryConnection" in query:
                 payload = {
                     "data": {
                         "guillotine": {
@@ -183,6 +219,14 @@ def graphql_server(page: dict) -> Iterator[tuple[list, str]]:
                 self.send_header("Content-Length", str(len(payload)))
                 self.end_headers()
                 self.wfile.write(payload)
+                return
+            if parsed.path.endswith("/cs/project/list") and projects is not None:
+                raw = json.dumps(projects).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(raw)))
+                self.end_headers()
+                self.wfile.write(raw)
                 return
             if "configenv" in parsed.path or parsed.path.endswith("module-config"):
                 raw = CONFIGENV_HTML.encode("utf-8")
@@ -315,7 +359,7 @@ class CmsCliTests(unittest.TestCase):
             _storage_state(state)
             with graphql_server(PAGE_AS_JSON) as (hits, url):
                 result = run(
-                    "step", "enonic.cms", "--profile", "enonic",
+                    "step", "enonic.cms", "--profile", "as",
                     "--source", str(source),
                     "--branch", "draft",
                     "--xp-host", url,
@@ -383,6 +427,134 @@ class CmsCliTests(unittest.TestCase):
             )
             self.assertEqual(pages[0]["resolve"], "customized")
 
+    def _run_cms(self, parent: Path, source: Path, url: str) -> dict:
+        state = parent / "state.json"
+        _storage_state(state)
+        result = run(
+            "step", "enonic.cms", "--profile", "enonic",
+            "--source", str(source), "--branch", "draft",
+            "--xp-host", url, "--guillotine", url,
+            "--storage-state", str(state), "--cms-key", "/en",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        runtime = sidecar_run_dir(source) / "inventory" / "runtime.json"
+        payload = json.loads(runtime.read_text(encoding="utf-8"))
+        validate(payload, "runtime-inventory")
+        return payload
+
+    def test_usage_probe_counts_page_layout_and_part(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            source = copy_fixture(parent)
+            with graphql_server(PAGE_AS_JSON, usage={"com.example.mini:mini-part": 7}) as (hits, url):
+                payload = self._run_cms(parent, source, url)
+            self.assertEqual(payload["usageProbe"], "ok")
+            self.assertEqual(payload["usage"], {
+                "com.example.mini:layout:mini-layout": 0,
+                "com.example.mini:page:mini-page": 0,
+                "com.example.mini:part:mini-part": 7,
+            })
+            probes = [h for h in hits if "components." in h["body"]["query"]]
+            self.assertEqual(len(probes), 3)
+            self.assertIn("first: 0", probes[0]["body"]["query"])
+            self.assertNotIn("mini-macro", json.dumps(payload["usage"]))
+
+    def test_usage_probe_graphql_error_degrades_to_unsupported(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            source = copy_fixture(parent)
+            with graphql_server(PAGE_AS_JSON, usage="error") as (hits, url):
+                payload = self._run_cms(parent, source, url)
+            self.assertEqual(payload["usageProbe"], "unsupported")
+            self.assertEqual(set(payload["usage"].values()), {None})
+            probes = [h for h in hits if "components." in h["body"]["query"]]
+            self.assertEqual(len(probes), 1)
+
+    def test_content_volume_counts_languages_media_and_projects(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            source = copy_fixture(parent)
+            projects = [{"name": "en"}, {"name": "no", "parent": "en"}]
+            with graphql_server(PAGE_AS_JSON, volume=True, projects=projects) as (hits, url):
+                self._run_cms(parent, source, url)
+            out = sidecar_run_dir(source) / "inventory"
+            doc = json.loads((out / "content-volume.json").read_text())
+            validate(doc, "content-volume")
+            totals = {row["type"]: row["total"] for row in doc["types"]}
+            self.assertEqual(totals["com.example.mini:mini-article"], 12)
+            self.assertEqual(totals["portal:site"], 0)
+            self.assertEqual(doc["languages"], [
+                {"language": "en", "count": 4}, {"language": "no", "count": 2},
+            ])
+            self.assertEqual(doc["media"]["total"], 8)
+            self.assertEqual(doc["media"]["byType"][0], {"type": "media:image", "count": 7})
+            self.assertEqual(doc["projects"], [{"name": "en"}, {"name": "no", "parent": "en"}])
+            self.assertNotIn("projectsReason", doc)
+            md = (out / "content-volume.md").read_text()
+            self.assertIn("| `com.example.mini:mini-article` | 12 |", md)
+            self.assertIn("| no | en |", md)
+            probes = [h for h in hits if "first: 0" in h["body"]["query"] and "type = " in h["body"]["query"]]
+            self.assertTrue(probes)
+
+    def test_content_volume_project_list_404_writes_null_with_status(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            source = copy_fixture(parent)
+            with graphql_server(PAGE_AS_JSON, volume=True) as (_hits, url):
+                self._run_cms(parent, source, url)
+            doc = json.loads((sidecar_run_dir(source) / "inventory/content-volume.json").read_text())
+            validate(doc, "content-volume")
+            self.assertIsNone(doc["projects"])
+            self.assertEqual(doc["projectsReason"], "HTTP 404")
+
+    def test_content_volume_unsupported_queries_are_unknown_not_zero(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            source = copy_fixture(parent)
+            with graphql_server(PAGE_AS_JSON, usage="error") as (_hits, url):
+                self._run_cms(parent, source, url)
+            doc = json.loads((sidecar_run_dir(source) / "inventory/content-volume.json").read_text())
+            validate(doc, "content-volume")
+            self.assertEqual({row["total"] for row in doc["types"]}, {None})
+            self.assertIsNone(doc["languages"])
+            self.assertIsNone(doc["media"]["total"])
+            self.assertIn("unknown", (sidecar_run_dir(source) / "inventory/content-volume.md").read_text())
+
+    def test_generic_enonic_profile_skips_config_env_and_infers_no_client_endpoints(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            source = copy_fixture(parent)
+            with graphql_server(PAGE_AS_JSON) as (_hits, url):
+                payload = self._run_cms(parent, source, url)
+            self.assertEqual(payload["endpoints"], [])
+            self.assertEqual(payload["configenv"], "")
+            self.assertEqual(payload["configEnv"], [])
+            manifest_doc = yaml.safe_load((sidecar_run_dir(source) / "MANIFEST.yaml").read_text())
+            skips = {row["step"]: row for row in manifest_doc["skips"]}
+            self.assertIn("enonic.cms.configenv", skips)
+            self.assertIn("live_config.configenv_path", skips["enonic.cms.configenv"]["fix"])
+
+    def test_explicit_configenv_flag_still_harvests_without_a_client_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            source = copy_fixture(parent)
+            state = parent / "state.json"
+            _storage_state(state)
+            with graphql_server(PAGE_AS_JSON) as (_hits, url):
+                result = run(
+                    "step", "enonic.cms", "--profile", "enonic", "--source", str(source),
+                    "--branch", "draft", "--xp-host", url, "--guillotine", url,
+                    "--storage-state", str(state), "--cms-key", "/en",
+                    "--configenv", f"{url}/admin/tool/example/module-config",
+                )
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            payload = json.loads((sidecar_run_dir(source) / "inventory/runtime.json").read_text())
+            self.assertEqual(len(payload["configEnv"]), 3)
+            self.assertEqual(
+                [e["provider"] for e in payload["endpoints"]],
+                ["env-travelSpecialistSyncEndpoint"],
+            )
+
     def test_missing_guillotine_and_project_refuses(self) -> None:
         ctx = SimpleNamespace(
             profile={"name": "t", "cms": {"host": "http://localhost:8080"}},
@@ -402,6 +574,7 @@ class CmsCliTests(unittest.TestCase):
                     "project": "en",
                     "keys": ["/en"],
                 },
+                "live_config": {"configenv_path": "/admin/tool/example/module-config"},
             },
             cms={"branch": "draft"},
         )
@@ -411,7 +584,7 @@ class CmsCliTests(unittest.TestCase):
         self.assertTrue(cfg.guillotine.endswith("/admin/site/preview/en/draft"))
         self.assertNotIn("no.seeds.as/graphql", cfg.guillotine)
         self.assertTrue(
-            cfg.configenv.endswith("/admin/tool/no.seeds.configenv/module-config"),
+            cfg.configenv.endswith("/admin/tool/example/module-config"),
         )
 
     def test_cms_patches_openapi_endpoints(self) -> None:
@@ -421,13 +594,13 @@ class CmsCliTests(unittest.TestCase):
             state = parent / "state.json"
             _storage_state(state)
             static = run(
-                "run", "--profile", "enonic", "--source", str(source),
+                "run", "--profile", "as", "--source", str(source),
                 *STATIC_UNTIL,
             )
             self.assertEqual(static.returncode, 0, static.stderr + static.stdout)
             with graphql_server(PAGE_AS_JSON) as (_hits, url):
                 result = run(
-                    "step", "enonic.cms", "--profile", "enonic",
+                    "step", "enonic.cms", "--profile", "as",
                     "--source", str(source),
                     "--out", str(sidecar_run_dir(source)),
                     "--branch", "draft",

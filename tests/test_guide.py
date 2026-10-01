@@ -79,16 +79,16 @@ class SliceTests(unittest.TestCase):
     def test_until_static_stops_after_integrations(self) -> None:
         rows = _slice_pipeline(self.rows, None, "static", profile=self.profile)
         self.assertEqual(self._slots(rows)[-1], "inventory.integrations")
-        self.assertEqual(len(rows), 5)
+        self.assertEqual(len(rows), 6)
 
     def test_phase_range_equals_slot_range(self) -> None:
         by_phase = _slice_pipeline(self.rows, "merge", "synthesis", profile=self.profile)
-        by_slot = _slice_pipeline(self.rows, "maps.merge", "spec.kit", profile=self.profile)
+        by_slot = _slice_pipeline(self.rows, "maps.merge", "report.compat", profile=self.profile)
         self.assertEqual(by_phase, by_slot)
 
     def test_step_phase_number_runs_every_slot(self) -> None:
         rows = _slice_pipeline(self.rows, None, None, only="2", profile=self.profile)
-        self.assertEqual(len(rows), 5)
+        self.assertEqual(len(rows), 6)
 
     def test_step_slot_id_keeps_single_slot(self) -> None:
         rows = _slice_pipeline(self.rows, None, None, only="maps.merge", profile=self.profile)

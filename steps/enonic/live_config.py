@@ -1,18 +1,25 @@
 """Live Site Config and Config Env harvest.
 
 Site Config is Content Studio REST (Guillotine dataAsJson omits it on XP7 CS 5.2).
-Config Env is the no.seeds.configenv admin HTML table (no list JSON API).
+Config Env is an admin-tool HTML table (no list JSON API) at the profile's
+`live_config.configenv_path`.
 Secrets are dropped. URLs are metadata only — never fetched.
+
+Every client rule (which config keys hold endpoints, which provider they belong
+to, how an environment value maps to an origin) comes from the profile key
+`live_config`; this module names no client.
 """
 
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass, field
 from html import unescape
 from typing import Any
 from urllib.parse import quote
 
 from extractkit_cli.common import load_yaml
+from extractkit_cli.errors import ExtractkitError
 
 SECRET_MARKERS = (
     "password",
@@ -20,21 +27,88 @@ SECRET_MARKERS = (
     "secret",
     "apikey",
 )
-SITE_URL_KEYS = frozenset({"tourplanurl"})
 CONFIG_URL_SUFFIXES = ("endpoint",)
-HOSTMAP_KEYS = frozenset({"env-hostmap", "hostmap"})
 
-# Derived from as netaxept.js / flywire.js host selection. Not production calls.
-NETAXEPT_PATHS = (
-    ("Register", "/Netaxept/Register.aspx"),
-    ("Process", "/Netaxept/Process.aspx"),
-    ("Query", "/Netaxept/Query.aspx"),
-    ("terminal", "/terminal/default.aspx"),
-)
-FLYWIRE_API = {
-    "demo": "https://api-platform-sandbox.flywire.com",
-    "prod": "https://api-platform.flywire.com",
-}
+
+@dataclass(frozen=True)
+class EnvRule:
+    """A site-config leaf key whose value picks an origin; `urls` are appended to it."""
+
+    provider: str
+    key: str
+    path: str = ""
+    origins: dict[str, str] = field(default_factory=dict)
+    default: str = ""
+    urls: tuple[str, ...] = ("",)
+
+    def matches(self, path: str) -> bool:
+        return _leaf(path).casefold() == self.key.casefold() and (
+            not self.path or self.path.casefold() in path.casefold()
+        )
+
+    def origin_for(self, value: str) -> str:
+        return self.origins.get(value.strip().casefold(), self.default)
+
+
+@dataclass(frozen=True)
+class Rules:
+    site_url_keys: frozenset[str] = frozenset()
+    hostmap_keys: frozenset[str] = frozenset()
+    providers: tuple[tuple[str, str], ...] = ()
+    env_endpoints: tuple[EnvRule, ...] = ()
+    configenv_path: str = ""
+
+
+def _shape_error(detail: str) -> ExtractkitError:
+    return ExtractkitError(
+        f"profile live_config {detail}",
+        "see docs/profiles.md 'live_config' for the table shape",
+    )
+
+
+def _str_list(table: dict, name: str) -> list[str]:
+    value = table.get(name, [])
+    if not isinstance(value, list) or not all(isinstance(v, str) for v in value):
+        raise _shape_error(f"{name} must be a list of strings")
+    return value
+
+
+def _env_rule(raw: object) -> EnvRule:
+    if not isinstance(raw, dict) or not raw.get("provider") or not raw.get("key"):
+        raise _shape_error("env_endpoints entries need provider and key")
+    origins = raw.get("origins") or {}
+    urls = raw.get("urls") or [""]
+    if not isinstance(origins, dict) or not isinstance(urls, list):
+        raise _shape_error("env_endpoints origins must be a mapping and urls a list")
+    return EnvRule(
+        provider=str(raw["provider"]),
+        key=str(raw["key"]),
+        path=str(raw.get("path") or ""),
+        origins={str(k).casefold(): str(v) for k, v in origins.items()},
+        default=str(raw.get("default") or ""),
+        urls=tuple(str(u) for u in urls),
+    )
+
+
+def rules_from_profile(profile: object) -> Rules:
+    """Validate and normalise `profile['live_config']`. Missing or empty means no rules."""
+    table = profile.get("live_config") if isinstance(profile, dict) else None
+    if not table:
+        return Rules()
+    if not isinstance(table, dict):
+        raise _shape_error("must be a mapping")
+    providers = table.get("providers") or {}
+    env = table.get("env_endpoints") or []
+    if not isinstance(providers, dict) or not isinstance(env, list):
+        raise _shape_error("providers must be a mapping and env_endpoints a list")
+    return Rules(
+        site_url_keys=frozenset(k.casefold() for k in _str_list(table, "site_url_keys")),
+        hostmap_keys=frozenset(k.casefold() for k in _str_list(table, "hostmap_keys")),
+        providers=tuple((str(k).casefold(), str(v)) for k, v in providers.items()),
+        env_endpoints=tuple(_env_rule(item) for item in env),
+        configenv_path=str(table.get("configenv_path") or ""),
+    )
+
 
 CONFIGENV_ROW = re.compile(
     r'id="key-([^"]+)">([^<]*)</td>\s*<td id="value-\1">([^<]*)</td>',
@@ -115,18 +189,11 @@ def _leaf(path: str) -> str:
     return path.rsplit(".", 1)[-1]
 
 
-def _provider(path: str) -> str:
+def _provider(path: str, rules: Rules) -> str:
     leaf = _leaf(path).casefold()
-    if "tourplan" in leaf:
-        return "Tourplan"
-    if "netaxept" in leaf:
-        return "Netaxept"
-    if "flywire" in leaf:
-        return "Flywire"
-    if "travelspecialist" in leaf:
-        return "TravelSpecialist"
-    if "hostmap" in leaf:
-        return "hostMap"
+    for needle, name in rules.providers:
+        if needle in leaf:
+            return name
     return _leaf(path)
 
 
@@ -148,48 +215,33 @@ def endpoints_from_site_fields(
     fields: dict[str, object],
     *,
     content_key: str,
+    rules: Rules,
 ) -> list[dict[str, str]]:
     endpoints: list[dict[str, str]] = []
     for path, value in fields.items():
-        leaf = _leaf(path).casefold()
         url = _http_url(value)
-        if leaf in SITE_URL_KEYS and url:
+        if _leaf(path).casefold() in rules.site_url_keys and url:
             endpoints.append(_endpoint(
-                _provider(path), url, f"siteConfig:{content_key}:{path}",
+                _provider(path, rules), url, f"siteConfig:{content_key}:{path}",
             ))
-    netaxept = ""
-    for path, value in fields.items():
-        if _leaf(path).casefold() == "netaxeptenv" and isinstance(value, str):
-            netaxept = value
+    for rule in rules.env_endpoints:
+        for path, value in fields.items():
+            if not rule.matches(path) or not isinstance(value, str) or not value.strip():
+                continue
+            # Source names the full config path when the rule scopes by path, else the key.
+            label = path if rule.path else rule.key
+            origin = rule.origin_for(value)
+            for suffix in rule.urls:
+                endpoints.append(_endpoint(
+                    rule.provider,
+                    origin + suffix,
+                    f"siteConfig:{content_key}:{label}={value.strip()}",
+                ))
             break
-    if isinstance(netaxept, str) and netaxept.strip():
-        prefix = "test." if netaxept.strip().casefold() == "test" else ""
-        origin = f"https://{prefix}epayment.nets.eu"
-        for _name, suffix in NETAXEPT_PATHS:
-            endpoints.append(_endpoint(
-                "Netaxept",
-                origin + suffix,
-                f"siteConfig:{content_key}:netaxeptEnv={netaxept.strip()}",
-            ))
-    flywire = None
-    source_path = "siteConfig.config.flywirePortal.env"
-    for path, value in fields.items():
-        if _leaf(path).casefold() == "env" and "flywireportal" in path.casefold():
-            flywire = value
-            source_path = path
-            break
-    if isinstance(flywire, str) and flywire.strip():
-        env = flywire.strip().casefold()
-        url = FLYWIRE_API.get("demo" if env == "demo" else "prod")
-        endpoints.append(_endpoint(
-            "Flywire",
-            url,
-            f"siteConfig:{content_key}:{source_path}={flywire.strip()}",
-        ))
     return endpoints
 
 
-def endpoints_from_config_env(items: list[dict[str, str]]) -> list[dict[str, str]]:
+def endpoints_from_config_env(items: list[dict[str, str]], rules: Rules) -> list[dict[str, str]]:
     endpoints: list[dict[str, str]] = []
     for item in items:
         key = item.get("key") or ""
@@ -197,7 +249,7 @@ def endpoints_from_config_env(items: list[dict[str, str]]) -> list[dict[str, str
             continue
         value = item.get("value") or ""
         folded = key.casefold()
-        if folded in HOSTMAP_KEYS or folded.endswith("hostmap"):
+        if folded in rules.hostmap_keys or any(folded.endswith(k) for k in rules.hostmap_keys):
             for part in value.replace(" ", "").split(","):
                 if "=" not in part:
                     continue
@@ -212,7 +264,7 @@ def endpoints_from_config_env(items: list[dict[str, str]]) -> list[dict[str, str
             continue
         url = _http_url(value)
         if url and folded.endswith(CONFIG_URL_SUFFIXES):
-            endpoints.append(_endpoint(_provider(key), url, f"configEnv:{key}"))
+            endpoints.append(_endpoint(_provider(key, rules), url, f"configEnv:{key}"))
     return endpoints
 
 
@@ -235,20 +287,19 @@ def cs_content_url(host: str, project: str, content_id: str) -> str:
     )
 
 
-def default_configenv_url(host: str) -> str:
-    return f"{host}/admin/tool/no.seeds.configenv/module-config"
+def default_configenv_url(host: str, rules: Rules) -> str:
+    """The Config Env tool URL, or "" when the profile names no tool path."""
+    return f"{host}{rules.configenv_path}" if rules.configenv_path else ""
 
 
-def slim_integration_fields(fields: dict[str, object]) -> dict[str, object]:
+def slim_integration_fields(fields: dict[str, object], rules: Rules) -> dict[str, object]:
     keep: dict[str, object] = {}
     for path, value in fields.items():
         leaf = _leaf(path).casefold()
-        blob = path.casefold()
         keep_it = (
-            leaf in SITE_URL_KEYS
-            or leaf == "netaxeptenv"
-            or leaf.endswith("endpoint")
-            or ("flywireportal" in blob and leaf == "env")
+            leaf in rules.site_url_keys
+            or leaf.endswith(CONFIG_URL_SUFFIXES)
+            or any(rule.matches(path) for rule in rules.env_endpoints)
         )
         if keep_it:
             keep[path] = value
@@ -259,13 +310,14 @@ def site_config_record(
     content_key: str,
     content_id: str,
     payload: dict,
+    rules: Rules,
 ) -> dict[str, Any]:
     rows = flatten_properties(payload.get("data"))
     fields, redacted = public_fields(rows)
     return {
         "key": content_key,
         "id": content_id,
-        "fields": slim_integration_fields(fields),
+        "fields": slim_integration_fields(fields, rules),
         "redacted": redacted,
     }
 

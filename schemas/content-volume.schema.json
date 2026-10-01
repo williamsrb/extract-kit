@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.content-volume/v1",
+  "title": "content volume v1",
+  "type": "object",
+  "required": ["schema", "host", "branch", "types", "languages", "media", "projects"],
+  "$defs": {
+    "count": { "type": ["integer", "null"], "minimum": 0 }
+  },
+  "properties": {
+    "schema": { "const": "99x.extract.content-volume/v1" },
+    "host": { "type": "string" },
+    "branch": { "type": "string" },
+    "types": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "total"],
+        "properties": {
+          "type": { "type": "string" },
+          "total": { "$ref": "#/$defs/count" }
+        }
+      }
+    },
+    "languages": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "object",
+        "required": ["language", "count"],
+        "properties": {
+          "language": { "type": "string" },
+          "count": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "required": ["total", "byType"],
+      "properties": {
+        "total": { "$ref": "#/$defs/count" },
+        "byType": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "count"],
+            "properties": {
+              "type": { "type": "string" },
+              "count": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "projects": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "parent": { "type": "string" }
+        }
+      }
+    },
+    "projectsReason": { "type": "string" }
+  },
+  "additionalProperties": true
+}

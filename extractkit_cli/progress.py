@@ -75,13 +75,27 @@ def resolve_out_dir(args: Namespace, source: Path | None) -> Path:
     return latest
 
 
+def optional_slots(profile: dict) -> set[str]:
+    return set(profile.get("optional_slots") or [])
+
+
+def optional_pending(profile: dict, out: Path) -> list[tuple[str, str]]:
+    """Bound optional slots whose artifacts are absent (skipped or never run)."""
+    optional = optional_slots(profile)
+    return [
+        (slot, plugin_id) for slot, plugin_id in runner._bound_pipeline(profile)
+        if slot in optional and not step_complete(out, plugin_id)
+    ]
+
+
 def first_incomplete(
     profile: dict,
     out: Path,
 ) -> tuple[str, str] | None:
+    optional = optional_slots(profile)
     rows = runner._bound_pipeline(profile)
     for slot, plugin_id in rows:
-        if not step_complete(out, plugin_id):
+        if slot not in optional and not step_complete(out, plugin_id):
             return slot, plugin_id
     return None
 
@@ -105,9 +119,10 @@ def _profile_from_args(args: Namespace, out: Path) -> dict:
 
 def pipeline_state(profile: dict, out: Path) -> str:
     """`complete`, `cms`, `offline` (only CMS missing) or `other:<slot>`."""
+    optional = optional_slots(profile)
     incomplete = [
         slot for slot, plugin_id in runner._bound_pipeline(profile)
-        if not step_complete(out, plugin_id)
+        if slot not in optional and not step_complete(out, plugin_id)
     ]
     if not incomplete:
         return "complete"
@@ -123,13 +138,15 @@ def _missing(out: Path, plugin_id: str) -> list[str]:
 
 def status_rows(profile: dict, out: Path, style: guide.Style) -> list[str]:
     bound = dict(runner._bound_pipeline(profile))
+    optional = optional_slots(profile)
     state = pipeline_state(profile, out)
     all_phases = guide.phases(profile)
     width = max((len(p.id) for p in all_phases), default=0) + 2
     current_seen = False
     lines: list[str] = []
     for phase in all_phases:
-        plugins = [bound[s] for s in phase.slots if s in bound]
+        plugins = [bound[s] for s in phase.slots if s in bound and s not in optional]
+        extras = [s for s in phase.slots if s in bound and s in optional]
         skills = list(dict.fromkeys(SKILL_FOR[p] for p in plugins if p in SKILL_FOR))
         label = f"{phase.number} {phase.id:<{width}}"
         note = ""
@@ -159,8 +176,32 @@ def status_rows(profile: dict, out: Path, style: guide.Style) -> list[str]:
         else:
             mark = style.glyph("pending")
             note = f"skills: {', '.join(skills)}" if skills else ""
+        pending = [s for s in extras if not step_complete(out, bound[s])]
+        if pending and not phase.command:
+            note = (note + " · " if note else "") + "optional, not captured: " + ", ".join(pending)
         lines.append(f"  {mark} {label}{note}".rstrip())
     return lines
+
+
+def optional_tips(profile: dict, out: Path, args: Namespace) -> list[str]:
+    """One pasteable `step` command per optional slot that has no artifacts."""
+    argv = list(getattr(args, "argv", None) or [])
+    prog = getattr(args, "prog_display", None) or "extractkit"
+    derived = guide.sidecar_source(out)
+    default = {
+        "--profile": str(profile.get("name") or "enonic"),
+        "--source": str(derived) if derived else guide.SOURCE_PLACEHOLDER,
+    }
+    tips: list[str] = []
+    for slot, _plugin in optional_pending(profile, out):
+        extra = guide._cms_defaults(argv) if slot == "inventory.baseline" else {}
+        tokens = guide.rewrite(
+            argv, command="step", keep=guide.OUTPUT_FLAGS + guide.CARRY_FLAGS,
+            set={"--out": str(out), **extra}, default=default,
+        )
+        command = guide.join([prog, tokens[0], slot, *tokens[1:]])
+        tips.append(f"{slot} not captured (optional): {command}")
+    return tips[:guide.MAX_TIPS]
 
 
 def cmd_status(args: Namespace) -> int:
@@ -172,7 +213,12 @@ def cmd_status(args: Namespace) -> int:
     style = guide.style_for()
     header = [f"extractkit status · {profile.get('name')} · sidecar {guide.rel_to_cwd(out)}"]
     suggestion = guide.next_for("status", pipeline_state(profile, out), args, profile, out)
-    guide.emit(header + status_rows(profile, out, style), guide.render_next(suggestion, style))
+    found = [] if getattr(args, "quiet", False) else optional_tips(profile, out, args)
+    guide.emit(
+        header + status_rows(profile, out, style),
+        guide.render_tips(found, style),
+        guide.render_next(suggestion, style),
+    )
     return 0
 
 

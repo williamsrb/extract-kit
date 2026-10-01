@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.controllers/v1",
+  "title": "controllers v1",
+  "type": "object",
+  "required": ["schema", "controllers"],
+  "$defs": {
+    "line": { "type": "integer", "minimum": 1 }
+  },
+  "properties": {
+    "schema": { "const": "99x.extract.controllers/v1" },
+    "controllers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "file", "folder", "kind", "name", "app",
+          "imports", "calls", "queries", "methods", "views", "i18n", "configKeys", "listeners"
+        ],
+        "properties": {
+          "file": { "type": "string" },
+          "folder": { "type": "string" },
+          "kind": { "type": "string" },
+          "name": { "type": "string" },
+          "app": { "type": "string" },
+          "imports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["module", "line"],
+              "properties": {
+                "module": { "type": "string" },
+                "alias": { "type": "string" },
+                "names": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "local"],
+                    "properties": {
+                      "name": { "type": "string" },
+                      "local": { "type": "string" }
+                    }
+                  }
+                },
+                "line": { "$ref": "#/$defs/line" }
+              }
+            }
+          },
+          "calls": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["call", "module", "line"],
+              "properties": {
+                "call": { "type": "string" },
+                "module": { "type": "string" },
+                "line": { "$ref": "#/$defs/line" }
+              }
+            }
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["field", "value", "line"],
+              "properties": {
+                "field": { "type": "string", "enum": ["query", "contentTypes"] },
+                "value": { "type": "string" },
+                "line": { "$ref": "#/$defs/line" }
+              }
+            }
+          },
+          "methods": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "line"],
+              "properties": {
+                "name": { "type": "string" },
+                "line": { "$ref": "#/$defs/line" }
+              }
+            }
+          },
+          "views": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["via", "ref", "line"],
+              "properties": {
+                "via": { "type": "string" },
+                "ref": { "type": ["string", "null"] },
+                "line": { "$ref": "#/$defs/line" }
+              }
+            }
+          },
+          "i18n": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["key", "line"],
+              "properties": {
+                "key": { "type": "string" },
+                "line": { "$ref": "#/$defs/line" }
+              }
+            }
+          },
+          "configKeys": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["key", "line"],
+              "properties": {
+                "key": { "type": "string" },
+                "line": { "$ref": "#/$defs/line" }
+              }
+            }
+          },
+          "listeners": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type", "line"],
+              "properties": {
+                "type": { "type": "string" },
+                "line": { "$ref": "#/$defs/line" }
+              }
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

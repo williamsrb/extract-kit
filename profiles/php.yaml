@@ -13,15 +13,18 @@ adapters:
   map.code: map.code
   map.semantic: map.semantic
   inventory.descriptors: null
+  inventory.controllers: null
   maps.normalize: maps.normalize
   inventory.integrations: null
   inventory.runtime: null
+  inventory.baseline: null
   maps.merge: maps.merge
   inventory.docs: null
   product.impeccable: product.impeccable
   docs.synthesize: docs.synthesize
   use_cases: use_cases
   spec.kit: spec.kit
+  report.compat: null
 deps:
   - provides: [php]
     apt: php-cli

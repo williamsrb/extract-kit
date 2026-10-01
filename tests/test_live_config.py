@@ -6,7 +6,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from extractkit_cli import manifest
+from extractkit_cli.errors import ExtractkitError
 from steps.enonic import live_config
+
+AS_RULES = live_config.rules_from_profile(manifest.load("as"))
 
 
 class LiveConfigTests(unittest.TestCase):
@@ -39,7 +43,7 @@ class LiveConfigTests(unittest.TestCase):
                 },
             ],
         }
-        record = live_config.site_config_record("/en", "id-1", payload)
+        record = live_config.site_config_record("/en", "id-1", payload, AS_RULES)
         self.assertEqual(
             record["fields"]["siteConfig.config.tourplanUrl"],
             "https://tourplan.example.test/api",
@@ -47,7 +51,7 @@ class LiveConfigTests(unittest.TestCase):
         self.assertIn("siteConfig.config.tourplanPassword", record["redacted"])
         self.assertNotIn("secret", str(record["fields"]))
         endpoints = live_config.endpoints_from_site_fields(
-            record["fields"], content_key="/en",
+            record["fields"], content_key="/en", rules=AS_RULES,
         )
         urls = {row["url"] for row in endpoints}
         self.assertIn("https://tourplan.example.test/api", urls)
@@ -65,11 +69,58 @@ class LiveConfigTests(unittest.TestCase):
         items = live_config.parse_configenv_html(html)
         secrets = [i for i in items if i.get("redacted") == "true"]
         self.assertEqual(secrets[0]["key"], "env-simpleSecret")
-        endpoints = live_config.endpoints_from_config_env(items)
+        endpoints = live_config.endpoints_from_config_env(items, AS_RULES)
         urls = {row["url"] for row in endpoints}
         self.assertIn("https://sync.example.test/ingest", urls)
         self.assertIn("https://cms.example.test", urls)
         self.assertNotIn("nope", str(endpoints))
+
+    def test_empty_rules_infer_nothing_from_site_config(self) -> None:
+        fields = {
+            "siteConfig.config.tourplanUrl": "https://tourplan.example.test/api",
+            "siteConfig.config.netaxeptEnv": "test",
+        }
+        rules = live_config.rules_from_profile({"live_config": {}})
+        self.assertEqual(live_config.endpoints_from_site_fields(fields, content_key="/en", rules=rules), [])
+        self.assertEqual(live_config.slim_integration_fields(fields, rules), {})
+        self.assertEqual(live_config.default_configenv_url("http://h", rules), "")
+
+    def test_generic_endpoint_suffix_survives_without_rules(self) -> None:
+        rules = live_config.Rules()
+        fields = {"app.syncEndpoint": "https://x.example.test", "app.other": "v"}
+        self.assertEqual(live_config.slim_integration_fields(fields, rules), {"app.syncEndpoint": "https://x.example.test"})
+
+    def test_env_rule_maps_value_to_origin_default_and_paths(self) -> None:
+        rules = live_config.rules_from_profile({"live_config": {
+            "env_endpoints": [{
+                "provider": "Pay", "key": "mode", "path": "payments",
+                "origins": {"sandbox": "https://sandbox.example.test"},
+                "default": "https://live.example.test", "urls": ["/a", "/b"],
+            }],
+            "providers": {"pay": "Pay"},
+            "configenv_path": "/admin/tool/x",
+        }})
+        sandbox = live_config.endpoints_from_site_fields(
+            {"cfg.payments.mode": "Sandbox", "cfg.other.mode": "x"}, content_key="/k", rules=rules,
+        )
+        self.assertEqual([e["url"] for e in sandbox], [
+            "https://sandbox.example.test/a", "https://sandbox.example.test/b",
+        ])
+        self.assertEqual(sandbox[0]["source"], "siteConfig:/k:cfg.payments.mode=Sandbox")
+        live = live_config.endpoints_from_site_fields({"cfg.payments.mode": "prod"}, content_key="/k", rules=rules)
+        self.assertEqual(live[0]["url"], "https://live.example.test/a")
+        self.assertEqual(live_config.default_configenv_url("http://h", rules), "http://h/admin/tool/x")
+
+    def test_malformed_table_names_a_fix(self) -> None:
+        for bad in (
+            {"live_config": ["x"]},
+            {"live_config": {"site_url_keys": "tourplanurl"}},
+            {"live_config": {"env_endpoints": [{"provider": "P"}]}},
+            {"live_config": {"providers": ["a"]}},
+        ):
+            with self.assertRaises(ExtractkitError) as caught:
+                live_config.rules_from_profile(bad)
+            self.assertIn("docs/profiles.md", caught.exception.fix)
 
     def test_patch_openapi_is_metadata_only(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

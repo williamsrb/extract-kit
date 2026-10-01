@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from extractkit_cli.common import load_json
+from steps.core import behavior
 
 
 def _contexts(ctx: object) -> list[dict]:
@@ -64,26 +65,32 @@ def _spec_md(context: dict, index: dict[str, dict]) -> str:
         "",
     ]
     if not ids:
-        lines.append("### FR-1 Context exists")
-        lines.append("")
-        lines.append(f"The bounded context `{ctx_id}` is recorded in `map/bounded-contexts.json`.")
-        lines.append("")
+        lines += [
+            "### FR-1 Context exists",
+            "",
+            f"The bounded context `{ctx_id}` is recorded in `map/bounded-contexts.json`.",
+            "",
+            behavior.evidence_line(["map/bounded-contexts.json"]),
+            "",
+        ]
         return "\n".join(lines)
     for n, ident in enumerate(ids, start=1):
-        row = index.get(ident) or {}
+        row = index.get(ident) or {"id": ident}
         kind = row.get("kind") or "surface"
         status = row.get("status") or "unverified-live"
-        evidence = row.get("evidence") or []
-        lines.append(f"### FR-{n} {kind} `{ident}` remains {status}")
-        lines.append("")
-        lines.append(
-            f"The {kind} `{ident}` is part of this context. "
-            f"Status `{status}` from `map/project-map.json`."
-        )
-        if evidence:
+        bullets = behavior.acceptance(row)
+        lines += [
+            f"### FR-{n} {kind} `{ident}` ({status})",
+            "",
+            f"The {kind} `{ident}` is `{status}` in `map/project-map.json`"
+            + (" and shows this behavior." if bullets else "; no behavior was extracted for it."),
+            "",
+        ]
+        if bullets:
+            lines += ["Acceptance:", ""]
+            lines += [f"- {bullet}" for bullet in bullets]
             lines.append("")
-            lines.append("Evidence: " + ", ".join(f"`{e}`" for e in evidence))
-        lines.append("")
+        lines += [behavior.evidence_line(behavior.evidence_refs(row)), ""]
     return "\n".join(lines)
 
 
@@ -115,7 +122,7 @@ class SpeckitStep:
             ctx.write_text(  # type: ignore[attr-defined]
                 "spec-kit/specs/default/spec.md",
                 "# Default (as-is)\n\n### FR-1 Maps exist\n\n"
-                "See `map/project-map.json`.\n",
+                "See `map/project-map.json`.\n\nEvidence: `map/project-map.json`\n",
             )
             return
         for context in contexts:

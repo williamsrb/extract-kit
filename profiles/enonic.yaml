@@ -8,15 +8,18 @@ adapters:
   map.code: map.code
   map.semantic: map.semantic
   inventory.descriptors: enonic.descriptors
+  inventory.controllers: enonic.controllers
   maps.normalize: maps.normalize
   inventory.integrations: enonic.integrations
   inventory.runtime: enonic.cms
+  inventory.baseline: enonic.baseline
   maps.merge: maps.merge
   inventory.docs: enonic.docs
   product.impeccable: product.impeccable
   docs.synthesize: docs.synthesize
   use_cases: use_cases
   spec.kit: spec.kit
+  report.compat: enonic.compat
 cms:
   host: http://localhost:8080
   project: en
@@ -25,6 +28,7 @@ cms:
     - /en
   sample_per_type: 3
 round2: []
+live_config: {}
 deps:
   - provides: [playwright-cli]
     optional: true

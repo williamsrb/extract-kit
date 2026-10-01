@@ -14,6 +14,7 @@ from .hygiene import flush as flush_hygiene
 from .outtree import (
     build_manifest,
     ensure_self_ignore,
+    out_inside_source,
     resolve_out,
     resolve_source,
     write_self_ignore,
@@ -62,9 +63,12 @@ def _bound_pipeline(profile: dict) -> list[tuple[str, str]]:
     """Return (slot, plugin_id) for each pipeline entry that is bound."""
     rows: list[tuple[str, str]] = []
     unbound_required: list[str] = []
+    optional = set(profile.get("optional_slots") or [])
     for slot in manifest.pipeline_ids(profile):
         plugin_id = manifest.adapter_for(profile, slot)
         if plugin_id is None:
+            if slot in optional:
+                continue
             step_cls = None
             try:
                 # Slot name may itself be a plugin id (core binds map.code to itself).
@@ -169,8 +173,9 @@ def _preflight(ctx: RunContext, rows: list[tuple[str, str]]) -> None:
 
 def _execute(ctx: RunContext, rows: list[tuple[str, str]]) -> None:
     _preflight(ctx, rows)
-    ensure_self_ignore(ctx.source, ctx.plan.record)
-    write_self_ignore(ctx.source)
+    if out_inside_source(ctx.source, ctx.out):
+        ensure_self_ignore(ctx.source, ctx.plan.record)
+        write_self_ignore(ctx.source)
 
     for slot, plugin_id in rows:
         step = registry.instantiate(plugin_id)
@@ -224,6 +229,7 @@ def _context_from_args(args: Namespace) -> RunContext:
             "cms_keys": list(getattr(args, "cms_keys", None) or []),
             "round2": list(getattr(args, "round2", None) or []),
             "configenv": getattr(args, "configenv", None),
+            "site_url": getattr(args, "site_url", None),
             "allow_production": bool(getattr(args, "allow_production", False)),
         },
         tasks=bool(getattr(args, "tasks", False)),

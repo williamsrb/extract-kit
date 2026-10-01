@@ -1,4 +1,8 @@
 <layout>
   <display-name>Mini layout</display-name>
   <form/>
+  <regions>
+    <region name="left"/>
+    <region name="right"/>
+  </regions>
 </layout>

@@ -32,7 +32,7 @@ BOOLEAN_FLAGS = frozenset({
 })
 CARRY_FLAGS = (
     "--branch", "--xp-host", "--guillotine", "--project", "--storage-state",
-    "--cms-key", "--round2", "--configenv", "--tasks",
+    "--cms-key", "--round2", "--configenv", "--site-url", "--tasks",
 )
 OUTPUT_FLAGS = ("-v", "--verbose", "-q", "--quiet")
 PLACEHOLDER = re.compile(r"^<[A-Za-z0-9._-]+>$")

@@ -1,0 +1,81 @@
+{
+  "configEnv": [
+    {
+      "key": "env-travelSpecialistSyncEndpoint",
+      "value": "https://sync.example.test/ingest"
+    },
+    {
+      "key": "env-hostMap",
+      "value": "/en=cms.example.test"
+    },
+    {
+      "key": "env-simpleSecret",
+      "redacted": "true"
+    }
+  ],
+  "configenv": "<HOST>/admin/tool/no.seeds.configenv/module-config",
+  "endpoints": [
+    {
+      "direction": "outbound",
+      "provider": "Tourplan",
+      "source": "siteConfig:/en:siteConfig.config.tourplanUrl",
+      "url": "https://tourplan.example.test/api"
+    },
+    {
+      "direction": "outbound",
+      "provider": "Netaxept",
+      "source": "siteConfig:/en:netaxeptEnv=test",
+      "url": "https://test.epayment.nets.eu/Netaxept/Register.aspx"
+    },
+    {
+      "direction": "outbound",
+      "provider": "Netaxept",
+      "source": "siteConfig:/en:netaxeptEnv=test",
+      "url": "https://test.epayment.nets.eu/Netaxept/Process.aspx"
+    },
+    {
+      "direction": "outbound",
+      "provider": "Netaxept",
+      "source": "siteConfig:/en:netaxeptEnv=test",
+      "url": "https://test.epayment.nets.eu/Netaxept/Query.aspx"
+    },
+    {
+      "direction": "outbound",
+      "provider": "Netaxept",
+      "source": "siteConfig:/en:netaxeptEnv=test",
+      "url": "https://test.epayment.nets.eu/terminal/default.aspx"
+    },
+    {
+      "direction": "outbound",
+      "provider": "Flywire",
+      "source": "siteConfig:/en:siteConfig.config.flywirePortal.env=demo",
+      "url": "https://api-platform-sandbox.flywire.com"
+    },
+    {
+      "direction": "outbound",
+      "provider": "TravelSpecialist",
+      "source": "configEnv:env-travelSpecialistSyncEndpoint",
+      "url": "https://sync.example.test/ingest"
+    },
+    {
+      "direction": "inbound",
+      "provider": "hostMap",
+      "source": "configEnv:env-hostMap",
+      "url": "https://cms.example.test"
+    }
+  ],
+  "siteConfig": [
+    {
+      "fields": {
+        "siteConfig.config.flywirePortal.env": "demo",
+        "siteConfig.config.netaxeptEnv": "test",
+        "siteConfig.config.tourplanUrl": "https://tourplan.example.test/api"
+      },
+      "id": "id-1",
+      "key": "/en",
+      "redacted": [
+        "siteConfig.config.tourplanPassword"
+      ]
+    }
+  ]
+}

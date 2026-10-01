@@ -1419,7 +1419,7 @@
     "id": "ph_sub",
     "x": 116,
     "y": 1170,
-    "text": "--from / --until / step take a phase id. 1, 6 and 7 are commands.",
+    "text": "--from / --until / step take a phase id. 1, 6 and 7 are commands. Grey = optional or added slot.",
     "fontSize": 17,
     "strokeColor": "#5f6368",
     "fontFamily": 5
@@ -2291,7 +2291,7 @@
       ]
     },
     "label": {
-      "text": "live / dead",
+      "text": "live / dead / unobserved",
       "fontSize": 14,
       "fontFamily": 5
     },
@@ -2335,5 +2335,35 @@
       "fontSize": 14,
       "fontFamily": 5
     }
+  },
+  {
+    "type": "text",
+    "id": "ph_n2",
+    "x": 357,
+    "y": 1612,
+    "text": "+ controllers",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
+    "type": "text",
+    "id": "ph_n3",
+    "x": 524,
+    "y": 1612,
+    "text": "+ baseline (optional)",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
+    "type": "text",
+    "id": "ph_n5",
+    "x": 858,
+    "y": 1612,
+    "text": "+ compat (optional)",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
   }
 ]

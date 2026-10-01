@@ -33,6 +33,9 @@ your own command with that flag added.
 | `check` | Reads the sidecar only |
 <!-- markdownlint-enable MD013 -->
 
+`resume` skips optional slots (`inventory.baseline`, `report.compat`). Run
+them with `step`; `status` prints the command.
+
 If `resume` lands on CMS, pass the CMS flags. To skip CMS, use
 `run --from merge` instead. Done-markers are in [steps](steps.md).
 
@@ -61,10 +64,10 @@ as well as a slot or plugin id.
 | # | Phase | Slots or command |
 | --- | --- | --- |
 | 1 | `preflight` | `doctor` (command) |
-| 2 | `static` | map.code, map.semantic, inventory.descriptors, maps.normalize, inventory.integrations |
-| 3 | `cms` | inventory.runtime |
+| 2 | `static` | map.code, map.semantic, inventory.descriptors, inventory.controllers, maps.normalize, inventory.integrations |
+| 3 | `cms` | inventory.runtime, inventory.baseline (optional) |
 | 4 | `merge` | maps.merge, inventory.docs |
-| 5 | `synthesis` | product.impeccable, docs.synthesize, use_cases, spec.kit |
+| 5 | `synthesis` | product.impeccable, docs.synthesize, use_cases, spec.kit, report.compat (optional) |
 | 6 | `check` | `check` (command) |
 | 7 | `promote` | `promote` (command) |
 <!-- markdownlint-enable MD013 -->
@@ -138,14 +141,15 @@ slice. `--storage-state` is required whenever `enonic.cms` runs.
 | `--guillotine URL` | GraphQL POST URL |
 | `--cms-key KEY` | Content key to survey (repeatable) |
 | `--round2 CONTEXT` | Survey that context's keys a second time (repeatable) |
-| `--configenv URL` | Config Env HTML page |
+| `--configenv URL` | Config Env HTML page. Default: `{host}` plus the profile's `live_config.configenv_path`; with neither, Config Env is skipped |
+| `--site-url URL` | Base URL for `inventory.baseline` page captures. Default: `{host}/admin/site/preview/{project}/{branch}` |
 | `--allow-production` | Lift the production refusal (unused in the DoD) |
 
 Each flag falls back to the profile's `cms` key, then a built-in default.
 The table is in [profiles](profiles.md#enonic). A key given with
 `--cms-key` replaces the profile's `cms.keys`.
 
-`--xp-host`, `--guillotine` and `--configenv` must be local
+`--xp-host`, `--guillotine`, `--configenv` and `--site-url` must be local
 (`localhost`, `127.0.0.1`, `::1`, `0.0.0.0`, `*.localhost`) or review
 (`*.k8s.seeds.no`). Anything else is production and refused.
 
@@ -164,12 +168,12 @@ tree.
   `hygiene/dead-code.md` (FR-10 coverage)
 - `integrations/openapi.yaml` is missing, is not YAML, or has an
   operation without `x-source`
-- `inventory/runtime.json`, the Enonic extras, or
+- `inventory/runtime.json`, `inventory/controllers.json`,
+  `inventory/content-volume.json`, the Enonic extras, or
   `map/bounded-contexts.json` exist and break their schema
-- a `spec-kit/specs/**/spec.md` has no `FR-N` heading, or an FR section
-  cites neither a project-map id in backticks nor an evidence ref (a
-  backticked `runtime:…`, `map:…`, `evidence:…` or `*.json`, or an
-  `Evidence:` line)
+- a `spec-kit/specs/**/spec.md` has no `FR-N` heading, an FR section has
+  no `Evidence:` line, or a paragraph marked `_(inferred)_` has no
+  `Evidence:` line in it or right after it
 
 Optional files that are absent are not problems.
 
@@ -199,4 +203,6 @@ check.
 ## Sidecar
 
 Default `--out` is `<source>/.extract/<run-id>/`. `.extract/.gitignore`
-is `*`. The kit never edits the source `.gitignore` or `.git/`.
+is `*`, written only when the sidecar sits under `<source>/.extract/`. With
+an `--out` elsewhere the run writes nothing into the source. The kit never
+edits the source `.gitignore` or `.git/`.

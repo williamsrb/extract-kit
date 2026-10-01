@@ -29,6 +29,11 @@ def latest_run(source: Path) -> Path | None:
     return max(runs, key=lambda p: p.name)
 
 
+def out_inside_source(source: Path, out: Path) -> bool:
+    """True when the sidecar sits under `<source>/.extract/` and so needs the self-ignore."""
+    return out.resolve().is_relative_to(source.resolve() / EXTRACT_DIRNAME)
+
+
 def ensure_self_ignore(source: Path, plan_record) -> Path:
     """Write `<source>/.extract/.gitignore` with `*`. Never touches source `.gitignore`."""
     ignore = source.resolve() / EXTRACT_DIRNAME / ".gitignore"

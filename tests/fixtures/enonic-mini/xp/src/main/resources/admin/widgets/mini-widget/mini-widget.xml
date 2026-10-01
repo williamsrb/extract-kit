@@ -1,0 +1,6 @@
+<widget>
+  <display-name>Mini widget</display-name>
+  <interfaces>
+    <interface>contentstudio.menuitem</interface>
+  </interfaces>
+</widget>

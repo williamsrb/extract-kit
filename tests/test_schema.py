@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 
 from extractkit_cli.errors import ExtractkitError
-from extractkit_cli.schema import validate
+from extractkit_cli.schema import load_schema, validate
 
 EXAMPLE = {
     "schema": "99x.extract.project-map/v1",
@@ -110,6 +110,41 @@ class SchemaTests(unittest.TestCase):
             },
             "bounded-contexts",
         )
+
+    def test_field_defs_are_identical_across_schemas(self) -> None:
+        stems = (
+            "inventory", "content-model", "component-map", "project-map",
+            "route-map", "surface",
+        )
+        first = load_schema(stems[0])["$defs"]
+        for stem in stems[1:]:
+            defs = load_schema(stem)["$defs"]
+            self.assertEqual(defs["field"], first["field"], stem)
+            self.assertEqual(defs["occurrences"], first["occurrences"], stem)
+
+    def test_unobserved_status_is_valid_in_every_map(self) -> None:
+        surface = {
+            "id": "a:part:p", "kind": "part", "entry": "x", "status": "unobserved",
+        }
+        validate({"schema": "99x.extract.project-map/v1", "surfaces": [surface]}, "project-map")
+        validate({"schema": "99x.extract.component-map/v1", "components": [surface]}, "component-map")
+        validate({"schema": "99x.extract.content-model/v1", "types": [surface]}, "content-model")
+        validate({"schema": "99x.extract.route-map/v1", "routes": [surface]}, "route-map")
+
+    def test_nested_field_validates_and_bad_field_fails(self) -> None:
+        field = {
+            "name": "opts", "type": "option-set",
+            "occurrences": {"min": 0, "max": 1},
+            "options": [{"name": "a", "items": [{"mixin": "app:m"}]}],
+        }
+        surface = {
+            "id": "a:content-type:t", "kind": "content-type", "entry": "x",
+            "status": "live", "fields": [field],
+        }
+        validate({"schema": "99x.extract.content-model/v1", "types": [surface]}, "content-model")
+        surface["fields"] = [{"label": "no name or mixin"}]
+        with self.assertRaises(ExtractkitError):
+            validate({"schema": "99x.extract.content-model/v1", "types": [surface]}, "content-model")
 
 
 if __name__ == "__main__":

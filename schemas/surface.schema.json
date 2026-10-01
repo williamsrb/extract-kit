@@ -4,6 +4,107 @@
   "title": "stack-agnostic surface",
   "type": "object",
   "required": ["id", "kind", "entry", "status"],
+  "$defs": {
+    "field": {
+      "type": "object",
+      "anyOf": [
+        {
+          "required": [
+            "name",
+            "type"
+          ]
+        },
+        {
+          "required": [
+            "mixin"
+          ]
+        }
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "occurrences": {
+          "$ref": "#/$defs/occurrences"
+        },
+        "selection": {
+          "$ref": "#/$defs/occurrences"
+        },
+        "config": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "fromMixin": {
+          "type": "string"
+        },
+        "fieldSet": {
+          "type": "string"
+        },
+        "mixin": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "items"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/field"
+                }
+              }
+            }
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "occurrences": {
+      "type": "object",
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
   "properties": {
     "id": { "type": "string", "minLength": 1 },
     "kind": { "type": "string" },
@@ -15,9 +116,16 @@
     "evidence": { "type": "array" },
     "status": {
       "type": "string",
-      "enum": ["live", "dead", "conditional", "unverified-live"]
+      "enum": ["live", "dead", "conditional", "unverified-live", "unobserved"]
     },
-    "stackRef": { "type": "object" }
+    "stackRef": { "type": "object" },
+    "fields": { "type": "array", "items": { "$ref": "#/$defs/field" } },
+    "config": { "type": "array", "items": { "$ref": "#/$defs/field" } },
+    "regions": { "type": "array", "items": { "type": "string" } },
+    "behavior": { "type": "object" },
+    "configKeys": { "type": "array", "items": { "type": "string" } },
+    "listeners": { "type": "array", "items": { "type": "string" } },
+    "usage": { "type": ["integer", "null"] }
   },
   "additionalProperties": true
 }

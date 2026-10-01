@@ -1,5 +1,54 @@
 <content-type>
   <display-name>Mini article</display-name>
   <super-type>base:structured</super-type>
-  <form/>
+  <form>
+    <input name="title" type="TextLine">
+      <label>Title</label>
+      <occurrences minimum="1" maximum="1"/>
+    </input>
+    <field-set>
+      <label>Related</label>
+      <items>
+        <input name="related" type="ContentSelector">
+          <label>Related article</label>
+          <occurrences minimum="0" maximum="0"/>
+          <config>
+            <allowContentType>com.example.mini:mini-article</allowContentType>
+            <allowPath>${site}/*</allowPath>
+          </config>
+        </input>
+      </items>
+    </field-set>
+    <item-set name="links">
+      <label>Links</label>
+      <occurrences minimum="0" maximum="0"/>
+      <items>
+        <input name="href" type="TextLine">
+          <label>Href</label>
+          <occurrences minimum="1" maximum="1"/>
+        </input>
+      </items>
+    </item-set>
+    <option-set name="layoutChoice">
+      <label>Layout</label>
+      <expanded>false</expanded>
+      <occurrences minimum="1" maximum="1"/>
+      <options minimum="1" maximum="1">
+        <option name="wide">
+          <label>Wide</label>
+          <items>
+            <input name="caption" type="TextLine">
+              <label>Caption</label>
+            </input>
+          </items>
+        </option>
+        <option name="narrow">
+          <label>Narrow</label>
+          <items/>
+        </option>
+      </options>
+    </option-set>
+    <inline mixin="mini-mixin"/>
+    <inline mixin="com.other.app:external"/>
+  </form>
 </content-type>

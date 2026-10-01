@@ -1,4 +1,8 @@
 <x-data>
   <display-name>Mini x-data</display-name>
-  <form/>
+  <form>
+    <input name="theme" type="TextLine">
+      <label>Theme</label>
+    </input>
+  </form>
 </x-data>

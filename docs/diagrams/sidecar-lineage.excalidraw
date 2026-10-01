@@ -576,7 +576,7 @@
       "y": 236,
       "width": -10,
       "height": 74,
-      "text": "live / dead",
+      "text": "live / dead / unobserved",
       "fontSize": 14,
       "fontFamily": 5,
       "textAlign": "center",

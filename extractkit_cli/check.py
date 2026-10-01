@@ -20,7 +20,8 @@ MAP_FILES = (
 )
 HTTP_METHODS = ("get", "put", "post", "delete", "options", "head", "patch", "trace")
 FR_HEADING = re.compile(r"^#{1,6}\s*FR-\d+\b", re.IGNORECASE)
-BACKTICK = re.compile(r"`([^`]+)`")
+EVIDENCE_LINE = re.compile(r"^\s*Evidence\s*:\s*\S", re.MULTILINE)
+INFERRED = "`_(inferred)_`"
 
 
 def _out_dir(raw: str | None) -> Path:
@@ -184,6 +185,8 @@ def check_tree(out: Path) -> list[str]:
         ("inventory/content-survey.json", "content-survey"),
         ("inventory/content-survey-resolved.json", "content-survey-resolved"),
         ("inventory/page-templates.json", "page-templates"),
+        ("inventory/controllers.json", "controllers"),
+        ("inventory/content-volume.json", "content-volume"),
     ):
         extra = out / rel
         if extra.is_file():
@@ -208,23 +211,23 @@ def check_tree(out: Path) -> list[str]:
     return problems
 
 
-def _map_ids(out: Path) -> set[str]:
-    ids: set[str] = set()
-    path = out / "map" / "project-map.json"
-    if not path.is_file():
-        return ids
-    payload = load_json(path, "map/project-map.json")
-    for surface in payload.get("surfaces") or []:
-        if isinstance(surface, dict) and surface.get("id"):
-            ids.add(str(surface["id"]))
-    return ids
+def _unevidenced_inferred(section: str) -> list[str]:
+    """Inferred paragraphs with no `Evidence:` line in them or right after them."""
+    paragraphs = [p for p in re.split(r"\n\s*\n", section) if p.strip()]
+    bad: list[str] = []
+    for index, paragraph in enumerate(paragraphs):
+        if "_(inferred)_" not in paragraph or EVIDENCE_LINE.search(paragraph):
+            continue
+        following = paragraphs[index + 1] if index + 1 < len(paragraphs) else ""
+        if not EVIDENCE_LINE.match(following):
+            bad.append(paragraph)
+    return bad
 
 
 def _spec_fr_gaps(out: Path) -> list[str]:
     specs_root = out / "spec-kit" / "specs"
     if not specs_root.is_dir():
         return []
-    map_ids = _map_ids(out)
     problems: list[str] = []
     specs = sorted(specs_root.rglob("spec.md"))
     if not specs:
@@ -236,34 +239,32 @@ def _spec_fr_gaps(out: Path) -> list[str]:
         sections: list[tuple[str, str]] = []
         current: str | None = None
         body: list[str] = []
+        preamble = ""
         for line in text.splitlines():
             if FR_HEADING.match(line.strip()):
                 if current is not None:
                     sections.append((current, "\n".join(body)))
+                else:
+                    preamble = "\n".join(body)
                 current = line.strip()
                 body = []
-            elif current is not None:
+            else:
                 body.append(line)
         if current is not None:
             sections.append((current, "\n".join(body)))
+        problems.extend(
+            f"{rel} has an {INFERRED} paragraph without an `Evidence:` line before its first FR"
+            for _ in _unevidenced_inferred(preamble)
+        )
         if not sections:
             problems.append(f"{rel} has no FR headings")
             continue
         for heading, section in sections:
-            blob = heading + "\n" + section
-            ticks = BACKTICK.findall(blob)
-            cited_map = {tick for tick in ticks if tick in map_ids}
-            cited_evidence = any(
-                tick.startswith(("runtime:", "map:", "evidence:"))
-                or tick.endswith(".json")
-                for tick in ticks
-            )
-            if cited_map or cited_evidence:
-                continue
-            if re.search(r"evidence\s*:", blob, re.IGNORECASE):
-                continue
-            problems.append(
-                f"{rel} {heading} cites neither a map id nor an evidence ref"
+            if not EVIDENCE_LINE.search(section):
+                problems.append(f"{rel} {heading} has no `Evidence:` line")
+            problems.extend(
+                f"{rel} {heading} has an {INFERRED} paragraph without an `Evidence:` line"
+                for _ in _unevidenced_inferred(section)
             )
     return problems
 

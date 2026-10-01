@@ -1,4 +1,14 @@
 <mixin>
   <display-name>Mini mixin</display-name>
-  <form/>
+  <form>
+    <input name="seoTitle" type="TextLine">
+      <label>SEO title</label>
+    </input>
+    <input name="heroImage" type="ImageSelector">
+      <label>Hero image</label>
+      <config>
+        <allowContentType>media:image</allowContentType>
+      </config>
+    </input>
+  </form>
 </mixin>

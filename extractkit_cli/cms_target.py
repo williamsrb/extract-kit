@@ -27,6 +27,9 @@ def hostname_of(raw: str) -> str:
 
 def classify(raw: str) -> str:
     """Return local | review | production."""
+    # Chromium reads `\` as `/`, so `prod\@localhost` would leave the host urlparse sees.
+    if "\\" in raw or urlparse(normalize_url(raw)).username is not None:
+        return "production"
     host = hostname_of(raw)
     if not host:
         return "production"

@@ -8,7 +8,7 @@ the Guillotine GraphQL URL passed as a run parameter. The as app-own service
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 from urllib import error as urlerror
@@ -81,6 +81,7 @@ class CmsConfig:
     context_by_key: dict[str, str]
     configenv: str
     sample_per_type: int
+    rules: live_config.Rules = field(default_factory=live_config.Rules)
 
 
 def _unique(items: list[str]) -> list[str]:
@@ -138,11 +139,13 @@ def resolve_cms(ctx: Any) -> CmsConfig:
     configenv = cms_target.normalize_url(
         cli.get("configenv") or profile.get("configenv") or "",
     )
+    rules = live_config.rules_from_profile(ctx.profile)
     if not configenv:
-        configenv = live_config.default_configenv_url(host)
-    cms_target.assert_allowed(
-        configenv, allow_production=allow, what="--configenv",
-    )
+        configenv = live_config.default_configenv_url(host, rules)
+    if configenv:
+        cms_target.assert_allowed(
+            configenv, allow_production=allow, what="--configenv",
+        )
     env = gql_env if gql_env == "production" else host_env
     keys = _unique(list(cli.get("cms_keys") or []))
     if not keys:
@@ -185,6 +188,7 @@ def resolve_cms(ctx: Any) -> CmsConfig:
         context_by_key=context_by_key,
         configenv=configenv,
         sample_per_type=page_templates.sample_per_type(profile, cli),
+        rules=rules,
     )
 
 
@@ -434,6 +438,178 @@ def _type_query(type_id: str, limit: int) -> str:
     )
 
 
+USAGE_KINDS = ("page", "layout", "part")
+
+
+def _usage_query(kind: str, key: str) -> str:
+    noql = f"components.{kind}.descriptor = '{key}'"
+    return (
+        'query { guillotine { queryConnection(query: "'
+        + _escape_key(noql)
+        + '", first: 0) { totalCount } } }'
+    )
+
+
+def probe_usage(url: str, cookie: str, resources: list[dict]) -> dict:
+    """Exhaustive per-descriptor usage count. A query error degrades, never refuses.
+
+    Returns `{"usage": {"<app>:<kind>:<name>": int | None}, "usageProbe": "ok" | "unsupported"}`.
+    Page, layout and part only: macros live in HtmlArea text with no indexed field.
+    """
+    keys = sorted({
+        (r["kind"], f"{r.get('app')}:{r.get('name')}")
+        for r in resources
+        if isinstance(r, dict) and r.get("kind") in USAGE_KINDS and r.get("app") and r.get("name")
+    })
+    usage: dict[str, int | None] = {}
+    for kind, key in keys:
+        try:
+            payload = post_graphql(url, _usage_query(kind, key), cookie)
+        except ExtractkitError:
+            return _usage_unsupported(keys)
+        conn = _gql_field(payload, "queryConnection")
+        count = conn.get("totalCount") if isinstance(conn, dict) else None
+        if payload.get("errors") or not isinstance(count, int) or isinstance(count, bool):
+            return _usage_unsupported(keys)
+        usage[_usage_key(kind, key)] = count
+    return {"usage": usage, "usageProbe": "ok"}
+
+
+def _usage_unsupported(keys: list[tuple[str, str]]) -> dict:
+    return {"usage": {_usage_key(kind, key): None for kind, key in keys}, "usageProbe": "unsupported"}
+
+
+def _usage_key(kind: str, key: str) -> str:
+    """Surface-id form: a page, a layout and a part may share one `<app>:<name>`."""
+    app, _, name = key.rpartition(":")
+    return f"{app}:{kind}:{name}"
+
+
+def _count_probe(url: str, cookie: str, noql: str, aggregation: str = "") -> dict | None:
+    """One exhaustive `queryConnection(first: 0)`. None when the query is not understood."""
+    selection = "totalCount" + (" aggregationsAsJson" if aggregation else "")
+    query = (
+        'query { guillotine { queryConnection(query: "' + _escape_key(noql) + '", first: 0'
+        + aggregation + ") { " + selection + " } } }"
+    )
+    try:
+        payload = post_graphql(url, query, cookie)
+    except ExtractkitError:
+        return None
+    conn = _gql_field(payload, "queryConnection")
+    if payload.get("errors") or not isinstance(conn, dict):
+        return None
+    total = conn.get("totalCount")
+    if not isinstance(total, int) or isinstance(total, bool):
+        return None
+    buckets = _buckets(conn.get("aggregationsAsJson")) if aggregation else []
+    return {"total": total, "buckets": buckets}
+
+
+def _buckets(raw: object) -> list[dict]:
+    try:
+        data = json.loads(raw) if isinstance(raw, str) else raw
+    except ValueError:
+        return []
+    if not isinstance(data, dict):
+        return []
+    rows: list[dict] = []
+    for agg in data.values():
+        if not isinstance(agg, dict):
+            continue
+        for bucket in agg.get("buckets") or []:
+            if isinstance(bucket, dict) and bucket.get("key") is not None:
+                rows.append({"key": str(bucket["key"]), "count": int(bucket.get("docCount") or 0)})
+    return sorted(rows, key=lambda r: (-r["count"], r["key"]))
+
+
+def _terms(name: str, field: str) -> str:
+    return f', aggregations: [{{name: "{name}", terms: {{field: "{field}", size: 200}}}}]'
+
+
+def _project_list(host: str, cookie: str) -> tuple[list[dict] | None, str]:
+    url = f"{host}/admin/rest-v2/cs/project/list"
+    try:
+        status, raw = http_get(url, cookie, accept="application/json")
+    except ExtractkitError as exc:
+        return None, str(exc)
+    if status != 200:
+        return None, f"HTTP {status}"
+    try:
+        body = json.loads(raw.decode("utf-8"))
+    except ValueError:
+        return None, "non-JSON answer"
+    items = body.get("projects") if isinstance(body, dict) else body
+    if not isinstance(items, list):
+        return None, "unexpected answer shape"
+    rows: list[dict] = []
+    for item in items:
+        if isinstance(item, dict) and item.get("name"):
+            row = {"name": str(item["name"])}
+            if item.get("parent"):
+                row["parent"] = str(item["parent"])
+            rows.append(row)
+    return sorted(rows, key=lambda r: r["name"]), ""
+
+
+def survey_volume(cfg: CmsConfig, cookie: str, type_ids: list[str]) -> dict:
+    """Content counts for sizing a content migration. A failed probe is `None`, never 0."""
+    url = cfg.guillotine
+    types = []
+    for type_id in sorted(type_ids):
+        probe = _count_probe(url, cookie, f"type = '{type_id}'")
+        types.append({"type": type_id, "total": probe["total"] if probe else None})
+    langs = _count_probe(url, cookie, "", _terms("languages", "language"))
+    media = _count_probe(url, cookie, "type LIKE 'media:*'", _terms("types", "type"))
+    projects, reason = _project_list(cfg.host, cookie)
+    doc: dict = {
+        "schema": "99x.extract.content-volume/v1",
+        "host": cfg.host,
+        "branch": cfg.branch,
+        "types": types,
+        "languages": (
+            [{"language": b["key"], "count": b["count"]} for b in langs["buckets"]]
+            if langs else None
+        ),
+        "media": {
+            "total": media["total"] if media else None,
+            "byType": [{"type": b["key"], "count": b["count"]} for b in media["buckets"]] if media else [],
+        },
+        "projects": projects,
+    }
+    if projects is None:
+        doc["projectsReason"] = reason
+    return doc
+
+
+def render_volume_md(doc: dict) -> str:
+    def cell(value: object) -> str:
+        return "unknown" if value is None else str(value)
+
+    lines = ["# Content volume", "", f"Host `{doc['host']}`, branch `{doc['branch']}`. `unknown` = the query failed.", ""]
+    lines += ["## Content types", "", "| type | total |", "|---|---|"]
+    lines += [f"| `{row['type']}` | {cell(row['total'])} |" for row in doc["types"]]
+    lines += ["", "## Languages", ""]
+    if doc["languages"] is None:
+        lines.append("unknown (aggregation not supported).")
+    else:
+        lines += ["| language | count |", "|---|---|"]
+        lines += [f"| {row['language']} | {row['count']} |" for row in doc["languages"]]
+    lines += ["", "## Media", "", f"Total: {cell(doc['media']['total'])}", ""]
+    if doc["media"]["byType"]:
+        lines += ["| type | count |", "|---|---|"]
+        lines += [f"| `{row['type']}` | {row['count']} |" for row in doc["media"]["byType"]]
+        lines.append("")
+    lines += ["## Projects and layers", ""]
+    if doc["projects"] is None:
+        lines.append(f"unknown ({doc.get('projectsReason')}).")
+    else:
+        lines += ["| project | parent layer |", "|---|---|"]
+        lines += [f"| {row['name']} | {row.get('parent', '')} |" for row in doc["projects"]]
+    lines.append("")
+    return "\n".join(lines)
+
+
 def load_page_templates(
     url: str,
     cookie: str,
@@ -617,6 +793,8 @@ class EnonicCmsStep:
         "inventory/page-templates.json",
         "inventory/content-survey.md",
         "inventory/content-survey-resolved.md",
+        "inventory/content-volume.json",
+        "inventory/content-volume.md",
     )
     required = True
 
@@ -703,8 +881,9 @@ class EnonicCmsStep:
                 )
                 seen_keys.add(path)
         site_configs, config_env, endpoints = _harvest_live_config(
-            cfg, pages, cookie,
+            ctx, cfg, pages, cookie,
         )
+        usage = probe_usage(cfg.guillotine, cookie, resources)
         payload = {
             "schema": "99x.extract.runtime-inventory/v1",
             "env": cfg.env,
@@ -717,10 +896,15 @@ class EnonicCmsStep:
             "siteConfig": site_configs,
             "configEnv": config_env,
             "endpoints": endpoints,
+            **usage,
         }
         schema.validate(payload, "runtime-inventory", what="inventory/runtime.json")
         ctx.write_json("inventory/runtime.json", payload)  # type: ignore[attr-defined]
         _write_enonic_survey(ctx, cfg, folder_key, templates, type_rows)
+        volume = survey_volume(cfg, cookie, type_ids)
+        schema.validate(volume, "content-volume", what="inventory/content-volume.json")
+        ctx.write_json("inventory/content-volume.json", volume)  # type: ignore[attr-defined]
+        ctx.write_text("inventory/content-volume.md", render_volume_md(volume))  # type: ignore[attr-defined]
         _patch_openapi(ctx, endpoints)
 
     def check(self, _ctx: object) -> list[str]:
@@ -728,6 +912,7 @@ class EnonicCmsStep:
 
 
 def _harvest_live_config(
+    ctx: Any,
     cfg: CmsConfig,
     pages: list[dict],
     cookie: str,
@@ -764,24 +949,32 @@ def _harvest_live_config(
             ) from None
         if not isinstance(body, dict):
             continue
-        record = live_config.site_config_record(key, content_id, body)
+        record = live_config.site_config_record(key, content_id, body, cfg.rules)
         site_configs.append(record)
         endpoints.extend(
             live_config.endpoints_from_site_fields(
-                record.get("fields") or {}, content_key=key,
+                record.get("fields") or {}, content_key=key, rules=cfg.rules,
             )
         )
     config_env: list[dict] = []
+    if not cfg.configenv:
+        ctx.record_skip(
+            "enonic.cms.configenv",
+            "no Config Env URL: the profile sets no live_config.configenv_path "
+            "and --configenv was not given",
+            "pass --configenv <config-env-tool-url>, or set live_config.configenv_path "
+            "in a client profile (see profiles/as.yaml)",
+        )
+        return site_configs, config_env, live_config.dedupe_endpoints(endpoints)
     status, raw = http_get(cfg.configenv, cookie, accept="text/html")
     if status == 200:
         config_env = live_config.parse_configenv_html(raw.decode("utf-8", "replace"))
-        endpoints.extend(live_config.endpoints_from_config_env(config_env))
+        endpoints.extend(live_config.endpoints_from_config_env(config_env, cfg.rules))
     elif status not in (404, 405, 501):
         raise ExtractkitError(
             f"Config Env GET {cfg.configenv} returned HTTP {status}",
-            "pass --configenv at the XP7 tool "
-            "/admin/tool/no.seeds.configenv/module-config, or skip if that "
-            "app is not installed",
+            "pass --configenv at the Config Env admin tool URL, or skip it if "
+            "that tool is not installed",
             fix_args={"--configenv": "<config-env-url>"},
         )
     return site_configs, config_env, live_config.dedupe_endpoints(endpoints)

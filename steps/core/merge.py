@@ -7,6 +7,7 @@ from pathlib import Path
 from extractkit_cli.common import load_json
 from extractkit_cli.schema import validate
 from steps.core.normalize import (
+    ADMIN_KINDS,
     COMPONENT_KINDS,
     MODEL_KINDS,
     ROUTE_KINDS,
@@ -18,6 +19,7 @@ CONTEXT_BUCKETS = (
     ("presentation", "Presentation", COMPONENT_KINDS),
     ("content", "Content model", MODEL_KINDS),
     ("routing", "Routing and jobs", ROUTE_KINDS | {"mapping"}),
+    ("admin", "Administration", ADMIN_KINDS),
 )
 
 
@@ -97,6 +99,24 @@ def _composition_for(descriptor: str, pages: list[dict]) -> list[str]:
     return list(best[1]) if best else []
 
 
+def _usage_key(surface: dict, key: str) -> str:
+    app, _, name = key.rpartition(":")
+    return f"{app}:{surface.get('kind') or ''}:{name}"
+
+
+def _status_from_usage(row: dict, key: str, count: object) -> None:
+    """Not seen in the survey: only an exhaustive count may call it live or dead."""
+    if not isinstance(count, int) or isinstance(count, bool):
+        row["status"] = "unobserved"
+        return
+    row["usage"] = count
+    if count > 0:
+        row["status"] = "live"
+        row["evidence"] = [*row["evidence"], f"usage:{key}:{count}"]
+    else:
+        row["status"] = "dead"
+
+
 def merge_surfaces(
     surfaces: list[dict],
     runtime: dict | None,
@@ -111,6 +131,7 @@ def merge_surfaces(
         return updated, []
 
     pages = [p for p in (runtime.get("pages") or []) if isinstance(p, dict)]
+    usage = runtime.get("usage") if isinstance(runtime.get("usage"), dict) else {}
     seen = _round_seen(pages)
     round1, round2 = _round_sets(pages)
     contradictions: list[dict] = []
@@ -143,7 +164,7 @@ def merge_surfaces(
             row["status"] = "live"
             row["composition"] = _composition_for(key, pages)
         else:
-            row["status"] = "dead"
+            _status_from_usage(row, key, usage.get(_usage_key(row, key)))
         updated.append(row)
     return updated, contradictions
 
@@ -197,12 +218,19 @@ def split_contexts(surfaces: list[dict], runtime: dict | None) -> list[dict]:
     return contexts
 
 
+def _existing_references(ctx: object) -> list[dict]:
+    path: Path = ctx.rel("map/content-model.json")  # type: ignore[attr-defined]
+    if not path.is_file():
+        return []
+    return list(load_json(path, "map/content-model.json").get("references") or [])
+
+
 def _rewrite_maps(ctx: object, surfaces: list[dict]) -> None:
     components = [s for s in surfaces if s.get("kind") in COMPONENT_KINDS]
     types = [s for s in surfaces if s.get("kind") in MODEL_KINDS]
     routes = [
         s for s in surfaces
-        if s.get("kind") in ROUTE_KINDS or s.get("kind") == "mapping"
+        if s.get("kind") in ROUTE_KINDS | ADMIN_KINDS or s.get("kind") == "mapping"
     ]
     ctx.write_json("map/project-map.json", {  # type: ignore[attr-defined]
         "schema": "99x.extract.project-map/v1",
@@ -215,6 +243,7 @@ def _rewrite_maps(ctx: object, surfaces: list[dict]) -> None:
     ctx.write_json("map/content-model.json", {  # type: ignore[attr-defined]
         "schema": "99x.extract.content-model/v1",
         "types": types,
+        "references": _existing_references(ctx),
     })
     ctx.write_json("map/route-map.json", {  # type: ignore[attr-defined]
         "schema": "99x.extract.route-map/v1",
@@ -245,18 +274,25 @@ def _merge_report(
         counts[status] = counts.get(status, 0) + 1
     lines.append("## Status counts")
     lines.append("")
-    for status in ("live", "dead", "conditional", "unverified-live"):
+    for status in ("live", "dead", "conditional", "unobserved", "unverified-live"):
         lines.append(f"- `{status}`: {counts.get(status, 0)}")
     lines.append("")
+    probe = runtime.get("usageProbe")
+    if probe:
+        lines.append(f"Usage probe: `{probe}` (no usage counts; unseen components stay `unobserved`).")
+        lines.append("")
+    usage = runtime.get("usage") if isinstance(runtime.get("usage"), dict) else {}
     lines.append("## Surfaces")
     lines.append("")
-    lines.append("| id | kind | status |")
-    lines.append("|---|---|---|")
+    lines.append("| id | kind | status | usage |")
+    lines.append("|---|---|---|---|")
     for surface in surfaces:
         ident = surface.get("id") or ""
         kind = surface.get("kind") or ""
         status = surface.get("status") or ""
-        lines.append(f"| `{ident}` | {kind} | {status} |")
+        count = usage.get(_usage_key(surface, _descriptor_key(surface)))
+        shown = count if isinstance(count, int) and not isinstance(count, bool) else "-"
+        lines.append(f"| `{ident}` | {kind} | {status} | {shown} |")
     lines.append("")
     lines.append("## Contradictions")
     lines.append("")

@@ -7,8 +7,11 @@ import re
 import shutil
 from pathlib import Path
 
-from extractkit_cli.common import REPO_ROOT, write_text
+from extractkit_cli.common import REPO_ROOT, load_json, write_text
+from steps.enonic.controllers import HTTP_METHODS, http_requests
 from steps.enonic.descriptors import collect_resources
+
+ALL_FALLBACK = ("post", "get", "put", "delete", "patch", "head", "options", "trace")
 
 HTTP_CLIENT_RE = re.compile(r"""['"]/lib/http-client['"]""")
 SCRIPT_SRC_RE = re.compile(
@@ -48,15 +51,22 @@ def harvest_outbound(source: Path) -> list[dict]:
         if not match:
             continue
         rel = _rel(source, path)
-        line = _line_no(text, match)
-        ops.append({
-            "operationId": f"outbound_{path.stem}",
-            "summary": f"Outbound HTTP from {rel}",
-            "path": f"/outbound/{path.stem}",
-            "method": "post",
-            "direction": "outbound",
-            "x-source": [f"{rel}:{line}"],
-        })
+        requests = http_requests(text) or [{"line": _line_no(text, match)}]
+        for index, request in enumerate(requests):
+            suffix = "" if index == 0 else f"_{index + 1}"
+            op = {
+                "operationId": f"outbound_{path.stem}{suffix}",
+                "summary": f"Outbound HTTP from {rel}",
+                "path": f"/outbound/{path.stem}" + ("" if index == 0 else f"/{index + 1}"),
+                "method": request.get("method") if request.get("method") in HTTP_METHODS else "post",
+                "direction": "outbound",
+                "x-source": [f"{rel}:{request['line']}"],
+            }
+            if "url" in request:
+                op["x-url"] = request["url"]
+            if "urlExpr" in request:
+                op["x-url-expr"] = request["urlExpr"]
+            ops.append(op)
     return ops
 
 
@@ -90,7 +100,15 @@ def harvest_browser_embed(source: Path) -> list[dict]:
     return ops
 
 
-def harvest_inbound(source: Path) -> list[dict]:
+def _service_methods(controllers: list[dict], app: str, name: str) -> list[dict]:
+    """Exported HTTP methods of one service controller, in source order."""
+    for row in controllers:
+        if row.get("kind") == "service" and row.get("app") == app and row.get("name") == name:
+            return [m for m in row.get("methods") or [] if m.get("name") in HTTP_METHODS]
+    return []
+
+
+def harvest_inbound(source: Path, controllers: list[dict] | None = None) -> list[dict]:
     ops: list[dict] = []
     for resource in collect_resources(source):
         if resource.get("kind") != "service":
@@ -98,15 +116,37 @@ def harvest_inbound(source: Path) -> list[dict]:
         app = resource.get("app") or "unknown"
         name = resource.get("name") or "service"
         path = resource.get("path") or ""
-        ops.append({
-            "operationId": f"inbound_{name}",
-            "summary": f"XP service {name}",
-            "path": f"/_/service/{app}/{name}",
-            "method": "post",
-            "direction": "inbound",
-            "x-source": [f"{path}:1"],
-        })
+        found = _service_methods(controllers or [], app, name)
+        exported = [(m["name"], m["line"]) for m in found] or [("post", None)]
+        explicit = {name for name, _ in exported}
+        for method, line in exported:
+            suffix = "" if len(exported) == 1 else f"_{method}"
+            op = {
+                "operationId": f"inbound_{name}{suffix}",
+                "summary": f"XP service {name}",
+                "path": f"/_/service/{app}/{name}",
+                "method": _all_method(explicit) if method == "all" else method,
+                "direction": "inbound",
+                "x-source": [f"{path}:1"],
+            }
+            if line is not None:
+                op["x-source"] = [f"{_controller_file(controllers or [], app, name)}:{line}"]
+            if method == "all":
+                op["x-exported-method"] = "all"
+            ops.append(op)
     return ops
+
+
+def _all_method(explicit: set[str]) -> str:
+    """`all` serves every method without its own export; show it on the first such one."""
+    return next((m for m in ALL_FALLBACK if m not in explicit), "post")
+
+
+def _controller_file(controllers: list[dict], app: str, name: str) -> str:
+    return next(
+        row["file"] for row in controllers
+        if row.get("kind") == "service" and row.get("app") == app and row.get("name") == name
+    )
 
 
 def _operation_block(op: dict) -> dict:
@@ -119,13 +159,18 @@ def _operation_block(op: dict) -> dict:
             "200": {"description": "Observed at the cited source line. Field-minimal."}
         },
     }
-    if op.get("x-embed-url"):
-        block["x-embed-url"] = op["x-embed-url"]
+    for extra in ("x-embed-url", "x-url", "x-url-expr", "x-exported-method"):
+        if op.get(extra):
+            block[extra] = op[extra]
     return block
 
 
-def build_openapi(source: Path, title: str) -> dict:
-    ops = harvest_inbound(source) + harvest_outbound(source) + harvest_browser_embed(source)
+def build_openapi(source: Path, title: str, controllers: list[dict] | None = None) -> dict:
+    ops = (
+        harvest_inbound(source, controllers)
+        + harvest_outbound(source)
+        + harvest_browser_embed(source)
+    )
     paths: dict[str, dict] = {}
     for op in ops:
         item = paths.setdefault(op["path"], {})
@@ -179,6 +224,13 @@ def _copy_swagger_ui(ctx: object, spec: object) -> None:
     )
 
 
+def _controllers(ctx: object) -> list[dict]:
+    path: Path = ctx.rel("inventory/controllers.json")  # type: ignore[attr-defined]
+    if not path.is_file():
+        return []
+    return list(load_json(path, "inventory/controllers.json").get("controllers") or [])
+
+
 class EnonicIntegrationsStep:
     id = "enonic.integrations"
     requires = ("inventory/static.json",)
@@ -191,7 +243,7 @@ class EnonicIntegrationsStep:
     def run(self, ctx: object) -> None:
         source: Path = ctx.source  # type: ignore[attr-defined]
         title = f"{ctx.profile.get('name', 'extract')} integration contracts"  # type: ignore[attr-defined]
-        spec = build_openapi(source, title)
+        spec = build_openapi(source, title, _controllers(ctx))
         ctx.write_yaml("integrations/openapi.yaml", spec)  # type: ignore[attr-defined]
         _copy_swagger_ui(ctx, spec)
 

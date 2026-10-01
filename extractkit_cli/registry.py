@@ -33,7 +33,10 @@ def _load() -> dict[str, type]:
     from steps.core.speckit import SpeckitStep
     from steps.core.synthesize import SynthesizeStep
     from steps.core.use_cases import UseCasesStep
+    from steps.enonic.baseline import EnonicBaselineStep
     from steps.enonic.cms import EnonicCmsStep
+    from steps.enonic.compat import EnonicCompatStep
+    from steps.enonic.controllers import EnonicControllersStep
     from steps.enonic.descriptors import EnonicDescriptorsStep
     from steps.enonic.docs import EnonicDocsStep
     from steps.enonic.integrations import EnonicIntegrationsStep
@@ -45,8 +48,11 @@ def _load() -> dict[str, type]:
         NormalizeStep,
         MergeStep,
         EnonicDescriptorsStep,
+        EnonicControllersStep,
         EnonicIntegrationsStep,
         EnonicCmsStep,
+        EnonicBaselineStep,
+        EnonicCompatStep,
         EnonicDocsStep,
         ImpeccableStep,
         SynthesizeStep,
