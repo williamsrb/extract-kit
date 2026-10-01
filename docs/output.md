@@ -1,6 +1,6 @@
 # Output contract
 
-Canonical extract tree (stack-agnostic). Enonic details live only under `stackRef`.
+Canonical extract tree. Enonic details live only under `stackRef`.
 
 ```text
 <out>/
@@ -67,9 +67,10 @@ Rewritten at the end of every `run`, `step` and `resume`:
 
 ## Promote
 
-`extractkit promote` maps the files below. It refuses, writing nothing, when an
-existing destination holds changes git cannot restore (modified, staged,
-untracked, ignored, or a source outside git). `--force` overwrites anyway.
+`extractkit promote` maps the files below. It refuses, writing nothing,
+when an existing destination holds changes git cannot restore (modified,
+staged, untracked, ignored, or a source outside git). `--force`
+overwrites anyway.
 
 - `spec-kit/constitution.md` → `.specify/memory/constitution.md`
 - `spec-kit/specs/<ctx>/spec.md` → `specs/<ctx>/spec.md`
@@ -77,16 +78,34 @@ untracked, ignored, or a source outside git). `--force` overwrites anyway.
 - `design/DESIGN.md` → `DESIGN.md`
 - `design/design.json` → `.impeccable/design.json`
 
-Only files present in the sidecar are copied; `promote` refuses when there
-is nothing to copy.
+Only files present in the sidecar are copied. `promote` refuses when
+there is nothing to copy.
 
 ## Surface status
 
-`live` | `dead` | `conditional` | `unverified-live`.
-Runtime beats static. Round 2 beats round 1. Contradictions stay in the merge
-report. The rules are in [steps](steps.md#mapsmerge).
+Applies to `page`, `layout`, `part`, and `macro` when runtime exists.
 
-No `PLAN.md`, `DECISIONS.md`, or `IMPLEMENTATION.md` in this tree. Mode is as-is.
+| Status | Meaning |
+| --- | --- |
+| `live` | Seen in a runtime page's `templateOrder` |
+| `dead` | Runtime exists and never saw it |
+| `conditional` | Seen in round 1, absent in round 2 |
+| `unverified-live` | No runtime, or any other kind |
+
+<!-- markdownlint-disable MD013 -->
+| Rule | Winner |
+| --- | --- |
+| Runtime vs static | Runtime |
+| Round 2 vs round 1 | Round 2 |
+<!-- markdownlint-enable MD013 -->
+
+Contradictions stay in the merge report. The rules are in
+[steps](steps.md#mapsmerge).
+
+## As-is
+
+No `PLAN.md`, `DECISIONS.md`, or `IMPLEMENTATION.md` in this tree. Mode
+is as-is, not an XP8 port.
 
 ## Enonic extras (not a PHP/core contract)
 

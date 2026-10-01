@@ -1,8 +1,15 @@
 # Profiles
 
-Extractor types are YAML files under `profiles/`. `core` declares the pipeline
-and phases and leaves stack adapters unbound. `enonic` and `php` extend core.
+Extractor types are YAML files under `profiles/`.
 `extractkit profile show NAME` prints the composed result.
+
+<!-- markdownlint-disable MD013 -->
+| Profile | Role |
+| --- | --- |
+| `core` | Pipeline and phases. Stack adapters stay unbound |
+| `enonic` | Extends `core`. Binds XP7 descriptors, integrations, CMS, docs |
+| `php` | Extends `core`. Placeholder. `run` refuses; `doctor` is green |
+<!-- markdownlint-enable MD013 -->
 
 ## Keys
 
@@ -29,15 +36,15 @@ are allowed.
 Same algorithm as 99x-dev-kit `manifest.py`, ported for YAML:
 
 - `extends` with loop detection
-- lists (`pipeline`, `phases`, `deps`, `round2`) merge parent-first; a child
-  item already in the parent is not repeated
+- lists (`pipeline`, `phases`, `deps`, `round2`) merge parent-first; a
+  child item already in the parent is not repeated
 - maps (`cms`) merge shallowly; the child's keys win
 - child **replaces** `todo` and `adapters`
 - `lineage` is added: the chain from root to the profile
 
-Unknown adapter ids fail `extractkit doctor` / `profile show`. `doctor` also
-checks the phases: every pipeline slot sits in exactly one phase, no phase
-names an unknown slot, and no phase id repeats.
+Unknown adapter ids fail `extractkit doctor` / `profile show`. `doctor`
+also checks the phases: every pipeline slot sits in exactly one phase, no
+phase names an unknown slot, and no phase id repeats.
 
 ## Pipeline (core)
 
@@ -58,13 +65,13 @@ Each slot is described in [steps](steps.md). Phase grouping is in
 12. `spec.kit` — as-is constitution + per-context `spec.md`
 
 An unbound slot is dropped when the plugin of the same id is optional
-(`map.code`, `map.semantic`). Any other unbound slot makes `run` refuse with
-the `todo` list.
+(`map.code`, `map.semantic`). Any other unbound slot makes `run` refuse
+with the `todo` list.
 
 ## Enonic
 
-Binds `enonic.descriptors`, `enonic.integrations`, `enonic.cms`, `enonic.docs`.
-Production hosts are refused.
+Binds `enonic.descriptors`, `enonic.integrations`, `enonic.cms`,
+`enonic.docs`. Production hosts are refused.
 
 `cms` keys. A CLI flag beats the profile key; the profile key beats the
 built-in default.
@@ -87,24 +94,33 @@ built-in default.
 `--round2` values are added to the profile's `round2` list.
 
 `enonic.cms` is where XP7 detection rules live (not core, not PHP):
-`sample_per_type: 3`, `/_templates` folder order, and
-customized > explicit `page.template` > implicit `data.supports`.
-See `docs/output.md` (Enonic extras).
+`sample_per_type: 3`, `/_templates` folder order, and customized >
+explicit `page.template` > implicit `data.supports`. See
+[output](output.md#enonic-extras-not-a-phpcore-contract).
 
 ## PHP
 
-Empty placeholder. `todo` lists unfinished work. Adapters for descriptors,
-integrations, runtime, and docs stay `null`. `run --profile php` refuses.
-`doctor --profile php` is green. `php` and `composer` are optional deps.
+Empty placeholder. `todo` lists unfinished work. Adapters for
+descriptors, integrations, runtime, and docs stay `null`.
+
+- `run --profile php` refuses
+- `doctor --profile php` is green
+- `php` and `composer` are optional deps
 
 ## Adding a profile or adapter
 
-A stack profile is a new `profiles/<name>.yaml` with `extends: core` and its
-`adapters`. A new plugin is a class with `id`, `requires`, `produces`,
+Step 1: Add `profiles/<name>.yaml` with `extends: core` and its
+`adapters`.
+
+Step 2: A new plugin is a class with `id`, `requires`, `produces`,
 `required`, and `plan(ctx)`, `run(ctx)`, `check(ctx)` (see
-`extractkit_cli/registry.py` `Step`), registered in `registry._load()`. Write
-through `ctx.write_text` / `write_json` / `write_yaml` so the run output
-lists the file, and call `ctx.record_skip(step, reason, fix)` instead of
-failing when an optional input is missing. `status` and `resume` treat the
-plugin as done when every path in `produces` exists, unless
-`extractkit_cli/progress.py` `DISTINCTIVE` lists narrower markers.
+`extractkit_cli/registry.py` `Step`). Register it in `registry._load()`.
+
+Step 3: Write through `ctx.write_text` / `write_json` / `write_yaml` so
+the run output lists the file. Call
+`ctx.record_skip(step, reason, fix)` instead of failing when an optional
+input is missing.
+
+Step 4: `status` and `resume` treat the plugin as done when every path in
+`produces` exists, unless `extractkit_cli/progress.py` `DISTINCTIVE`
+lists narrower markers.

@@ -1,8 +1,20 @@
 # 99x Extract Kit
 
-Read a legacy checkout and write a **stack-agnostic extract tree**. Enonic XP7
-is the first adapter. PHP is an empty placeholder. Spec Kit is an as-is sink
-of that tree, not an XP8/React4XP port. Every command writes on the first call.
+Extractkit reads a legacy checkout and writes a sidecar any later tool can
+consume.
+
+<!-- markdownlint-disable MD013 -->
+| Profile | What it does |
+| --- | --- |
+| `enonic` | XP7 inventory, OpenAPI harvest, optional live CMS |
+| `php` | Placeholder. `doctor` is green; `run` refuses with the todo list |
+| `core` | Pipeline and phases only. No stack adapters |
+<!-- markdownlint-enable MD013 -->
+
+The sidecar stays under `<source>/.extract/<run-id>/`. `promote` copies as-is
+Spec Kit files into the checkout. That is not an XP8 or React4XP port.
+
+Every command writes on the first call. There is no dry run.
 
 Docs: [flow](docs/flow.md), [CLI](docs/cli.md), [steps](docs/steps.md),
 [profiles](docs/profiles.md), [output](docs/output.md).
@@ -33,22 +45,35 @@ No bootstrap, no desktop forks, no writes into `~/.agents-profiles`.
 ./extractkit promote --source /path/to/legacy
 ```
 
-`run` writes `<source>/.extract/<run-id>/`. Each run prints the phases it
-touched and ends with a `next` block holding the command to paste next.
-`status` (alias `next`) shows every phase as done, current, or pending. See
-[flow](docs/flow.md) for the path, [CLI](docs/cli.md) for phases, `-v` / `-q`,
-and the promote guard. The kit never edits the source `.gitignore` or
-`.git/`. `.extract/.gitignore` contains `*` so the sidecar is self-ignored.
+## Sidecar
+
+`run` writes `<source>/.extract/<run-id>/`.
+
+## Next
+
+Each run prints the phases it touched and ends with a `next` block: the
+command to paste next. `status` (alias `next`) shows every phase as done,
+current, or pending.
+
+The path is in [flow](docs/flow.md). Flags, `-v` / `-q`, and the promote
+guard are in [CLI](docs/cli.md).
 
 ![Operator path](docs/diagrams/operator-path.png)
 
-`./extractkit run --profile php --source …` exits non-zero with the unfinished
-work list. It does not parse PHP.
+## Source safety
+
+The kit never edits the source `.gitignore` or `.git/`.
+`.extract/.gitignore` contains `*` so the sidecar is self-ignored.
+
+## PHP
+
+`./extractkit run --profile php --source …` exits non-zero with the
+unfinished work list. It does not parse PHP.
 
 ## Static extract
 
-A full pipeline includes live CMS and requires `--branch` and
-`--storage-state`. For descriptors, maps, and OpenAPI only:
+Descriptors, maps, and OpenAPI only. A full Enonic run also surveys live
+CMS and needs `--branch` and `--storage-state`.
 
 ```bash
 ./extractkit run --profile enonic --source /path/to/legacy --until static
@@ -62,32 +87,16 @@ Then merge, docs, and Spec Kit without CMS:
   --from merge --until synthesis
 ```
 
-`extractkit check` validates schemas, FR-10 descriptor coverage, OpenAPI
-`x-source`, optional runtime inventory, bounded contexts, and spec.md FR cites.
-
-Static harvest writes `integrations/openapi.yaml` and a **read-only**
-Swagger UI under `integrations/swagger-ui/` (`swagger-ui-dist` 5.30.2).
-Try it out is disabled. The spec is inlined in `spec.js` so `index.html`
-works from `file://`. Live CMS then patches `x-production-endpoints` and
-refreshes `spec.js`. Those URLs are never fetched.
+`extractkit check` validates the sidecar. What it fails on is in
+[CLI](docs/cli.md#check).
 
 ## Runtime CMS
 
-`enonic.cms` surveys a **local or review** XP only. Pass `--branch draft|master`.
-The Guillotine GraphQL URL is a run parameter (`--guillotine`); production
-hosts are refused. Auth is a Playwright storage-state file (`--storage-state`).
-Pin keys with `--cms-key`; do not walk the tree. Enonic still samples
-**3 contents per type** (`queryConnection` `first=3`) and resolves pages
-as customized > explicit `page.template` > implicit `data.supports` in
-`/_templates` folder order. That logic is XP7-only
-(`steps/enonic/page_templates.py`). PHP has no equivalent.
+`enonic.cms` surveys a local or review XP only. Production hosts are
+refused.
 
-After the page survey, the same session reads **Site Config** (Content Studio
-REST) and **Config Env** (`--configenv`, default XP7
-`/admin/tool/no.seeds.configenv/module-config`). Live provider URLs are written
-to `inventory/runtime.json` `endpoints` and merged into OpenAPI
-`x-production-endpoints` as metadata. Secrets are dropped. Those URLs are
-never fetched.
+Required: `--branch draft|master`, `--storage-state`, and a Guillotine URL
+(`--guillotine`). Pin keys with `--cms-key`. Do not walk the tree.
 
 ```bash
 ./extractkit step enonic.cms --profile enonic --source /path/to/legacy \
@@ -98,18 +107,20 @@ never fetched.
   --cms-key /en
 ```
 
-`maps.merge` then marks surveyed page/layout/part/macro surfaces `live` or
-`dead`, writes `inventory/merge-report.md`, and splits
-`map/bounded-contexts.json`.
+Survey rules and redaction are in
+[steps](docs/steps.md#inventoryruntime-enoniccms). After CMS, `maps.merge`
+updates page, layout, part, and macro status. The four values are in
+[output](docs/output.md#surface-status).
 
 ## Promote
 
-Explicit. Copies as-is Spec Kit constitution to
-`.specify/memory/constitution.md` (the path Spec Kit reads), plus PRODUCT,
-DESIGN, and `specs/<context>/spec.md`. Does not copy the sidecar into git.
-Refuses, writing nothing, when an existing destination has changes git cannot
-restore (modified, staged, untracked, ignored, or a source outside git). Pass
-`--force` to overwrite anyway.
+Explicit. Copies as-is Spec Kit constitution, PRODUCT, DESIGN, and
+per-context `spec.md` into the checkout. It does not copy the sidecar into
+git.
+
+It refuses, writing nothing, when git cannot restore an existing
+destination. `--force` overwrites. Paths and the guard are in
+[output](docs/output.md#promote) and [CLI](docs/cli.md#promote-guard).
 
 ## Tests
 
@@ -117,5 +128,4 @@ restore (modified, staged, untracked, ignored, or a source outside git). Pass
 python3 -m unittest discover -s tests
 ```
 
-Fixtures under `tests/fixtures/enonic-mini/`. No GitLab CI in this kit.
-No `PLAN.md` in this repo; the harness plan is `~/.agents/plans/legacy-spec-extractor.md`.
+Fixtures: `tests/fixtures/enonic-mini/`. No GitLab CI in this kit.
