@@ -1,8 +1,8 @@
 [
   {
     "type": "cameraUpdate",
-    "width": 1200,
-    "height": 900,
+    "width": 1400,
+    "height": 1050,
     "x": 0,
     "y": 0
   },
@@ -21,7 +21,7 @@
     "id": "s",
     "x": 40,
     "y": 54,
-    "text": "--from / --until / step take a phase id. 1, 6 and 7 are commands. Grey = optional or added slot.",
+    "text": "--from / --until / step take a phase id. 1, 6, 7 and 8 are commands. Grey = optional or added slot.",
     "fontSize": 16,
     "strokeColor": "#5f6368",
     "fontFamily": 5
@@ -175,7 +175,7 @@
       "type": 3
     },
     "label": {
-      "text": "6 check",
+      "text": "6 agent",
       "fontSize": 15,
       "fontFamily": 5
     },
@@ -197,19 +197,47 @@
     "y": 140,
     "width": 145,
     "height": 80,
-    "backgroundColor": "#b2f2bb",
-    "fillStyle": "hachure",
+    "backgroundColor": "#ffec99",
+    "fillStyle": "solid",
     "roundness": {
       "type": 3
     },
     "label": {
-      "text": "7 promote",
+      "text": "7 check",
       "fontSize": 15,
       "fontFamily": 5
     },
     "boundElements": [
       {
         "id": "a6",
+        "type": "arrow"
+      },
+      {
+        "id": "a7",
+        "type": "arrow"
+      }
+    ]
+  },
+  {
+    "type": "rectangle",
+    "id": "p8",
+    "x": 1199,
+    "y": 140,
+    "width": 145,
+    "height": 80,
+    "backgroundColor": "#b2f2bb",
+    "fillStyle": "hachure",
+    "roundness": {
+      "type": 3
+    },
+    "label": {
+      "text": "8 promote",
+      "fontSize": 15,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a7",
         "type": "arrow"
       }
     ]
@@ -413,6 +441,39 @@
     }
   },
   {
+    "type": "arrow",
+    "id": "a7",
+    "x": 1177,
+    "y": 180.0,
+    "width": 22,
+    "height": 0.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        22,
+        0.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "p7",
+      "fixedPoint": [
+        1,
+        0.5
+      ]
+    },
+    "endBinding": {
+      "elementId": "p8",
+      "fixedPoint": [
+        0,
+        0.5
+      ]
+    }
+  },
+  {
     "type": "text",
     "id": "n1",
     "x": 30,
@@ -458,6 +519,16 @@
     "x": 698,
     "y": 232,
     "text": "+ compat (optional)",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
+    "type": "text",
+    "id": "n6",
+    "x": 865,
+    "y": 232,
+    "text": "+ rules.name, business\n(spec.enrich optional)",
     "fontSize": 15,
     "strokeColor": "#5f6368",
     "fontFamily": 5

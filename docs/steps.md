@@ -562,6 +562,66 @@ says an API is removed unless that page does. `promote` does not copy
 **Skip.** No `inventory/static.json` records a skip that points at
 `run --until static`.
 
+## Agent tasks
+
+Not pipeline slots. The agent phase (phase 6) lists the tasks in
+`agent-tasks/<id>/`; `extractkit agent list|show|next` renders them and the
+[extract-agentic skill](../skills/extract-agentic/SKILL.md) runs them. The
+kit never calls a model. `status` counts the phase done when every required
+task is done. Output rules are the same as for the kit: every claim beyond
+an extracted fact ends with `_(inferred)_` and sits under an `Evidence:`
+line.
+
+### rules.name
+
+**Does.** Required. After `rules.view`. Reads `rules/RULES.md`,
+`rules/review.md` and `rules/view-rules.json`, and the source at each cited
+`path:line`. The agent writes a `name:` and a one-sentence `intent:` for
+each business rule, names every copy of a divergent group without picking
+one, and never ticks `[x]` or sets `out-of-scope: yes`.
+
+**Writes.** `rules/review.md`. Then it re-runs
+`run --from merge --until synthesis` so the names reach
+`rules/view-rules.json`, `rules/RULES.md` and the specs.
+
+**Done when.** `rules/view-rules.json` exists and no `business` rule is
+still `status: extracted`. A marker file cannot prove this, because
+`rules/review.md` exists from `rules.view` onwards.
+
+**Skip.** None. With no business rules the task is already done.
+
+### business
+
+**Does.** Required. After `spec.kit`. Reads `map/bounded-contexts.json`,
+`use-cases/`, `rules/RULES.md`, `rules/view-rules.json`,
+`map/content-model.json`, `map/route-map.json`, `product/PRODUCT.md` and
+`docs/harvest/` when it exists. Writes the general business flow of the
+extracted project. It lists divergent rule groups and `unobserved` surfaces
+under Open questions and adds no port advice.
+
+**Writes.** `business/BUSINESS.md` with the sections Purpose and audience,
+Actors, Capabilities, Business flow, Business rules by capability,
+Glossary, Integrations and Open questions. `promote` copies it to
+`BUSINESS.md`. `check` validates it when present (see
+[output](output.md#businessmd)).
+
+**Skip.** `agent next` does not return the task while a required input is
+missing; it names the input and points at `status`.
+
+### spec.enrich
+
+**Does.** Optional. After `spec.kit`. Rewrites the prose of a `spec.md` FR
+or a `use-cases/*.md` journey so it reads better. Every FR keeps its
+`Acceptance:` bullets and `Evidence:` line, and every added sentence ends
+with `_(inferred)_`.
+
+**Writes.** `spec-kit/specs/` and `use-cases/`, prose only. `check` then
+fails an FR without an `Evidence:` line.
+
+**Skip.** Never returned by `agent next`. Run it with
+`extractkit agent show spec.enrich --out <sidecar>`. Re-running `spec.kit`
+rewrites the specs, so enrich after the last run of that slot.
+
 ## PHP
 
 The PHP profile leaves `inventory.descriptors`, `inventory.controllers`,

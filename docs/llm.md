@@ -67,16 +67,49 @@ extractkit run --profile enonic --source <legacy> --out <sidecar> --from merge -
 ```
 <!-- markdownlint-enable MD013 -->
 
-Merge also writes `rules/`. Synthesis cites the rules in the specs.
+Merge also writes `rules/`. Synthesis cites the rules in the specs. The
+next phase is the agent phase (6); `run` and `step` refuse it.
 
-### 6 Check and 7 Promote
+### 6 Agent
+
+The kit stores each agent step as a prompt in `agent-tasks/<id>/`. It never
+calls a model. After synthesis, `extractkit status` shows the agent phase as
+current while a required task is pending.
+
+```bash
+extractkit agent list --out <sidecar>
+extractkit agent next --out <sidecar> --json
+extractkit agent show <id> --out <sidecar>
+```
+
+`agent next` names the first required task whose inputs exist. `agent show`
+prints its prompt with the real sidecar and source paths, then the input and
+output files. Do the task, run its `rerun` command when it declares one, run
+`check`, and ask for the next task. Stop when `agent next` reports none
+pending. The `extract-agentic` skill runs this loop.
+
+<!-- markdownlint-disable MD013 -->
+| Task | Writes | Done when |
+| --- | --- | --- |
+| `rules.name` | `rules/review.md` (names and intents) | no business rule in `rules/view-rules.json` is still `extracted` |
+| `business` | `business/BUSINESS.md` | the file exists |
+| `spec.enrich` | `spec-kit/specs/`, `use-cases/` (prose only) | optional, never blocks |
+<!-- markdownlint-enable MD013 -->
+
+`rules.name` needs a re-run: the names reach `rules/view-rules.json` only
+when you run the merge and synthesis slice. The procedure and the analyst
+gates are in each task's prompt. The agent never ticks `[x]` in
+`rules/review.md`.
+
+### 7 Check and 8 Promote
 
 ```bash
 extractkit check --out <sidecar>
 extractkit promote --source <legacy> --out <sidecar>
 ```
 
-Promote only when the operator asks.
+`check` validates `business/BUSINESS.md` only when it exists. Promote only
+when the operator asks.
 
 ## Exit codes and `next`
 
@@ -87,6 +120,7 @@ Promote only when the operator asks.
 | Exit 0, `or continue without CMS` alternative | Pick the CMS line only when a local or review XP and a storage state exist; otherwise the offline line |
 | Exit 1 with `error:` and `fix:   $ <command>` | Run the fix command. It is your own command with the missing flag added |
 | Exit 1 with a prose `fix:` | Do what it says, or report it to the operator when it needs a decision |
+| Exit 0, `Agent is next` | Run `extractkit agent next`, or the `or skip to check` line when the operator asked for less |
 | `check` exit 1 | Fix each listed problem at its source, re-run the slot that writes the file, then `check` again |
 | Exit 2 | A wrong flag or command. Read `--help`; do not retry blindly |
 <!-- markdownlint-enable MD013 -->
@@ -106,52 +140,17 @@ Promote only when the operator asks.
 | `promote` refuses | A destination git cannot restore | Commit or stash it. `--force` only on the operator's word |
 | `template … maps to no component surface` | A surface was removed from `map/component-map.json` | Re-run `maps.normalize`, never edit the map |
 | `component … is not spec-ready` | A `template` block lost a required key | Re-run `maps.normalize` |
+| `business/BUSINESS.md … does not resolve` | An `Evidence:` ref is not a source `path:line`, a map id, a context id or a rule id | Fix the ref in `business/BUSINESS.md`; do not edit the maps |
+| `run --from agent` refuses | The agent phase is a command | `extractkit agent next --out <sidecar>` |
 | `business rule VR-… is not cited` | A business rule is in no spec FR and not dropped | Re-run `spec.kit`; if the operator says the rule is dropped, set `out-of-scope: yes` in `rules/review.md` |
 <!-- markdownlint-enable MD013 -->
 
-## Naming the rules
-
-The kit extracts every rule in the view layer with `path:line` and scores it.
-It does not know what a rule means. You name it. An analyst confirms it.
-
-Step 1: Open `rules/RULES.md`. Read the coverage line first. If files were
-skipped, tell the operator which and why before going on.
-
-Step 2: Open `rules/review.md`. Each business rule is a checkbox with
-`name:`, `intent:` and `out-of-scope:` lines.
-
-Step 3: For each rule, read the source at the `path:line` it cites. Do not
-rely on the expression alone.
-
-Step 4: Write `name:` as a short label and `intent:` as one sentence about
-the business condition. End both with `_(inferred)_`.
-
-Step 5: For each divergent group in `rules/RULES.md`, name every copy and say
-nothing about which one is right. Do not pick a winner. The group is already
-an open question in the spec, and the analyst answers it.
-
-Step 6: Re-run the merge and synthesis slice so the names reach
-`rules/view-rules.json`, `rules/RULES.md` and the specs. Ids carry your edits
-over; an id that vanished is listed under `Removed`.
-
-<!-- markdownlint-disable MD013 -->
-```bash
-extractkit run --profile enonic --source <legacy> --out <sidecar> --from merge --until synthesis
-extractkit check --out <sidecar>
-```
-<!-- markdownlint-enable MD013 -->
-
-A rule moves through three stages: `extracted` (the kit), `named` (you),
-`confirmed` (the analyst ticks `[x]`).
-
 ## Do not
 
-- Do not tick `[x]` in `rules/review.md`. Only the analyst confirms.
-- Do not set `out-of-scope: yes` unless the operator told you to.
-- Do not edit `rules/view-rules.json`, `rules/RULES.md`, `rules/literals.md`
-  or any map or inventory file. Re-run the slot instead.
-- Do not change a rule id, delete a rule entry, or rename a file.
-- Do not invent a rule, an operand or a literal that is not in the source.
+- Do not tick `[x]` in `rules/review.md` or set `out-of-scope: yes`. The
+  agent tasks say the rest.
+- Do not edit a map, an inventory file or `rules/view-rules.json`. Re-run
+  the slot instead.
 - Do not write port plans, `DECISIONS.md` or `IMPLEMENTATION.md`.
 - Do not run graft, graphify, Serena onboarding or `git` writes in the source.
 - Do not edit the source `.gitignore` or `.git/`.

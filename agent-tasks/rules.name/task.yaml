@@ -1,0 +1,11 @@
+id: rules.name
+title: Name the view-layer business rules
+after: rules.view
+reads:
+  - rules/RULES.md
+  - rules/review.md
+  - rules/view-rules.json
+writes:
+  - rules/review.md
+done_check: rules_named
+rerun: run --from merge --until synthesis

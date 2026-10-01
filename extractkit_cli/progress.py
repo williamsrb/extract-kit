@@ -34,6 +34,9 @@ SKILL_FOR: dict[str, str] = {
 }
 
 
+AGENT_SKILL = "extract-agentic"
+
+
 def _produced(out: Path, rel: str) -> bool:
     path = out / rel
     if rel.endswith("/"):
@@ -152,6 +155,19 @@ def status_rows(profile: dict, out: Path, style: guide.Style) -> list[str]:
         note = ""
         if phase.command == "doctor":
             mark = style.blank()
+        elif phase.command == "agent":
+            from . import agent_tasks
+
+            waiting = agent_tasks.pending(out, profile)
+            hint = f"skills: {AGENT_SKILL}"
+            if state not in ("complete", "offline"):
+                mark, note = style.glyph("pending"), hint
+            elif not waiting:
+                mark = style.glyph("done")
+            else:
+                mark = style.glyph("current" if not current_seen else "pending")
+                current_seen = True
+                note = f"pending {', '.join(t.id for t in waiting)} · {hint}"
         elif phase.command:
             is_current = not current_seen and state in ("complete", "offline") \
                 and phase.command == "check"

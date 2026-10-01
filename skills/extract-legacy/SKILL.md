@@ -13,8 +13,7 @@ in the kit tree.
 
 Read `docs/llm.md` first. It holds the invariants, the command sequence per
 phase, what to do for each exit code and `next` block, the failure table and
-the procedure for naming view-layer business rules. This skill only adds
-what is specific to a skill run.
+the agent phase. This skill only adds what is specific to a skill run.
 
 ## Rules
 
@@ -55,33 +54,24 @@ Diagrams: `docs/flow.md` and `docs/diagrams/*.png`.
 5. Merge and synthesis: `extractkit resume --profile enonic --source
    <legacy> --until synthesis` (or, without CMS, `extractkit run --profile
    enonic --source <legacy> --out <sidecar> --from merge --until synthesis`)
-6. Name the view-layer business rules in `rules/review.md` by the
-   procedure in `docs/llm.md`, re-run step 5, then
-   `extractkit check --out <sidecar>`
+6. Agent phase (name the rules, write `BUSINESS.md`): invoke the
+   `extract-agentic` skill. It runs `extractkit agent next --out <sidecar>`
+   until nothing is pending, then `extractkit check --out <sidecar>`
 7. Promote only when asked: `extractkit promote --source <legacy>
    --out <sidecar>`
 
 `status` prints a skill of `impeccable` when PRODUCT/DESIGN are missing,
-and `extract-legacy` for deterministic kit steps (including CMS HTTP).
+`extract-agentic` for the agent phase, and `extract-legacy` for
+deterministic kit steps (including CMS HTTP).
 
 Impeccable `init` / `document` may replace the as-is PRODUCT/DESIGN the
 kit already wrote. Do not invent an XP8 visual world.
 
 ## Spec enrich (optional, after `spec.kit`)
 
-The kit writes behavior text from extracted facts only and never infers. A
-model may rewrite the prose of a `spec.md` FR or a `use-cases/*.md` journey
-to read better, under this contract:
-
-- Every FR keeps its `Acceptance:` bullets and its `Evidence:` line. Do not
-  drop or reword a `file:line`, map id, `runtime:` or `baseline:` ref.
-- Every sentence the model adds beyond the extracted facts ends with
-  `_(inferred)_`, and the paragraph that holds it is followed by (or contains)
-  an `Evidence:` line.
-- Add no port plan, XP8 advice, or stack choice. Those stay out of
-  `spec-kit/` (as-is).
-- Run `extractkit check --out <sidecar>` afterwards. It fails an FR without
-  an `Evidence:` line and an `_(inferred)_` paragraph without one.
+The prompt moved into the agent task registry. Run
+`extractkit agent show spec.enrich --out <sidecar>` and follow it, through
+the `extract-agentic` skill.
 
 ## Optional slots
 

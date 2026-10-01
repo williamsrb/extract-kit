@@ -1,0 +1,20 @@
+id: business
+title: Write BUSINESS.md, the general business flow
+after: spec.kit
+reads:
+  - map/bounded-contexts.json
+  - use-cases/
+  - rules/RULES.md
+  - rules/view-rules.json
+  - map/content-model.json
+  - map/route-map.json
+  - product/PRODUCT.md
+writes:
+  - business/BUSINESS.md
+done:
+  - business/BUSINESS.md
+promote:
+  - from: business/BUSINESS.md
+    to: BUSINESS.md
+checks:
+  - business

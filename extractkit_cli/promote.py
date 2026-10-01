@@ -7,7 +7,7 @@ import subprocess
 from argparse import Namespace
 from pathlib import Path
 
-from . import guide
+from . import agent_tasks, guide
 from .common import Plan, write_text
 from .errors import ExtractkitError
 from .outtree import resolve_source
@@ -44,6 +44,7 @@ def cmd_promote(args: Namespace) -> int:
         if src.is_file():
             copies.append((src, source / dest_rel))
     copies.extend((src, source / dest) for src, dest in _spec_promotions(out))
+    copies.extend((src, source / dest) for src, dest in agent_tasks.promotions(out))
     if not copies:
         raise ExtractkitError(
             f"nothing to promote from {out}",

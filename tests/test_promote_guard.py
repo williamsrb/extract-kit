@@ -114,6 +114,42 @@ class PromoteGuardTests(unittest.TestCase):
             self.assertTrue((source / "PRODUCT.md").is_file())
             self.assertTrue((source / CONSTITUTION).is_file())
 
+    def test_business_md_is_promoted_from_the_task_registry(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            out = _sidecar(parent)
+            (out / "business").mkdir()
+            (out / "business" / "BUSINESS.md").write_text("# business\n", encoding="utf-8")
+            source = _source(parent)
+            result = _promote(source, out)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual((source / "BUSINESS.md").read_text(), "# business\n")
+            self.assertIn("BUSINESS.md", result.stdout)
+
+    def test_business_md_is_not_promoted_when_absent(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            source = _source(parent)
+            self.assertEqual(_promote(source, _sidecar(parent)).returncode, 0)
+            self.assertFalse((source / "BUSINESS.md").exists())
+
+    def test_business_md_follows_the_same_guard(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            out = _sidecar(parent)
+            (out / "business").mkdir()
+            (out / "business" / "BUSINESS.md").write_text("# new\n", encoding="utf-8")
+            source = _source(parent)
+            (source / "BUSINESS.md").write_text("# hand edited\n", encoding="utf-8")
+            git_init(source)
+            (source / "BUSINESS.md").write_text("# edited again\n", encoding="utf-8")
+            result = _promote(source, out)
+            self.assertEqual(result.returncode, 1, result.stdout)
+            self.assertIn("BUSINESS.md  (modified)", result.stderr)
+            forced = _promote(source, out, "--force")
+            self.assertEqual(forced.returncode, 0, forced.stderr)
+            self.assertEqual((source / "BUSINESS.md").read_text(), "# new\n")
+
 
 if __name__ == "__main__":
     unittest.main()

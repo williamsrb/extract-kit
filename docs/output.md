@@ -31,6 +31,7 @@ Canonical extract tree. Enonic details live only under `stackRef`.
   docs/technical/
   docs/guide/
   use-cases/<context>.md
+  business/BUSINESS.md            # optional; agent task `business`
   integrations/openapi.yaml
   integrations/swagger-ui/        # read-only Swagger UI; Try it out disabled
   spec-kit/constitution.md
@@ -110,6 +111,16 @@ for each content-selector field.
 - `rules/RULES.md`, `rules/literals.md`: the readable views
 - `rules/review.md`: the only file in `rules/` a person or agent edits
 
+## BUSINESS.md
+
+`business/BUSINESS.md` is written by the `business` agent task. It has the
+H2 sections Purpose and audience, Actors, Capabilities, Business flow,
+Business rules by capability, Glossary, Integrations and Open questions.
+`check` validates it only when it exists: every section is present, every
+`Evidence:` ref resolves (a source `path:line`, a map id, a context id or a
+rule id), every capability cites a rule id or a surface id, and every
+`_(inferred)_` paragraph has an `Evidence:` line.
+
 ## Hygiene
 
 `hygiene/dead-code.md` is report-only. The kit never deletes source.
@@ -127,6 +138,9 @@ overwrites anyway.
 - `product/PRODUCT.md` → `PRODUCT.md`
 - `design/DESIGN.md` → `DESIGN.md`
 - `design/design.json` → `.impeccable/design.json`
+- `business/BUSINESS.md` → `BUSINESS.md` (a promote row declared by the
+  `business` agent task in `agent-tasks/business/task.yaml`; every task's
+  `promote` rows are added to this list)
 
 `baseline/`, `reports/` and `inventory/` are never promoted. Only files
 present in the sidecar are copied. `promote` refuses when there is nothing

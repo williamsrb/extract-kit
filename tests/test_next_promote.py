@@ -13,6 +13,7 @@ from tests.support import (
     porcelain,
     run,
     sidecar_run_dir,
+    valid_business,
 )
 
 
@@ -61,8 +62,16 @@ class NextPromoteTests(unittest.TestCase):
             self.assertTrue((out / "spec-kit" / "constitution.md").is_file())
             done = run("next", "--source", str(source), "--out", str(out))
             self.assertEqual(done.returncode, 0, done.stderr + done.stdout)
-            self.assertIn("→ 6 check", done.stdout)
-            self.assertIn("check --out", done.stdout)
+            self.assertIn("→ 6 agent", done.stdout)
+            self.assertIn("agent next --out", done.stdout)
+            self.assertIn("or skip to check:", done.stdout)
+            (out / "business").mkdir()
+            (out / "business" / "BUSINESS.md").write_text(valid_business(), encoding="utf-8")
+            back = run("next", "--source", str(source), "--out", str(out))
+            self.assertIn("✓ 6 agent", back.stdout)
+            self.assertIn("→ 7 check", back.stdout)
+            self.assertIn("check --out", back.stdout)
+            self.assertNotIn("agent next", back.stdout)
 
     def test_status_names_optional_slots_that_were_not_captured(self) -> None:
         import json
@@ -87,7 +96,8 @@ class NextPromoteTests(unittest.TestCase):
             self.assertIn("tip   inventory.baseline not captured (optional):", result.stdout)
             self.assertIn("step inventory.baseline", result.stdout)
             self.assertIn("--storage-state", result.stdout)
-            self.assertIn("Pipeline complete", result.stdout)
+            self.assertIn("Agent is next:", result.stdout)
+            self.assertIn("agent next --out", result.stdout)
             quiet = run("status", "--source", str(source), "--out", str(out), "-q")
             self.assertNotIn("tip ", quiet.stdout)
 
@@ -107,6 +117,8 @@ class NextPromoteTests(unittest.TestCase):
                 "--from", "maps.merge", "--until", "spec.kit",
             )
             self.assertEqual(docs.returncode, 0, docs.stderr + docs.stdout)
+            (out / "business").mkdir()
+            (out / "business" / "BUSINESS.md").write_text(valid_business(), encoding="utf-8")
             applied = run(
                 "promote", "--source", str(source), "--out", str(out),
             )
@@ -115,6 +127,9 @@ class NextPromoteTests(unittest.TestCase):
             self.assertTrue(dest.is_file())
             self.assertIn("as-is", dest.read_text().lower())
             self.assertTrue((source / "PRODUCT.md").is_file())
+            self.assertEqual(
+                (source / "BUSINESS.md").read_text(), (out / "business" / "BUSINESS.md").read_text(),
+            )
             self.assertTrue((source / ".impeccable" / "design.json").is_file())
             self.assertTrue(list((source / "specs").glob("*/spec.md")))
             self.assertNotEqual(porcelain(source), "")

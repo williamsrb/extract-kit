@@ -22,6 +22,15 @@ HTTP_METHODS = ("get", "put", "post", "delete", "options", "head", "patch", "tra
 FR_HEADING = re.compile(r"^#{1,6}\s*FR-\d+\b", re.IGNORECASE)
 EVIDENCE_LINE = re.compile(r"^\s*Evidence\s*:\s*\S", re.MULTILINE)
 INFERRED = "`_(inferred)_`"
+BUSINESS_FILE = "business/BUSINESS.md"
+BUSINESS_SECTIONS = (
+    "Purpose and audience", "Actors", "Capabilities", "Business flow",
+    "Business rules by capability", "Glossary", "Integrations", "Open questions",
+)
+EVIDENCE_REFS = re.compile(r"^\s*Evidence\s*:(.*)$", re.MULTILINE)
+BACKTICKED = re.compile(r"`([^`]+)`")
+SOURCE_REF = re.compile(r"^(.+):(\d+)$")
+RULE_ID = re.compile(r"VR-[0-9a-f]{10}")
 
 
 def _out_dir(raw: str | None) -> Path:
@@ -61,6 +70,129 @@ def _paths_in_maps(out: Path) -> set[str]:
                 if isinstance(descriptor, str):
                     found.add(descriptor)
     return found
+
+
+def _ids_in_maps(out: Path) -> set[str]:
+    """Ids of the surfaces, components, types and routes in the map files."""
+    found: set[str] = set()
+    for rel, _stem in MAP_FILES:
+        path = out / rel
+        if not path.is_file():
+            continue
+        payload = load_json(path, rel)
+        for collection_key in ("surfaces", "components", "types", "routes"):
+            items = payload.get(collection_key) or []
+            if not isinstance(items, list):
+                continue
+            found.update(
+                item["id"] for item in items
+                if isinstance(item, dict) and isinstance(item.get("id"), str)
+            )
+    return found
+
+
+def _context_ids(out: Path) -> set[str]:
+    path = out / "map" / "bounded-contexts.json"
+    if not path.is_file():
+        return set()
+    contexts = load_json(path, "map/bounded-contexts.json").get("contexts") or []
+    return {c["id"] for c in contexts if isinstance(c, dict) and isinstance(c.get("id"), str)}
+
+
+def _rule_ids(out: Path) -> set[str]:
+    path = out / "rules" / "view-rules.json"
+    if not path.is_file():
+        return set()
+    rules = load_json(path, "rules/view-rules.json").get("rules") or []
+    return {r["id"] for r in rules if isinstance(r, dict) and isinstance(r.get("id"), str)}
+
+
+def _split_h2(text: str) -> dict[str, str]:
+    """H2 title to the section body. Text before the first H2 is under ''."""
+    sections: dict[str, list[str]] = {"": []}
+    current = ""
+    for line in text.splitlines():
+        match = re.match(r"^##\s+(.+?)\s*#*\s*$", line)
+        if match:
+            current = match.group(1)
+            sections.setdefault(current, [])
+        else:
+            sections[current].append(line)
+    return {title: "\n".join(lines) for title, lines in sections.items()}
+
+
+def _capabilities(section: str) -> list[tuple[str, str]]:
+    blocks: list[tuple[str, list[str]]] = []
+    for line in section.splitlines():
+        match = re.match(r"^###\s+(.+?)\s*$", line)
+        if match:
+            blocks.append((match.group(1), []))
+        elif blocks:
+            blocks[-1][1].append(line)
+    return [(title, "\n".join(lines)) for title, lines in blocks]
+
+
+def _evidence_refs(text: str) -> list[str]:
+    refs: list[str] = []
+    for tail in EVIDENCE_REFS.findall(text):
+        ticked = BACKTICKED.findall(tail)
+        refs.extend(ticked or [part.strip() for part in tail.split(",") if part.strip()])
+    return refs
+
+
+def _source_ref_resolves(ref: str, source: Path | None) -> bool:
+    match = SOURCE_REF.match(ref)
+    if match is None or source is None:
+        return False
+    path = (source / match.group(1)).resolve()
+    if not path.is_file() or not path.is_relative_to(source.resolve()):
+        return False
+    with path.open("rb") as handle:
+        lines = sum(1 for _ in handle)
+    return 1 <= int(match.group(2)) <= lines
+
+
+def _business_gaps(out: Path) -> list[str]:
+    """Problems in `business/BUSINESS.md`. An absent file is not a problem."""
+    path = out / BUSINESS_FILE
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8")
+    sections = _split_h2(text)
+    problems = [
+        f"{BUSINESS_FILE} is missing the section '## {title}'"
+        for title in BUSINESS_SECTIONS if title not in sections
+    ]
+    surface_ids = _ids_in_maps(out)
+    rule_ids = _rule_ids(out)
+    known = surface_ids | _context_ids(out) | rule_ids
+    manifest_path = out / "MANIFEST.yaml"
+    source_raw = (
+        (load_yaml(manifest_path, "MANIFEST.yaml").get("source") or {}).get("path")
+        if manifest_path.is_file() else None
+    )
+    source = Path(source_raw) if source_raw else None
+    for ref in dict.fromkeys(_evidence_refs(text)):
+        if ref in known or _source_ref_resolves(ref, source):
+            continue
+        if RULE_ID.fullmatch(ref):
+            problems.append(f"{BUSINESS_FILE} cites rule {ref}, which is not in rules/view-rules.json")
+        else:
+            problems.append(
+                f"{BUSINESS_FILE} Evidence ref `{ref}` does not resolve to a source path:line, "
+                "a map id, a context id or a rule id"
+            )
+    for title, body in _capabilities(sections.get("Capabilities", "")):
+        cited = set(BACKTICKED.findall(body)) | set(RULE_ID.findall(body))
+        if not cited & (surface_ids | rule_ids):
+            problems.append(f"{BUSINESS_FILE} capability '{title}' cites no rule id or surface id")
+    for title, body in sections.items():
+        where = f"section '## {title}'" if title else "text before the first section"
+        problems.extend(
+            f"{BUSINESS_FILE} {where} has an {INFERRED} paragraph without an `Evidence:` line"
+            for _ in _unevidenced_inferred(body)
+        )
+    return problems
 
 
 def _hygiene_text(out: Path) -> str:
@@ -269,6 +401,7 @@ def check_tree(out: Path) -> list[str]:
     problems.extend(_template_gaps(out))
     problems.extend(_rule_gaps(out))
     problems.extend(_spec_fr_gaps(out))
+    problems.extend(_business_gaps(out))
 
     return problems
 
@@ -329,6 +462,9 @@ def _spec_fr_gaps(out: Path) -> list[str]:
                 for _ in _unevidenced_inferred(section)
             )
     return problems
+
+
+NAMED_CHECKS = {"business": _business_gaps, "spec_fr": _spec_fr_gaps}
 
 
 def cmd_check(args: Namespace) -> int:

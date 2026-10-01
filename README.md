@@ -47,6 +47,7 @@ No bootstrap, no desktop forks, no writes into `~/.agents-profiles`.
 ./extractkit run --profile enonic --source /path/to/legacy --until static
 ./extractkit status --source /path/to/legacy
 ./extractkit resume --profile enonic --source /path/to/legacy
+./extractkit agent next --out /path/to/legacy/.extract/<run-id>
 ./extractkit check --out /path/to/legacy/.extract/<run-id>
 ./extractkit promote --source /path/to/legacy
 ```
@@ -60,6 +61,11 @@ No bootstrap, no desktop forks, no writes into `~/.agents-profiles`.
 Each run prints the phases it touched and ends with a `next` block: the
 command to paste next. `status` (alias `next`) shows every phase as done,
 current, or pending.
+
+After synthesis, `next` points at `extractkit agent next` while a required
+agent task is pending. Agent tasks are prompts stored in `agent-tasks/`:
+they name the view-layer rules and write `BUSINESS.md`. The kit never calls
+a model; the `extract-agentic` skill runs them.
 
 The path is in [flow](docs/flow.md). Flags, `-v` / `-q`, and the promote
 guard are in [CLI](docs/cli.md).
@@ -158,13 +164,14 @@ confirms them. Details: [steps](docs/steps.md#inventorytemplates-coretemplates),
 inputs, regions, controller calls with `file:line`, and the composition
 runtime saw. Each FR has `Acceptance:` bullets and an `Evidence:` line.
 `check` fails an FR without that line. A model may enrich the prose under
-the contract in [the skill](skills/extract-legacy/SKILL.md).
+the contract in `extractkit agent show spec.enrich` (run by the
+[extract-agentic skill](skills/extract-agentic/SKILL.md)).
 
 ## Promote
 
-Explicit. Copies as-is Spec Kit constitution, PRODUCT, DESIGN, and
-per-context `spec.md` into the checkout. It does not copy the sidecar into
-git.
+Explicit. Copies as-is Spec Kit constitution, PRODUCT, DESIGN, `BUSINESS.md`
+when present, and per-context `spec.md` into the checkout. It does not copy
+the sidecar into git.
 
 It refuses, writing nothing, when git cannot restore an existing
 destination. `--force` overwrites. Paths and the guard are in

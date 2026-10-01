@@ -142,6 +142,7 @@ def _slice_pipeline(
 
 COMMAND_FIX = {
     "doctor": "extractkit doctor",
+    "agent": "extractkit agent next --out <sidecar>",
     "check": "extractkit check --out <sidecar>",
     "promote": "extractkit promote --source <legacy-checkout> --out <sidecar>",
 }

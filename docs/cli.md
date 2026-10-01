@@ -16,7 +16,8 @@ your own command with that flag added.
 | `deps [--profile NAME]` | Every dep run, not just found: binaries, Python version and modules |
 | `run --profile NAME --source DIR` | Pipeline; `--from` / `--until` |
 | `step STEP --profile NAME --source DIR` | One phase or one slot |
-| `check --out DIR` | Schema, coverage, `x-source`, spec FR |
+| `agent list\|show ID\|next [--out DIR] [--json]` | List, render and pick agent tasks. The kit never calls a model |
+| `check --out DIR` | Schema, coverage, `x-source`, spec FR, `BUSINESS.md` when present |
 | `status [--source DIR] [--out DIR]` | Phase checklist (alias `next`) |
 | `resume --profile NAME --source DIR` | Continue from first incomplete slot |
 | `promote --source DIR [--out DIR] [--force]` | Copy Spec Kit + PRODUCT |
@@ -34,6 +35,7 @@ your own command with that flag added.
 | `status` profile | `MANIFEST.yaml` `source.profile` when `--profile` is omitted |
 | `resume` | First slot that is not done, through the end or `--until` |
 | `check` | Reads the sidecar only |
+| `agent` | Latest sidecar under `<source>/.extract/` when `--source` is given; otherwise `--out` is required. `next` lists required tasks only; `show spec.enrich` runs the optional one |
 <!-- markdownlint-enable MD013 -->
 
 `resume` never starts at an optional slot (`inventory.baseline`,
@@ -60,7 +62,7 @@ Bare `extractkit` and any `--help` print help and exit 0.
 
 The operator path and sidecar lineage are in [flow](flow.md).
 
-`profiles/core.yaml` groups the pipeline into seven phases. Every profile
+`profiles/core.yaml` groups the pipeline into eight phases. Every profile
 inherits them. `--from`, `--until` and `step` accept a phase id or number
 as well as a slot or plugin id.
 
@@ -72,8 +74,9 @@ as well as a slot or plugin id.
 | 3 | `cms` | inventory.runtime, inventory.baseline (optional) |
 | 4 | `merge` | maps.merge, rules.view, inventory.docs |
 | 5 | `synthesis` | product.impeccable, docs.synthesize, use_cases, spec.kit, report.compat (optional) |
-| 6 | `check` | `check` (command) |
-| 7 | `promote` | `promote` (command) |
+| 6 | `agent` | `agent` (command) |
+| 7 | `check` | `check` (command) |
+| 8 | `promote` | `promote` (command) |
 <!-- markdownlint-enable MD013 -->
 
 <!-- markdownlint-disable MD013 -->
@@ -85,8 +88,32 @@ as well as a slot or plugin id.
 | slot or plugin id | Single-slot meaning, as before |
 <!-- markdownlint-enable MD013 -->
 
-Phases 1, 6 and 7 are commands. Passing them to `--from` / `--until` /
-`step` is refused, with the command to run instead.
+Phases 1, 6, 7 and 8 are commands. Passing them to `--from` / `--until` /
+`step` is refused, with the command to run instead (`run --from agent` names
+`extractkit agent next --out <sidecar>`).
+
+## Agent
+
+`extractkit agent` reads the task registry in `agent-tasks/<id>/` (a
+`task.yaml` and a `prompt.md`; schema in `schemas/agent-task.schema.json`).
+
+<!-- markdownlint-disable MD013 -->
+| Command | Output |
+| --- | --- |
+| `agent list` | Every task as done, pending (`next` marks the first), or optional; `--json` adds `reads`, `missing_reads`, `writes`, `rerun`, `promote`, `checks` |
+| `agent show ID` | The prompt with `{sidecar}`, `{source}`, `{profile}` and `{run_id}` filled in, then the input and output files; `--json` adds `prompt` and `inputs` |
+| `agent next` | The first pending required task whose inputs exist, then a pasteable `agent show`. With none pending it points at `check`; with only blocked tasks it names the missing inputs and points at `status` |
+<!-- markdownlint-enable MD013 -->
+
+A task is done when its `done` markers exist, or, for `rules.name`, when no
+business rule in `rules/view-rules.json` is still `extracted`. The agent
+phase is done when every required task is done. `spec.enrich` is optional
+and never blocks it.
+
+While a required task is pending, `status`, `run`, `step` and `resume` end
+with `Agent is next` and `agent next`, plus `or skip to check`. `check`
+validates `business/BUSINESS.md` only when it exists; a deterministic-only
+run still passes.
 
 ## Other flags
 
@@ -107,7 +134,7 @@ is new or existing.
 
 ### Slot rows
 
-One `[N/7] <Phase>` block per phase touched. Each slot is a row: `✓` with
+One `[N/8] <Phase>` block per phase touched. Each slot is a row: `✓` with
 up to three artifacts relative to the sidecar (then `+N more`), or `–`
 with the skip reason. The body ends with `N files written`.
 
@@ -120,8 +147,8 @@ or a row cut short (`Add -v to list every path.`).
 
 Every successful command ends with a `next` block: the command to run
 next, rebuilt from your flags and pinned to `--out <sidecar>`, plus an
-`or` alternative where one exists (continue without CMS, or add CMS after
-the offline route).
+`or` alternative where one exists (continue without CMS, skip the agent
+phase to `check`, or add CMS after the offline route).
 
 A value the kit cannot know stays as a placeholder such as
 `<playwright-state.json>` or `<legacy-checkout>`.

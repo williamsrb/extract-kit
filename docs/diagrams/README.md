@@ -25,7 +25,8 @@ The excalidraw.com links above open the version of 30 Sep. The local
 `unobserved` status. Sidecar lineage also shows `controllers.json`,
 `baseline/` and `reports/xp8-compat.md` (1 Oct). On 1 Oct they were
 rebuilt again for the `inventory.templates` and `rules.view` slots,
-`inventory/templates.json` and `rules/`. Re-export the links with
+`inventory/templates.json` and `rules/`, and then for the eight-phase
+pipeline (the `agent` phase) and `business/BUSINESS.md`. Re-export the links with
 `excalidraw-cli export` when you want them current; that uploads the
 drawing, so it is not done here.
 

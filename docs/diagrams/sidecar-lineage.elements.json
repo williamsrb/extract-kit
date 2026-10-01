@@ -259,6 +259,10 @@
       {
         "id": "a7",
         "type": "arrow"
+      },
+      {
+        "id": "a12",
+        "type": "arrow"
       }
     ],
     "roundness": {
@@ -686,6 +690,63 @@
     }
   },
   {
+    "type": "rectangle",
+    "id": "biz",
+    "x": 1020,
+    "y": 252,
+    "width": 210,
+    "height": 48,
+    "backgroundColor": "#c3fae8",
+    "fillStyle": "solid",
+    "label": {
+      "text": "business/BUSINESS.md",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a12",
+        "type": "arrow"
+      }
+    ],
+    "roundness": {
+      "type": 3
+    }
+  },
+  {
+    "type": "arrow",
+    "id": "a12",
+    "x": 1125.0,
+    "y": 300,
+    "width": 0,
+    "height": 30.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        30.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "biz",
+      "fixedPoint": [
+        0.5,
+        1
+      ]
+    },
+    "endBinding": {
+      "elementId": "dest",
+      "fixedPoint": [
+        0.5,
+        0
+      ]
+    }
+  },
+  {
     "type": "text",
     "id": "a4_lbl",
     "x": 462.0,
@@ -761,6 +822,16 @@
     "x": 850,
     "y": 482,
     "text": "writes rules; spec.kit,\ncheck read them",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "a12_lbl",
+    "x": 1133.0,
+    "y": 306.25,
+    "text": "promote",
     "fontSize": 14,
     "fontFamily": 5,
     "strokeColor": "#495057"

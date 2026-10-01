@@ -62,6 +62,9 @@ phases:
   - id: synthesis
     title: Synthesis
     slots: [product.impeccable, docs.synthesize, use_cases, spec.kit, report.compat]
+  - id: agent
+    title: Agent
+    command: agent
   - id: check
     title: Check
     command: check

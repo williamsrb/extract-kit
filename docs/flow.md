@@ -21,8 +21,8 @@ A full Enonic run without `--until` includes CMS and needs `--branch` and
 | Status | Meaning | Next |
 | --- | --- | --- |
 | `cms` | First incomplete slot is `inventory.runtime`, and more slots remain | `resume` with CMS flags, or `run --from merge` |
-| `offline` | Only CMS is missing | `check`, or add CMS and rebuild merge and synthesis |
-| `complete` | Every slot is done | `check` |
+| `offline` | Only CMS is missing | `agent next` while a required agent task is pending, then `check`, or add CMS and rebuild merge and synthesis |
+| `complete` | Every slot is done | `agent next` while a required agent task is pending, then `check` |
 | `other:<slot>` | First incomplete slot is not CMS | `resume` from that slot |
 <!-- markdownlint-enable MD013 -->
 
@@ -30,19 +30,26 @@ Optional slots (`inventory.baseline`, `report.compat`) do not change
 these states. `status` marks a phase `optional, not captured` and prints
 the `step` command that would add it.
 
+In `complete` and `offline`, a pending required agent task (`rules.name`,
+`business`) makes the agent phase current. The `next` block then offers
+`agent next`, with `check` as the alternative line; `offline` shows its CMS
+alternative again once the required tasks are done.
+
 `promote` is explicit. After a clean promote, `next` is `git status` in the
 checkout. The guard is in [CLI](cli.md#promote-guard).
 
 ## Phases
 
 `profiles/core.yaml` groups the pipeline. `--from`, `--until`, and `step`
-accept a phase id or number, or a slot or plugin id. Phases 1, 6, and 7
+accept a phase id or number, or a slot or plugin id. Phases 1, 6, 7, and 8
 are commands: passing them to `--from` / `--until` / `step` is refused.
 
 ![Phases](diagrams/phases.png)
 
 Slot contents and done-markers are in [steps](steps.md). Command flags
-are in [CLI](cli.md#phases).
+are in [CLI](cli.md#phases). The agent phase runs prompts stored as data in
+`agent-tasks/`; the kit lists them and checks what they write, and a skill
+(`extract-agentic`) does the work.
 
 ## Sidecar lineage
 

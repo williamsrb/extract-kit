@@ -11,7 +11,7 @@ import argparse
 import sys
 from collections.abc import Callable
 
-from . import check, deps, guide, profiles, progress, promote, runner
+from . import agent_tasks, check, deps, guide, profiles, progress, promote, runner
 from .errors import ExtractkitError
 
 DESCRIPTION = """\
@@ -22,8 +22,8 @@ and bind stack adapters. Enonic XP7 is the first adapter. PHP is an empty
 placeholder. Every command writes on the first call: run writes a sidecar
 under <source>/.extract/<run-id>/ and never mutates the source tree.
 
-The pipeline is grouped into seven phases: 1 preflight, 2 static, 3 cms,
-4 merge, 5 synthesis, 6 check, 7 promote. --from, --until and step accept a
+The pipeline is grouped into eight phases: 1 preflight, 2 static, 3 cms,
+4 merge, 5 synthesis, 6 agent, 7 check, 8 promote. --from, --until and step accept a
 phase id or number. Every run ends with the next command to paste.
 
 Runtime CMS (enonic.cms) is local or review XP only. Pass --branch,
@@ -147,6 +147,27 @@ def build_parser() -> argparse.ArgumentParser:
     p_show = profile.add_parser("show", help="Show one profile's composed YAML.")
     p_show.add_argument("name")
     p_show.set_defaults(func=profiles.cmd_show)
+
+    agent = group("agent", "List, show and pick the next agent task. The kit never calls a model.")
+
+    def agent_flags(sub: argparse.ArgumentParser) -> None:
+        sub.add_argument("--out", metavar="DIR",
+                         help="Extract sidecar. Default: latest <source>/.extract/<run-id>/.")
+        sub.add_argument("--source", metavar="DIR",
+                         help="Legacy checkout. Used to find the latest sidecar.")
+        sub.add_argument("--json", action="store_true", help="Machine-readable output.")
+        _add_output_flags(sub)
+
+    a_list = agent.add_parser("list", help="Every agent task with done or pending state.")
+    agent_flags(a_list)
+    a_list.set_defaults(func=agent_tasks.cmd_list)
+    a_show = agent.add_parser("show", help="Print one task's rendered prompt and input files.")
+    a_show.add_argument("task_id", metavar="ID")
+    agent_flags(a_show)
+    a_show.set_defaults(func=agent_tasks.cmd_show)
+    a_next = agent.add_parser("next", help="Print the first pending required task whose inputs exist.")
+    agent_flags(a_next)
+    a_next.set_defaults(func=agent_tasks.cmd_next)
 
     doc = flat("doctor", "Validate kit identity and profile YAML (empty PHP is allowed).")
     doc.add_argument("--profile", metavar="NAME", help="Check only this profile.")

@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from argparse import Namespace
 from pathlib import Path
+from unittest import mock
 
 from extractkit_cli import guide, manifest
 from extractkit_cli.errors import ExtractkitError
@@ -30,11 +31,19 @@ class PhaseModelTests(unittest.TestCase):
 
     def test_resolve_unknown_is_none(self) -> None:
         self.assertIsNone(guide.resolve_phase(self.enonic, "nope"))
-        self.assertIsNone(guide.resolve_phase(self.enonic, "8"))
+        self.assertIsNone(guide.resolve_phase(self.enonic, "9"))
 
     def test_command_phase_has_no_slots(self) -> None:
         check = guide.resolve_phase(self.enonic, "check")
-        self.assertEqual((check.number, check.command, check.slots), (6, "check", ()))
+        self.assertEqual((check.number, check.command, check.slots), (7, "check", ()))
+
+    def test_agent_phase_sits_between_synthesis_and_check(self) -> None:
+        agent = guide.resolve_phase(self.enonic, "agent")
+        self.assertEqual((agent.number, agent.command, agent.slots), (6, "agent", ()))
+        self.assertEqual(
+            [p.id for p in guide.phases(self.enonic)][4:],
+            ["synthesis", "agent", "check", "promote"],
+        )
 
     def test_phase_of_slot(self) -> None:
         self.assertEqual(guide.phase_of(self.enonic, "inventory.runtime").id, "cms")
@@ -95,9 +104,13 @@ class SliceTests(unittest.TestCase):
         self.assertEqual(rows, [("maps.merge", "maps.merge")])
 
     def test_command_phase_is_refused_with_command_fix(self) -> None:
-        with self.assertRaises(ExtractkitError) as caught:
-            _slice_pipeline(self.rows, None, "6", profile=self.profile)
-        self.assertIn("extractkit check --out <sidecar>", caught.exception.fix)
+        for token, fix in (
+            ("7", "extractkit check --out <sidecar>"),
+            ("agent", "extractkit agent next --out <sidecar>"),
+        ):
+            with self.subTest(token=token), self.assertRaises(ExtractkitError) as caught:
+                _slice_pipeline(self.rows, token, None, profile=self.profile)
+            self.assertIn(fix, caught.exception.fix)
 
     def test_unknown_token_lists_phases(self) -> None:
         with self.assertRaises(ExtractkitError) as caught:
@@ -212,7 +225,7 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(lines, [
             "extractkit · enonic · sidecar /nowhere/legacy/.extract/run1 (new)",
             "",
-            "[2/7] Static inventory",
+            "[2/8] Static inventory",
             "  – map.code               skipped: no graft/ index",
             "  ✓ inventory.descriptors  inventory/static.json",
             (
@@ -220,7 +233,7 @@ class RendererTests(unittest.TestCase):
                 "map/content-model.json, +1 more"
             ),
             "",
-            "[4/7] Merge",
+            "[4/8] Merge",
             "  ✓ inventory.docs         docs/harvest/INDEX.md",
             "  8 files written",
         ])
@@ -302,7 +315,7 @@ class NextTransitionTests(unittest.TestCase):
     def test_other_next_is_resume_without_range(self) -> None:
         s = self._run("other:maps.merge", "run", "--profile", "enonic", "--source", "legacy",
                       "--from", "cms", "--until", "cms", "--branch", "draft")
-        self.assertEqual(s.reason, "[4/7] Merge is next:")
+        self.assertEqual(s.reason, "[4/8] Merge is next:")
         self.assertEqual(guide.join(s.argv), (
             "./extractkit resume --profile enonic --source legacy --branch draft "
             "--out /nowhere/legacy/.extract/run1"
@@ -310,8 +323,9 @@ class NextTransitionTests(unittest.TestCase):
         self.assertIsNone(s.alt_argv)
 
     def test_offline_route_suggests_check_or_cms_rebuild(self) -> None:
-        s = self._run("offline", "run", "--profile", "enonic", "--source", "legacy",
-                      "--out", "x", "--from", "merge", "--until", "synthesis")
+        with mock.patch("extractkit_cli.agent_tasks.pending", return_value=[]):
+            s = self._run("offline", "run", "--profile", "enonic", "--source", "legacy",
+                          "--out", "x", "--from", "merge", "--until", "synthesis")
         self.assertEqual(guide.join(s.argv), "./extractkit check --out /nowhere/legacy/.extract/run1")
         self.assertEqual(guide.join(s.alt_argv), (
             "./extractkit run --profile enonic --source legacy "
@@ -320,9 +334,29 @@ class NextTransitionTests(unittest.TestCase):
         ))
 
     def test_complete_suggests_check(self) -> None:
-        s = self._run("complete")
+        with mock.patch("extractkit_cli.agent_tasks.pending", return_value=[]):
+            s = self._run("complete")
         self.assertEqual(guide.join(s.argv), "./extractkit check --out /nowhere/legacy/.extract/run1")
         self.assertIsNone(s.alt_argv)
+
+    def test_complete_and_offline_point_at_the_agent_while_a_task_is_pending(self) -> None:
+        for state in ("complete", "offline"):
+            with self.subTest(state=state):
+                s = self._run(state)
+                self.assertEqual(s.reason, "[6/8] Agent is next:")
+                self.assertEqual(
+                    guide.join(s.argv),
+                    "./extractkit agent next --out /nowhere/legacy/.extract/run1",
+                )
+                self.assertEqual(s.alt_reason, "skip to check")
+                self.assertEqual(
+                    guide.join(s.alt_argv),
+                    "./extractkit check --out /nowhere/legacy/.extract/run1",
+                )
+
+    def test_other_states_ignore_the_agent(self) -> None:
+        s = self._run("cms")
+        self.assertIn("resume", guide.join(s.argv))
 
     def test_status_derives_source_from_sidecar(self) -> None:
         args = self._args("next", "--out", str(self.out))
@@ -335,7 +369,8 @@ class NextTransitionTests(unittest.TestCase):
     def test_status_outside_extract_uses_placeholder(self) -> None:
         out = Path("/nowhere/sidecar")
         args = self._args("status", "--out", str(out), "--profile", "enonic")
-        s = guide.next_for("status", "complete", args, self.profile, out)
+        with mock.patch("extractkit_cli.agent_tasks.pending", return_value=[]):
+            s = guide.next_for("status", "complete", args, self.profile, out)
         self.assertEqual(guide.join(s.argv), "./extractkit check --out /nowhere/sidecar")
         s = guide.next_for("status", "other:maps.merge", args, self.profile, out)
         self.assertIn("--source <legacy-checkout>", guide.join(s.argv))
@@ -409,9 +444,9 @@ class CliOutputTests(unittest.TestCase):
             result = run("run", "--profile", "enonic", "--source", str(source), *STATIC_UNTIL)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn("\033", result.stdout)
-        self.assertIn("[2/7] Static inventory", result.stdout)
+        self.assertIn("[2/8] Static inventory", result.stdout)
         self.assertIn("tip   map.code:", result.stdout)
-        self.assertIn("next  [3/7] CMS needs a local XP", result.stdout)
+        self.assertIn("next  [3/8] CMS needs a local XP", result.stdout)
         self.assertIn("  or continue without CMS:", result.stdout)
 
     def test_quiet_suppresses_tips_only(self) -> None:

@@ -1,0 +1,12 @@
+id: spec.enrich
+title: Rewrite spec and use-case prose to read better
+after: spec.kit
+optional: true
+reads:
+  - spec-kit/specs/
+  - use-cases/
+writes:
+  - spec-kit/specs/
+  - use-cases/
+checks:
+  - spec_fr

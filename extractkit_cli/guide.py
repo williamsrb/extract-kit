@@ -28,7 +28,7 @@ CMS_SLOT = "inventory.runtime"
 # consumes the next token.
 BOOLEAN_FLAGS = frozenset({
     "-v", "--verbose", "-q", "--quiet", "--force",
-    "--allow-production", "--tasks", "-h", "--help",
+    "--allow-production", "--tasks", "--json", "-h", "--help",
 })
 CARRY_FLAGS = (
     "--branch", "--xp-host", "--guillotine", "--project", "--storage-state",
@@ -604,6 +604,22 @@ def _pipeline_next(
 
     check = [prog, *rewrite(argv, command="check", keep=OUTPUT_FLAGS, set={"--out": str(out)})]
 
+    def agent_suggestion() -> Suggestion | None:
+        agent_phase = phase_for_command(profile, "agent")
+        if agent_phase is None:
+            return None
+        from . import agent_tasks
+
+        if not agent_tasks.pending(out, profile):
+            return None
+        tokens = rewrite(argv, command="agent", keep=OUTPUT_FLAGS, set={"--out": str(out)})
+        return Suggestion(
+            f"[{agent_phase.number}/{total}] Agent is next:",
+            [prog, tokens[0], "next", *tokens[1:]],
+            "skip to check",
+            check,
+        )
+
     if state == "cms":
         tag = f"[{cms_phase.number}/{total}] " if cms_phase else ""
         return Suggestion(
@@ -612,6 +628,8 @@ def _pipeline_next(
             "continue without CMS",
             run_route(merge_id, synthesis_id, carry=False),
         )
+    if state in ("offline", "complete") and (agent := agent_suggestion()):
+        return agent
     if state == "offline":
         cms_id = cms_phase.id if cms_phase else CMS_SLOT
         return Suggestion(
