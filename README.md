@@ -1,187 +1,145 @@
 # 99x Extract Kit
 
-Extractkit reads a legacy checkout and writes a sidecar any later tool can
-consume.
+Extract Kit studies an existing software project and writes down what it
+does: its business rules, its pages and components, its data, and the
+systems it talks to. The result is a set of standard documents a team can
+use to plan a rebuild, a migration, or a handover, without having to
+reverse-engineer the old system first.
+
+Every requirement and rule in those documents points to the file and line
+where it was found. Anything an AI assistant adds is marked as inferred and
+must cite its evidence too.
+
+## Why use it
+
+- **Know the system before you change it.** In older projects much of the
+  knowledge lives only in the code, or with people who have left. The kit
+  turns it into readable documents.
+- **Evidence, not opinion.** Each requirement and rule cites where it comes
+  from. A final check rejects any requirement that has no proof.
+- **Hidden business rules come to light.** Conditions buried in page
+  templates and scripts are collected in one list. Rules that are repeated,
+  or that differ between files, are flagged for review.
+- **Ready for the next team.** The documents use formats current tools and
+  teams already know: Spec Kit (constitution and specs), OpenAPI with a
+  Swagger page, and DESIGN.md.
+- **Safe to run.** The original project is only read, never changed.
+  Production systems are refused. Documents enter the project only when
+  someone decides to copy them in.
+- **Repeatable where it counts.** Most documents are built from rules, not
+  written by an AI model, so the same project gives the same result. The
+  few steps that need judgment are handed to an AI assistant, and the kit
+  checks what the assistant writes.
+
+## How it works
+
+```mermaid
+flowchart LR
+  A[Read the project] --> B[Observe the running site]
+  B --> C[Cross-check]
+  C --> D[Write the documents]
+  D --> E[AI steps]
+  E --> F[Validate]
+  F --> G[Hand over]
+```
+
+1. **Read the project.** Scan the source code, configuration, page
+   templates, and existing documentation.
+2. **Observe the running site.** Visit a test copy with sample content to
+   see which pages and components are really in use, and take desktop and
+   mobile screenshots. Optional.
+3. **Cross-check.** Compare what the code declares with what the site
+   shows. Each component is marked as in use, unused, seen only
+   sometimes, or not observed.
+4. **Write the documents.** Turn the collected facts into the documents
+   listed below.
+5. **AI steps.** An AI assistant names the business rules and writes the
+   business overview. See [AI steps](#ai-steps) below.
+6. **Validate.** Check that every requirement and rule cites its evidence.
+7. **Hand over.** Copy the main documents into the project, where the next
+   team picks them up.
+
+## AI steps
+
+Some work needs judgment that rules cannot give, such as what a condition
+in a template means for the business. The kit packages that work as AI
+steps: it ships the instructions for each step, hands them to an AI
+assistant (for example Claude Code), and checks the result. The kit does
+not connect to an AI model itself, so you choose which assistant runs them.
 
 <!-- markdownlint-disable MD013 -->
-| Profile | What it does |
-| --- | --- |
-| `enonic` | XP7 inventory, OpenAPI harvest, optional live CMS |
-| `as` | `enonic` plus the Authentic Scandinavia `live_config` rules |
-| `php` | Placeholder. `doctor` is green; `run` refuses with the todo list |
-| `core` | Pipeline and phases only. No stack adapters |
+| AI step | What the assistant does | Required |
+| --- | --- | --- |
+| Name the business rules | Gives each extracted rule a plain business name and a one-sentence purpose | Yes |
+| Write the business overview | Writes BUSINESS.md from the extracted facts: purpose, actors, capabilities, business flow, rules, glossary, integrations, open questions | Yes |
+| Polish the specifications | Rewrites the requirement and journey text so it reads better, without changing the facts | No |
 <!-- markdownlint-enable MD013 -->
 
-The sidecar stays under `<source>/.extract/<run-id>/`. `promote` copies as-is
-Spec Kit files into the checkout. That is not an XP8 or React4XP port.
+Every sentence an assistant adds that is not an extracted fact is marked as
+inferred and must cite its evidence, or the validation step fails. Rule
+names stay proposals until an analyst confirms them; the assistant never
+confirms its own work.
 
-Every command writes on the first call. There is no dry run.
+## What you get
 
-Docs: [LLM instructions](docs/llm.md), [flow](docs/flow.md),
-[CLI](docs/cli.md), [steps](docs/steps.md), [profiles](docs/profiles.md),
-[output](docs/output.md).
+<!-- markdownlint-disable MD013 -->
+| Document | What it answers |
+| --- | --- |
+| Constitution | The ground rules of the extract: evidence over assumption, what is in and out of scope |
+| Specification, one per business area | What each part of the system does today, as numbered requirements with acceptance criteria and evidence |
+| Business overview (BUSINESS.md) | Purpose and audience, actors, capabilities, the business flow, business rules, glossary, integrations, and open questions |
+| Business rules catalogue | Every rule found in templates and scripts, where it lives, and which ones repeat or differ |
+| User journeys | Scenarios for each page and component, written as Given / When / Then |
+| Product summary (PRODUCT.md) | The capabilities of the system and whether each one is in use |
+| Front-end patterns (DESIGN.md) | Every page, layout, and component, with its inputs and what it contains |
+| Integrations API docs (OpenAPI, Swagger UI) | The services the system offers, the outside systems it calls, and third-party scripts, in a browsable page |
+| Project map | Components, content types, routes, and business areas, and how they relate |
+| Technical overview and reading guide | A walkthrough of the system and of how to read the extract |
+| Visual baseline (optional) | Desktop and mobile screenshots of each sampled page |
+| Upgrade compatibility report (optional, Enonic) | A factual list of what an Enonic XP 7 to XP 8 upgrade would touch |
+| Unused code report | Code that appears unused. Nothing is deleted |
+| Existing documentation | A copy of the project's own docs, collected in one place |
+<!-- markdownlint-enable MD013 -->
 
-Agents: read [docs/llm.md](docs/llm.md) first. It is the instruction set for
-driving the kit and for the rule-naming step.
+## What it needs
 
-## Install
+- **The project's source code** (required): a local copy of its repository.
+- **Existing documentation** (optional): READMEs and docs folders are
+  picked up automatically.
+- **A running test copy with sample content** (optional): a local or
+  review environment of the site, with its CMS database and a saved login.
+  Never production. Without it, the documents still come from the code;
+  only "is this in use?" stays unanswered.
 
-Python 3.12+ with PyYAML and jsonschema (already on the reference box).
+## What it does not do
 
-```bash
-chmod +x ./extractkit
-./extractkit --help
-```
+- **It does not build anything.** It describes the system as it is today.
+  It does not implement, port, or rewrite code.
+- **It does not plan the work.** There is no migration plan or task
+  breakdown. The specifications are ready for the team that does that next.
+- **It does not change the project.** The source is read-only. Copying the
+  documents in is a separate, explicit step.
+- **It does not touch production.** Production addresses are refused.
+- **It does not have the final word on business meaning.** Rule names
+  from the AI steps are proposals until an analyst confirms them.
+- **It does not delete code.** Unused code is reported, never removed.
 
-No bootstrap, no desktop forks, no writes into `~/.agents-profiles`.
+## Supported projects
 
-## Commands
+- **Enonic XP 7** sites: fully supported.
+- **Page templates and front-end code** are scanned in every run: FreeMarker,
+  Thymeleaf, Mustache, Handlebars, Pebble, React, Next.js, Angular, Vue, and
+  jQuery.
+- **PHP**: planned, not available yet.
 
-```bash
-./extractkit profile list
-./extractkit profile show enonic
-./extractkit profile show php
-./extractkit doctor --profile php          # empty PHP is allowed
-./extractkit doctor --profile enonic --source /path/to/legacy  # + readiness
-./extractkit deps --profile enonic         # runs each probe
-./extractkit run --profile enonic --source /path/to/legacy --until static
-./extractkit status --source /path/to/legacy
-./extractkit resume --profile enonic --source /path/to/legacy
-./extractkit agent next --out /path/to/legacy/.extract/<run-id>
-./extractkit check --out /path/to/legacy/.extract/<run-id>
-./extractkit promote --source /path/to/legacy
-```
+## For operators
 
-## Sidecar
+Install, commands, and options are in the [usage guide](docs/usage.md). In
+the commands and detailed docs, the output folder is called the *sidecar*
+and the local copy of the project the *checkout*.
 
-`run` writes `<source>/.extract/<run-id>/`.
+Docs: [LLM instructions](docs/llm.md), [usage](docs/usage.md),
+[flow](docs/flow.md), [CLI](docs/cli.md), [steps](docs/steps.md),
+[profiles](docs/profiles.md), [output](docs/output.md).
 
-## Next
-
-Each run prints the phases it touched and ends with a `next` block: the
-command to paste next. `status` (alias `next`) shows every phase as done,
-current, or pending.
-
-After synthesis, `next` points at `extractkit agent next` while a required
-agent task is pending. Agent tasks are prompts stored in `agent-tasks/`:
-they name the view-layer rules and write `BUSINESS.md`. The kit never calls
-a model; the `extract-agentic` skill runs them.
-
-The path is in [flow](docs/flow.md). Flags, `-v` / `-q`, and the promote
-guard are in [CLI](docs/cli.md).
-
-![Operator path](docs/diagrams/operator-path.png)
-
-## Source safety
-
-The kit never edits the source `.gitignore` or `.git/`. A sidecar under
-`<source>/.extract/` is self-ignored: `.extract/.gitignore` contains `*`. With
-an `--out` outside the checkout a run writes nothing into the source.
-
-## PHP
-
-`./extractkit run --profile php --source …` exits non-zero with the
-unfinished work list. It does not parse PHP.
-
-## Static extract
-
-Descriptors, maps, and OpenAPI only. A full Enonic run also surveys live
-CMS and needs `--branch` and `--storage-state`.
-
-```bash
-./extractkit run --profile enonic --source /path/to/legacy --until static
-```
-
-Then merge, docs, and Spec Kit without CMS:
-
-```bash
-./extractkit run --profile enonic --source /path/to/legacy \
-  --out /path/to/legacy/.extract/<run-id> \
-  --from merge --until synthesis
-```
-
-`extractkit check` validates the sidecar. What it fails on is in
-[CLI](docs/cli.md#check).
-
-## Runtime CMS
-
-`enonic.cms` surveys a local or review XP only. Production hosts are
-refused.
-
-Required: `--branch draft|master`, `--storage-state`, and a Guillotine URL
-(`--guillotine`). Pin keys with `--cms-key`. Do not walk the tree.
-
-```bash
-./extractkit step enonic.cms --profile enonic --source /path/to/legacy \
-  --out /path/to/legacy/.extract/<run-id> \
-  --branch draft \
-  --storage-state ~/.agents/.auth/xp7-localhost.json \
-  --guillotine http://localhost:8080/admin/site/preview/en/draft \
-  --cms-key /en
-```
-
-Survey rules and redaction are in
-[steps](docs/steps.md#inventoryruntime-enoniccms). After CMS, `maps.merge`
-updates page, layout, part, and macro status. The four values are in
-[output](docs/output.md#surface-status).
-
-## Baseline and XP8 report
-
-Two optional slots add what a port needs beyond the descriptors. Neither
-fails a run. A skip prints the command to run.
-
-```bash
-# desktop 1440 and mobile 390 screenshots, rendered HTML, network list
-./extractkit step inventory.baseline --profile enonic --source /path/to/legacy \
-  --out /path/to/legacy/.extract/<run-id> --branch draft \
-  --storage-state ~/.agents/.auth/xp7-localhost.json
-
-# factual XP7 to XP8 list, outside spec-kit/
-./extractkit step report.compat --profile enonic --source /path/to/legacy \
-  --out /path/to/legacy/.extract/<run-id>
-```
-
-`inventory.baseline` needs `playwright-cli` and the runtime pages. It
-refuses production hosts. `--site-url` replaces the preview base URL.
-`reports/xp8-compat.md` is never promoted.
-
-## View layer
-
-Every profile also inventories the view layer. `inventory.templates` detects
-FreeMarker, Thymeleaf, Mustache, Handlebars, Pebble, React, Next.js,
-Angular, Vue and jQuery, and `maps.normalize` maps each template file into a
-spec-ready `component` or `partial` surface (inputs, children, slots,
-outputs, data source) without converting any code. `rules.view` then
-harvests the business rules hidden in templates and view scripts, scores
-them, flags rules that are repeated or that diverge between files, and
-writes `rules/`. The kit extracts; the agent names the rules; an analyst
-confirms them. Details: [steps](docs/steps.md#inventorytemplates-coretemplates),
-[rule naming](docs/llm.md#naming-the-rules).
-
-## What the spec holds
-
-`spec.md` states behavior from extracted facts only: fields, config
-inputs, regions, controller calls with `file:line`, and the composition
-runtime saw. Each FR has `Acceptance:` bullets and an `Evidence:` line.
-`check` fails an FR without that line. A model may enrich the prose under
-the contract in `extractkit agent show spec.enrich` (run by the
-[extract-agentic skill](skills/extract-agentic/SKILL.md)).
-
-## Promote
-
-Explicit. Copies as-is Spec Kit constitution, PRODUCT, DESIGN, `BUSINESS.md`
-when present, and per-context `spec.md` into the checkout. It does not copy
-the sidecar into git.
-
-It refuses, writing nothing, when git cannot restore an existing
-destination. `--force` overwrites. Paths and the guard are in
-[output](docs/output.md#promote) and [CLI](docs/cli.md#promote-guard).
-
-## Tests
-
-```bash
-python3 -m unittest discover -s tests
-```
-
-Fixtures: `tests/fixtures/enonic-mini/` and `tests/fixtures/templates-mini/`.
-No GitLab CI in this kit.
+Agents: read [docs/llm.md](docs/llm.md) first.

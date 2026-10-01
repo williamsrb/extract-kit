@@ -27,8 +27,9 @@ Run from the kit repo. `<sidecar>` is the extract run directory
    skip the task.
 2. `extractkit agent show <id> --out <sidecar>`. The output is the full task
    prompt plus the input and output files. Follow it.
-3. Do the task in one fresh subagent per task, so a task never inherits the
-   previous task's context. Pass the rendered prompt and nothing else.
+3. Do each task in a fresh context, so a task never inherits the previous
+   task's context: one subagent per task when your assistant has subagents,
+   otherwise a new session. Pass the rendered prompt and nothing else.
 4. When the task declares `rerun`, run `extractkit <rerun>` with
    `--profile`, `--source` and `--out` added (`agent list --json` shows it).
    `rules.name` needs this: `rules/view-rules.json` only changes on re-run,

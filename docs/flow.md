@@ -15,7 +15,7 @@ current phase's missing marker decides the command.
 
 A full Enonic run without `--until` includes CMS and needs `--branch` and
 `--storage-state`. The skip path is the offline route in the
-[README](../README.md#static-extract).
+[usage guide](usage.md#static-extract).
 
 <!-- markdownlint-disable MD013 -->
 | Status | Meaning | Next |

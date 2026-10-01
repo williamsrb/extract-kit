@@ -42,7 +42,7 @@ class CheckSourceTests(unittest.TestCase):
             rows["serena onboarding"].fix,
             f"open {raw} in an agent with Serena and run onboarding",
         )
-        self.assertEqual(rows["graphify index"].fix, f"run `/graphify .` in {raw}")
+        self.assertEqual(rows["graphify index"].fix, readiness.GRAPHIFY_FIX.format(source=raw))
         self.assertEqual(rows["graft index"].fix, f"run `graft build` in {raw}")
 
     def test_serena_needs_project_yml_and_a_memory(self) -> None:
@@ -73,7 +73,7 @@ class DoctorSourceTests(unittest.TestCase):
             result = run("doctor", "--profile", "enonic", "--source", str(source))
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn(f"fix: open {source} in an agent with Serena", result.stdout)
-        self.assertIn(f"fix: run `/graphify .` in {source}", result.stdout)
+        self.assertIn(f"fix: {readiness.GRAPHIFY_FIX.format(source=source)}", result.stdout)
         self.assertIn(f"fix: run `graft build` in {source}", result.stdout)
         self.assertIn("doctor: 2 problem(s).", result.stdout)
         self.assertIn("and run onboarding, then re-run:", result.stdout)

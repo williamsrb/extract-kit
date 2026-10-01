@@ -132,7 +132,7 @@ when the operator asks.
 | --- | --- | --- |
 | `BROKEN` in `deps` | The tool is on PATH but its probe failed (for example `graphify` with a missing package) | Report the printed `fix:`; reinstall is the operator's call |
 | `serena onboarding` MISSING | No `.serena/project.yml` or no memory file | Ask the operator to onboard the project in an agent with Serena |
-| `graphify index` MISSING | No `graphify-out/graph.json` | Ask the operator to run `/graphify .` in the source |
+| `graphify index` MISSING | No `graphify-out/graph.json` | Ask the operator to build a Graphify index in the source (the graphify skill, for example `/graphify .`) |
 | `graft index` warning | No `graft/` | Optional. `map.code` skips until the operator runs `graft build` |
 | `profile 'core' has unbound required adapters` | `core` has no stack adapters | Use `enonic` (or `as`) |
 | `enonic.cms requires --branch` | The slice includes CMS | Add `--branch draft`, or stop at `--until static` |
