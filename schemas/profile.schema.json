@@ -26,7 +26,17 @@
             "items": { "type": "string" },
             "minItems": 1
           },
-          "optional": { "type": "boolean" }
+          "optional": { "type": "boolean" },
+          "probe": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "minItems": 1
+          },
+          "python_modules": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "python": { "type": "string", "pattern": "^(>=|>|<=|<|==)\\d+(\\.\\d+)*$" }
         },
         "additionalProperties": true
       }

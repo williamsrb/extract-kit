@@ -6,7 +6,8 @@ them.
 
 ## Operator path
 
-`doctor` and `deps` suggest `run --until static`. After that, `status`
+`doctor` and `deps` suggest `run --until static`. `doctor --source` first
+checks the target's Serena onboarding and Graphify index. After that, `status`
 (alias `next`) is the map: every phase is done, current, or pending. The
 current phase's missing marker decides the command.
 
@@ -60,6 +61,14 @@ Without it, `maps.merge` leaves page, layout, part, and macro as
 
 `controllers.json` comes from the static phase. `maps.normalize` copies
 each controller's entry into its surface's `behavior`.
+
+`templates.json` also comes from the static phase, for every profile.
+`maps.normalize` turns each template file into a `component` or `partial`
+surface, and joins an Enonic descriptor with its view into one surface, so a
+`--until static` run already has a spec-ready component map. `rules.view`
+runs in the merge phase after `maps.merge` and writes `rules/`. `spec.kit`
+and `use_cases` cite its rule ids; `check` fails a business rule that no
+spec cites.
 
 CMS also patches `openapi.yaml` `x-production-endpoints`. Those URLs are
 never fetched.

@@ -6,7 +6,7 @@ from argparse import Namespace
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import guide, manifest, registry, schema
+from . import guide, manifest, readiness, registry, schema
 from .common import Plan, timestamp, write_json, write_text, write_yaml
 from .errors import ExtractkitError
 from .hygiene import after_step
@@ -165,6 +165,7 @@ def _slot_phase(profile: dict | None, token: str, flag: str, known: str) -> guid
 
 
 def _preflight(ctx: RunContext, rows: list[tuple[str, str]]) -> None:
+    ctx.map_pointers["serena"] = readiness.serena_pointer(ctx.source)
     if any(plugin_id == "enonic.cms" for _, plugin_id in rows):
         from steps.enonic.cms import resolve_cms
 

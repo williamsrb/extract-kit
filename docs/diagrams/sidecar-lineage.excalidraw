@@ -159,7 +159,7 @@
       "x": 340,
       "y": 530,
       "width": 220,
-      "height": 90,
+      "height": 110,
       "backgroundColor": "#c3fae8",
       "fillStyle": "solid",
       "boundElements": [
@@ -173,6 +173,10 @@
         },
         {
           "id": "a9",
+          "type": "arrow"
+        },
+        {
+          "id": "a10",
           "type": "arrow"
         },
         {
@@ -191,8 +195,8 @@
       "x": 350,
       "y": 540,
       "width": 200,
-      "height": 70,
-      "text": "static.json\ncontrollers.json",
+      "height": 90,
+      "text": "static.json\ncontrollers.json\ntemplates.json",
       "fontSize": 16,
       "fontFamily": 5,
       "textAlign": "center",
@@ -305,6 +309,14 @@
           "type": "arrow"
         },
         {
+          "id": "a10",
+          "type": "arrow"
+        },
+        {
+          "id": "a11",
+          "type": "arrow"
+        },
+        {
           "id": "syn_label",
           "type": "text"
         }
@@ -370,7 +382,7 @@
       "type": "rectangle",
       "id": "comp",
       "x": 700,
-      "y": 537,
+      "y": 547,
       "width": 230,
       "height": 76,
       "backgroundColor": "#e9ecef",
@@ -396,7 +408,7 @@
       "type": "text",
       "id": "comp_label",
       "x": 710,
-      "y": 547,
+      "y": 557,
       "width": 210,
       "height": 56,
       "text": "reports/xp8-compat.md",
@@ -406,6 +418,44 @@
       "verticalAlign": "middle",
       "containerId": "comp",
       "strokeColor": "#868e96"
+    },
+    {
+      "type": "rectangle",
+      "id": "rules",
+      "x": 1000,
+      "y": 520,
+      "width": 230,
+      "height": 120,
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "a11",
+          "type": "arrow"
+        },
+        {
+          "id": "rules_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "rules_label",
+      "x": 1010,
+      "y": 530,
+      "width": 210,
+      "height": 100,
+      "text": "rules/\nview-rules.json\nRULES.md, literals.md\nreview.md",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "rules"
     },
     {
       "type": "arrow",
@@ -481,7 +531,7 @@
       "x": 187,
       "y": 420,
       "width": 153,
-      "height": 155,
+      "height": 165,
       "points": [
         [
           0,
@@ -489,7 +539,7 @@
         ],
         [
           153,
-          155
+          165
         ]
       ],
       "endArrowhead": "arrow",
@@ -687,9 +737,9 @@
       "type": "arrow",
       "id": "a9",
       "x": 560,
-      "y": 575,
+      "y": 585,
       "width": 140,
-      "height": 0,
+      "height": -10,
       "points": [
         [
           0,
@@ -697,7 +747,7 @@
         ],
         [
           140,
-          0
+          -10
         ]
       ],
       "endArrowhead": "arrow",
@@ -720,11 +770,80 @@
       "roughness": 2
     },
     {
+      "type": "arrow",
+      "id": "a10",
+      "x": 560,
+      "y": 546,
+      "width": 197,
+      "height": -126,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          197,
+          -126
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "inv",
+        "fixedPoint": [
+          1,
+          0.15
+        ]
+      },
+      "endBinding": {
+        "elementId": "syn",
+        "fixedPoint": [
+          0.25,
+          1
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "a11",
+      "x": 895.5,
+      "y": 420,
+      "width": 219.5,
+      "height": 100,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          219.5,
+          100
+        ]
+      ],
+      "startArrowhead": "arrow",
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "syn",
+        "fixedPoint": [
+          0.85,
+          1
+        ]
+      },
+      "endBinding": {
+        "elementId": "rules",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "roughness": 2
+    },
+    {
       "type": "text",
       "id": "a4_lbl",
       "x": 462,
-      "y": 462.5,
-      "text": "surfaces + behavior",
+      "y": 452,
+      "text": "surfaces + behavior\n+ views",
       "fontSize": 14,
       "fontFamily": 5,
       "strokeColor": "#495057"
@@ -773,8 +892,28 @@
       "type": "text",
       "id": "a9_lbl",
       "x": 595,
-      "y": 551,
+      "y": 556,
       "text": "XP8 report",
+      "fontSize": 14,
+      "fontFamily": 5,
+      "strokeColor": "#495057"
+    },
+    {
+      "type": "text",
+      "id": "a10_lbl",
+      "x": 652,
+      "y": 502,
+      "text": "templates.json",
+      "fontSize": 14,
+      "fontFamily": 5,
+      "strokeColor": "#495057"
+    },
+    {
+      "type": "text",
+      "id": "a11_lbl",
+      "x": 850,
+      "y": 482,
+      "text": "writes rules; spec.kit,\ncheck read them",
       "fontSize": 14,
       "fontFamily": 5,
       "strokeColor": "#495057"

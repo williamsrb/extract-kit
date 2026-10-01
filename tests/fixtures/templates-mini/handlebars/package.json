@@ -1,0 +1,6 @@
+{
+  "name": "handlebars-mini",
+  "dependencies": {
+    "handlebars": "^4.7.8"
+  }
+}

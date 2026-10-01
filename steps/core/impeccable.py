@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from extractkit_cli.common import load_json
+from steps.core.normalize import COMPONENT_KINDS
 
 
 def _load_surfaces(ctx: object) -> list[dict]:
@@ -66,7 +67,7 @@ def _product_md(ctx: object, surfaces: list[dict]) -> str:
 def _design_md(surfaces: list[dict]) -> str:
     components = [
         s for s in surfaces
-        if s.get("kind") in {"page", "layout", "part", "macro"}
+        if s.get("kind") in COMPONENT_KINDS
     ]
     lines = [
         "# DESIGN (as-is)",
@@ -77,7 +78,7 @@ def _design_md(surfaces: list[dict]) -> str:
         "",
     ]
     if not components:
-        lines.append("No page/layout/part/macro surfaces.")
+        lines.append("No page, layout, part, macro or template component surfaces.")
     else:
         for surface in components:
             ident = surface.get("id") or ""
@@ -88,6 +89,14 @@ def _design_md(surfaces: list[dict]) -> str:
             lines.append(f"- Entry: `{entry}`")
             if composition:
                 lines.append("- Template order: " + ", ".join(f"`{c}`" for c in composition))
+            template = surface.get("template")
+            if template:
+                lines.append(f"- Template: `{template['file']}` ({template['engine']})")
+                if template["inputs"]:
+                    lines.append("- Inputs: " + ", ".join(f"`{i['name']}`" for i in template["inputs"]))
+                kids = [c["surface"] or f"{c['ref']} (unresolved)" for c in template["children"]]
+                if kids:
+                    lines.append("- Children: " + ", ".join(f"`{k}`" for k in kids))
             lines.append("")
     return "\n".join(lines)
 
@@ -104,7 +113,7 @@ def _design_json(surfaces: list[dict]) -> dict:
                 "status": s.get("status"),
             }
             for s in surfaces
-            if s.get("kind") in {"page", "layout", "part", "macro"}
+            if s.get("kind") in COMPONENT_KINDS
         ],
     }
 

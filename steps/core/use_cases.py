@@ -85,21 +85,34 @@ def _page_journey(page: dict, ctx: object, slugs: dict[str, str]) -> list[str]:
     return lines
 
 
-def _surface_journey(surface: dict) -> list[str] | None:
+def _rule_journeys(rules: list[dict]) -> list[str]:
+    lines: list[str] = []
+    for rule in rules:
+        lines += _gwt(
+            f"the rule `{rule['id']}` ({rule['kind']}) applies to `{rule['component']}`",
+            f"`{rule['expression']}` is evaluated",
+            behavior.EFFECT_THEN.get(rule["effect"], "its outcome applies"),
+            [rule["source"], rule["id"]],
+        )
+    return lines
+
+
+def _surface_journey(surface: dict, rules: list[dict] | None = None) -> list[str] | None:
     bullets = behavior.acceptance(surface)
-    if not bullets:
+    if not bullets and not rules:
         return None
     ident = surface.get("id") or ""
     kind = surface.get("kind") or "surface"
     lines = [f"## {kind} `{ident}`", ""]
-    lines += _gwt(
-        f"the {kind} `{ident}` is in the extract map with status `{surface.get('status')}`",
-        "it is used",
-        "it shows this behavior:",
-        behavior.evidence_refs(surface),
-        bullets,
-    )
-    return lines
+    if bullets:
+        lines += _gwt(
+            f"the {kind} `{ident}` is in the extract map with status `{surface.get('status')}`",
+            "it is used",
+            "it shows this behavior:",
+            behavior.evidence_refs(surface),
+            bullets,
+        )
+    return lines + _rule_journeys(rules or [])
 
 
 class UseCasesStep:
@@ -123,6 +136,7 @@ class UseCasesStep:
             return
         pages = _runtime_pages(ctx)
         slugs = _baseline_slugs(ctx)
+        rules = behavior.rules_by_component(ctx)
         for context in contexts:
             ctx_id = str(context.get("id") or "context")
             title = str(context.get("title") or ctx_id)
@@ -139,7 +153,7 @@ class UseCasesStep:
                         body += _page_journey(page, ctx, slugs)
             else:
                 for ident in context.get("surfaces") or []:
-                    journey = _surface_journey(surfaces.get(str(ident)) or {"id": ident})
+                    journey = _surface_journey(surfaces.get(str(ident)) or {"id": ident}, rules.get(str(ident)))
                     if journey:
                         body += journey
             if len(body) == 4:

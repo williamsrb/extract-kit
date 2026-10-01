@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
@@ -14,6 +15,25 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 FILE_MODE = 0o644
 DIR_MODE = 0o755
+
+
+@dataclass
+class Row:
+    """One preflight line: a dependency or a target-readiness check.
+
+    `state` is ok, MISSING, BROKEN, skipped or warn. Only a MISSING or BROKEN
+    row with `required` set counts as a failure.
+    """
+
+    name: str
+    state: str
+    detail: str = ""
+    fix: str | None = None
+    required: bool = True
+
+    @property
+    def failed(self) -> bool:
+        return self.required and self.state in ("MISSING", "BROKEN")
 
 
 def ensure_dir(path: Path) -> None:

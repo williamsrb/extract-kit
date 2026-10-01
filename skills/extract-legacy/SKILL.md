@@ -11,6 +11,11 @@ description: >
 Kit: this repo (`./extractkit`). Plan and PRD live under `~/.agents/`, not
 in the kit tree.
 
+Read `docs/llm.md` first. It holds the invariants, the command sequence per
+phase, what to do for each exit code and `next` block, the failure table and
+the procedure for naming view-layer business rules. This skill only adds
+what is specific to a skill run.
+
 ## Rules
 
 - Source is read-only until the operator runs `extractkit promote`.
@@ -31,7 +36,9 @@ in the kit tree.
 
 Diagrams: `docs/flow.md` and `docs/diagrams/*.png`.
 
-1. `extractkit doctor` and `extractkit deps --profile enonic`
+1. `extractkit deps --profile enonic` and
+   `extractkit doctor --profile enonic --source <legacy>` (Serena onboarding
+   and a Graphify index must be ready; the operator fixes them)
 2. Static: `extractkit run --profile enonic --source <legacy> --until static`
 3. `extractkit status --source <legacy>` — every phase as done / current /
    pending, the current phase's missing artifacts, and skill names
@@ -48,7 +55,9 @@ Diagrams: `docs/flow.md` and `docs/diagrams/*.png`.
 5. Merge and synthesis: `extractkit resume --profile enonic --source
    <legacy> --until synthesis` (or, without CMS, `extractkit run --profile
    enonic --source <legacy> --out <sidecar> --from merge --until synthesis`)
-6. `extractkit check --out <sidecar>`
+6. Name the view-layer business rules in `rules/review.md` by the
+   procedure in `docs/llm.md`, re-run step 5, then
+   `extractkit check --out <sidecar>`
 7. Promote only when asked: `extractkit promote --source <legacy>
    --out <sidecar>`
 

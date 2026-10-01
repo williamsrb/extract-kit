@@ -1,0 +1,10 @@
+<div class="card">
+  <h3>{{title}}</h3>
+  {{#if (gt price 100)}}
+    <span class="premium">Premium</span>
+  {{/if}}
+  {{#if items.length}}
+    <ul>{{#each items}}<li>{{name}}</li>{{/each}}</ul>
+  {{/if}}
+  {{> price-tag}}
+</div>

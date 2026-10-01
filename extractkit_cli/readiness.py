@@ -1,0 +1,55 @@
+"""Target readiness: is the legacy checkout indexed for the agent tools.
+
+The kit never runs Serena, Graphify or graft. It only looks for what they leave
+behind, and names the command that produces it.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from .common import Row
+
+SERENA_FIX = "open {source} in an agent with Serena and run onboarding"
+GRAPHIFY_FIX = "run `/graphify .` in {source}"
+GRAFT_FIX = "run `graft build` in {source}"
+
+
+def check_source(source: Path) -> list[Row]:
+    """Serena and Graphify must be present; a missing graft index only warns."""
+    return [_serena(source), _graphify(source), _graft(source)]
+
+
+def serena_pointer(source: Path) -> str | None:
+    """Path to `.serena/` when onboarding has run, else None."""
+    return str(source / ".serena") if _serena(source).state == "ok" else None
+
+
+def _serena(source: Path) -> Row:
+    root = source / ".serena"
+    fix = SERENA_FIX.format(source=source)
+    if not (root / "project.yml").is_file():
+        return Row("serena onboarding", "MISSING", "no .serena/project.yml", fix)
+    if not any((root / "memories").glob("*.md")):
+        return Row("serena onboarding", "MISSING", "no .serena/memories/*.md", fix)
+    return Row("serena onboarding", "ok", str(root))
+
+
+def _graphify(source: Path) -> Row:
+    graph = source / "graphify-out" / "graph.json"
+    if graph.is_file():
+        return Row("graphify index", "ok", str(graph))
+    return Row(
+        "graphify index", "MISSING", "no graphify-out/graph.json",
+        GRAPHIFY_FIX.format(source=source),
+    )
+
+
+def _graft(source: Path) -> Row:
+    index = source / "graft"
+    if index.is_dir():
+        return Row("graft index", "ok", str(index))
+    return Row(
+        "graft index", "warn", "no graft/ index (map.code will skip)",
+        GRAFT_FIX.format(source=source), required=False,
+    )

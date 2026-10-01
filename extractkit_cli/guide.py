@@ -501,15 +501,22 @@ def next_for(
     profile: dict | None = None,
     out: Path | None = None,
     source: Path | None = None,
+    fix: str | None = None,
 ) -> Suggestion | None:
     """The `next` block for `command` in `state` (see the transitions table).
 
     Pipeline states: `cms`, `other:<slot>`, `offline`, `complete`. `check`:
     `clean`, `problems`. `promote`: `done`. `doctor` / `deps`: `clean`; any
-    other state gets no block.
+    other state gets no block, except `doctor` `problems` with a `fix` (the
+    first failing preflight fix), which points at that fix and a re-run.
     """
     argv = _argv(args)
     prog = _prog(args)
+    if command == "doctor" and state == "problems" and fix:
+        return Suggestion(
+            f"{fix}, then re-run:",
+            [prog, *rewrite(argv, command="doctor", keep=("--profile", "--source", *OUTPUT_FLAGS))],
+        )
     if command in ("run", "step", "resume", "status"):
         return _pipeline_next(state, argv, prog, profile or {}, out)
     if command == "check" and out is not None:
@@ -536,7 +543,7 @@ def next_for(
             "start with the static inventory:",
             [prog, *rewrite(argv, command="run", keep=OUTPUT_FLAGS, set={
                 "--profile": _runnable_profile(getattr(args, "profile", None)),
-                "--source": SOURCE_PLACEHOLDER,
+                "--source": getattr(args, "source", None) or SOURCE_PLACEHOLDER,
                 "--until": _phase_id(manifest.load("core"), "inventory.descriptors"),
             })],
         )

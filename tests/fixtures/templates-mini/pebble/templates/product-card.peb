@@ -1,0 +1,10 @@
+<div class="card">
+  <h3>{{ title }}</h3>
+  {% if price > 100 %}
+    <span class="premium">Premium</span>
+  {% endif %}
+  {% if items is not empty %}
+    {% for item in items %}<li>{{ item.name }}</li>{% endfor %}
+  {% endif %}
+  {% include "price-tag.peb" %}
+</div>

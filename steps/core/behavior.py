@@ -98,6 +98,43 @@ def acceptance(surface: dict) -> list[str]:
     return bullets
 
 
+EFFECT_THEN = {
+    "show": "the element it guards is shown",
+    "compute": "the value it derives is computed",
+    "validate": "the input is validated",
+    "format": "the value is formatted",
+    "select": "the matching branch is chosen",
+    "route": "the visitor is routed",
+    "css": "its presentation state changes",
+}
+
+
+def rules_by_component(ctx: object) -> dict[str, list[dict]]:
+    """Business view rules grouped by component surface id; empty without rules/view-rules.json."""
+    from extractkit_cli.common import load_json
+
+    path = ctx.rel("rules/view-rules.json")  # type: ignore[attr-defined]
+    if not path.is_file():
+        return {}
+    grouped: dict[str, list[dict]] = {}
+    for rule in load_json(path, "rules/view-rules.json").get("rules") or []:
+        if rule["bucket"] == "business" and rule["component"] and not rule.get("outOfScope"):
+            grouped.setdefault(rule["component"], []).append(rule)
+    return grouped
+
+
+def rule_bullets(rules: list[dict]) -> list[str]:
+    """One cited bullet per business rule: id, kind, expression and `path:line`."""
+    out = []
+    for rule in rules:
+        name = f" {rule['name']} _(inferred)_." if rule.get("name") else ""
+        flag = " Diverges from another copy of this rule." if rule.get("divergent") else ""
+        out.append(
+            f"Rule `{rule['id']}` ({rule['kind']}): `{rule['expression']}` ({rule['source']}).{name}{flag}"
+        )
+    return out
+
+
 def evidence_refs(surface: dict) -> list[str]:
     """Map id, descriptor path, runtime/usage refs, and the controller file."""
     refs = [str(surface.get("id") or ""), str(surface.get("entry") or "")]

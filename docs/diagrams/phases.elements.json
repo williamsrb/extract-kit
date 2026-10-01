@@ -414,10 +414,20 @@
   },
   {
     "type": "text",
+    "id": "n1",
+    "x": 30,
+    "y": 232,
+    "text": "+ doctor --source:\nSerena, Graphify\n(must pass)\ngraft (warning)",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
+    "type": "text",
     "id": "n2",
     "x": 197,
     "y": 232,
-    "text": "+ controllers",
+    "text": "+ controllers\n+ templates",
     "fontSize": 15,
     "strokeColor": "#5f6368",
     "fontFamily": 5
@@ -428,6 +438,16 @@
     "x": 364,
     "y": 232,
     "text": "+ baseline (optional)",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
+    "type": "text",
+    "id": "n4",
+    "x": 531,
+    "y": 232,
+    "text": "+ rules.view",
     "fontSize": 15,
     "strokeColor": "#5f6368",
     "fontFamily": 5

@@ -23,9 +23,11 @@ All three panels on one board.
 The excalidraw.com links above open the version of 30 Sep. The local
 `.excalidraw` and `.png` files were rebuilt for the optional slots and the
 `unobserved` status. Sidecar lineage also shows `controllers.json`,
-`baseline/` and `reports/xp8-compat.md` (1 Oct). Re-export the links
-with `excalidraw-cli export` when you want them current; that uploads
-the drawing, so it is not done here.
+`baseline/` and `reports/xp8-compat.md` (1 Oct). On 1 Oct they were
+rebuilt again for the `inventory.templates` and `rules.view` slots,
+`inventory/templates.json` and `rules/`. Re-export the links with
+`excalidraw-cli export` when you want them current; that uploads the
+drawing, so it is not done here.
 
 `*.elements.json` is the CLI input used to rebuild a `.excalidraw` file
 (`excalidraw-cli create <file>.elements.json -o <file>.excalidraw`).

@@ -12,6 +12,7 @@ Canonical extract tree. Enonic details live only under `stackRef`.
   map/bounded-contexts.json
   inventory/static.json
   inventory/controllers.json
+  inventory/templates.json
   inventory/runtime.json          # optional
   inventory/content-volume.json   # optional, with runtime
   inventory/content-volume.md     # optional, with runtime
@@ -19,6 +20,10 @@ Canonical extract tree. Enonic details live only under `stackRef`.
   baseline/<slug>/                # desktop.png, mobile.png, page.html, network.json
   reports/xp8-compat.md           # optional; never promoted
   inventory/merge-report.md
+  rules/view-rules.json
+  rules/RULES.md
+  rules/literals.md
+  rules/review.md
   product/PRODUCT.md
   design/DESIGN.md
   design/design.json
@@ -46,7 +51,7 @@ Rewritten at the end of every `run`, `step` and `resume`:
 - `run_id`: sidecar directory name (UTC timestamp)
 - `source`: `path`, git `sha` and `dirty` (null / false outside git),
   `profile`, `lineage`, and `tools` (extractkit and Python versions)
-- `maps`: `code` / `semantic` pointers to reused source indexes, or null
+- `maps`: `code` / `semantic` / `serena` pointers to reused source indexes, or null
 - `skips`: `step`, `reason`, `fix` for each slot skipped in that run
 
 ## Schemas
@@ -62,6 +67,8 @@ Rewritten at the end of every `run`, `step` and `resume`:
 | `map/bounded-contexts.json` | `bounded-contexts.schema.json` |
 | `inventory/static.json` | `inventory.schema.json` |
 | `inventory/controllers.json` | `controllers.schema.json` |
+| `inventory/templates.json` | `templates.schema.json` |
+| `rules/view-rules.json` | `view-rules.schema.json` |
 | `inventory/runtime.json` | `runtime-inventory.schema.json` |
 | `inventory/content-volume.json` | `content-volume.schema.json` |
 | `inventory/content-survey.json`, `content-survey-resolved.json`, `page-templates.json` | same-named `*.schema.json` |
@@ -81,12 +88,27 @@ copies identical.
 | `config` | page, layout, part, macro, task | Same field objects, for the component form |
 | `regions` | page, layout | Region names |
 | `behavior` | any surface with a controller | `file`, `imports`, `calls`, `queries`, `methods`, `views`, `i18n`, `configKeys`, `listeners`, each item with `line` |
+| `template` | page, layout, part, macro, component, partial | `engine`, `framework`, `file`, `inputs`, `children` (`surface` id or null, `status`), `slots`, `outputs`, `logic`, `i18n`, `assets`, `dom`, `dataSource`; each item with `line` |
 | `configKeys`, `listeners` | `site` | Names the app's controllers read or listen for |
 | `usage` | page, layout, part | Guillotine count when the probe answered |
 <!-- markdownlint-enable MD013 -->
 
 `map/content-model.json` also holds `references`: `{from, field, to[]}`
 for each content-selector field.
+
+## View-layer files
+
+- `inventory/templates.json`: `engines[]` (confidence, `path:line` signals),
+  `files[]` (one per template or view script, with its full `scan`),
+  `controllers[]` (render-controller predicates) and `coverage` (files
+  scanned, skipped with reason, excluded folders)
+- `rules/view-rules.json`: `rules[]` (`id`, `kind`, `bucket`, `score` and
+  `signals`, `expression`, `shape`, `operands`, `literals`, `component`,
+  `source`, `repeated`, `divergent`, `status`), `groups[]` and `removed[]`.
+  Rule `status` is `extracted` (kit), `named` (agent wrote `name` and
+  `intent`) or `confirmed` (analyst ticked it)
+- `rules/RULES.md`, `rules/literals.md`: the readable views
+- `rules/review.md`: the only file in `rules/` a person or agent edits
 
 ## Hygiene
 
@@ -114,6 +136,7 @@ to copy.
 
 Applies to `page`, `layout`, `part`, and `macro` when runtime exists.
 
+<!-- markdownlint-disable MD013 -->
 | Status | Meaning |
 | --- | --- |
 | `live` | Seen in a runtime page's `templateOrder`, or the usage probe counted more than 0 (evidence `usage:<app>:<kind>:<name>:<n>`) |
@@ -121,6 +144,7 @@ Applies to `page`, `layout`, `part`, and `macro` when runtime exists.
 | `unobserved` | Not seen, and no count: the probe was unsupported, or the kind has no indexed field (macro). It is not `dead`; a port should keep it |
 | `conditional` | Seen in round 1, absent in round 2 |
 | `unverified-live` | No runtime, or any other kind |
+<!-- markdownlint-enable MD013 -->
 
 <!-- markdownlint-disable MD013 -->
 | Rule | Winner |

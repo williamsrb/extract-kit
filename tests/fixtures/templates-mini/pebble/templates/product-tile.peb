@@ -1,0 +1,7 @@
+{% set total = price * quantity %}
+<div class="tile">
+  {% if price > 150 %}
+    <span class="premium">Premium</span>
+  {% endif %}
+  {% include "price-tag.peb" %}
+</div>

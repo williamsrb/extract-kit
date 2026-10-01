@@ -6,13 +6,14 @@ from pathlib import Path
 
 from extractkit_cli.common import load_json
 from steps.core.behavior import walk_fields
+from steps.core.viewscan import components as view_components
 from steps.enonic.descriptors import collect_site_mappings
 
-COMPONENT_KINDS = {"page", "layout", "part", "macro"}
+COMPONENT_KINDS = {"page", "layout", "part", "macro", "component", "partial"}
 MODEL_KINDS = {"content-type", "mixin", "x-data", "i18n-bundle"}
 ROUTE_KINDS = {
     "service", "task", "site", "filter", "response-processor", "error", "webapp",
-    "id-provider",
+    "id-provider", "route",
 }
 ADMIN_KINDS = {"admin-tool", "admin-widget"}
 
@@ -134,6 +135,11 @@ def _behavior(row: dict) -> dict:
     return {key: row[key] for key in BEHAVIOR_KEYS if key in row}
 
 
+def _load_templates(ctx: object) -> dict:
+    path: Path = ctx.rel("inventory/templates.json")  # type: ignore[attr-defined]
+    return load_json(path, "inventory/templates.json") if path.is_file() else {}
+
+
 def _load_resources(ctx: object) -> list[dict]:
     path: Path = ctx.rel("inventory/static.json")  # type: ignore[attr-defined]
     if path.is_file():
@@ -175,6 +181,8 @@ class NormalizeStep:
                 app = surface["stackRef"]["enonic"]["app"]
                 surface["configKeys"] = _app_signals(rows, app, "configKeys", "key")
                 surface["listeners"] = _app_signals(rows, app, "listeners", "type")
+        template_components, template_routes = view_components.apply(_load_templates(ctx), surfaces)
+        surfaces += template_components + template_routes
         components = [s for s in surfaces if s["kind"] in COMPONENT_KINDS]
         types = [s for s in surfaces if s["kind"] in MODEL_KINDS]
         routes = [s for s in surfaces if s["kind"] in ROUTE_KINDS | ADMIN_KINDS]

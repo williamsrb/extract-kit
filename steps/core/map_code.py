@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from extractkit_cli.readiness import GRAFT_FIX
+
 
 class MapCodeStep:
     id = "map.code"
@@ -23,7 +25,7 @@ class MapCodeStep:
         ctx.record_skip(  # type: ignore[attr-defined]
             self.id,
             f"no graft/ index in {source}",
-            f"run graft build in {source} yourself",
+            GRAFT_FIX.format(source=source),
         )
 
     def check(self, _ctx: object) -> list[str]:

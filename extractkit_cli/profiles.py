@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 from argparse import Namespace
 
-from . import guide, manifest, registry, schema
-from .common import load_kit_identity, load_yaml
+from . import deps, guide, manifest, readiness, registry, schema
+from .common import Row, load_kit_identity, load_yaml
 from .errors import ExtractkitError
+from .outtree import resolve_source
 
 
 def _assert_known_adapters(profile: dict) -> None:
@@ -88,14 +89,36 @@ def cmd_doctor(args: Namespace) -> int:
             problems.append(line)
             continue
         problems.extend(f"{name}: {problem}" for problem in guide.phase_problems(composed))
-    if not problems:
+    rows = _preflight_rows(args)
+    failed = [r for r in rows if r.failed]
+    lines = [line for r in rows for line in deps.render_row(r)]
+    if not problems and not failed:
         suggestion = guide.next_for("doctor", "clean", args)
         guide.emit(
-            [f"doctor: clean ({checked} profile(s) checked)."],
+            [f"doctor: clean ({checked} profile(s) checked).", *lines],
             guide.render_next(suggestion, guide.style_for()),
         )
         return 0
     for problem in problems:
         print(f"  {problem}")
-    print(f"\ndoctor: {len(problems)} problem(s).")
+    if lines:
+        if problems:
+            print()
+        print("\n".join(lines))
+    print(f"\ndoctor: {len(problems) + len(failed)} problem(s).")
+    first_fix = next((r.fix for r in failed if r.fix), None)
+    suggestion = guide.next_for("doctor", "problems", args, fix=first_fix)
+    if suggestion:
+        print()
+        guide.emit(guide.render_next(suggestion, guide.style_for()))
     return 1
+
+
+def _preflight_rows(args: Namespace) -> list[Row]:
+    """Dependency and target-readiness rows; empty unless --source is given."""
+    raw = getattr(args, "source", None)
+    if not raw:
+        return []
+    source = resolve_source(raw)
+    profile = manifest.load(getattr(args, "profile", None) or "core")
+    return [*deps.check_deps(profile), *readiness.check_source(source)]

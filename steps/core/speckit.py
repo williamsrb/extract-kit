@@ -28,6 +28,66 @@ def _surfaces(ctx: object) -> dict[str, dict]:
     return index
 
 
+def _components_section(ids: list[str], index: dict[str, dict]) -> list[str]:
+    """Component tree plus an input, slot and output table per component, each cited."""
+    members = {i: index[i] for i in ids if (index.get(i) or {}).get("template")}
+    if not members:
+        return []
+    children = {
+        i: list(dict.fromkeys(c["surface"] for c in row["template"]["children"] if c["surface"] in members))
+        for i, row in members.items()
+    }
+    nested = {c for kids in children.values() for c in kids}
+    lines = ["## Components", "", "Tree (resolved child components only):", ""]
+
+    def walk(ident: str, depth: int, trail: tuple[str, ...]) -> None:
+        template = members[ident]["template"]
+        lines.append(f"{'  ' * depth}- `{ident}` ({template['engine']}, `{template['file']}`)")
+        for child in children[ident]:
+            if child not in trail:
+                walk(child, depth + 1, (*trail, ident))
+
+    roots = [i for i in members if i not in nested]
+    for root in roots or list(members):
+        walk(root, 0, ())
+    lines.append("")
+    for ident, row in members.items():
+        template = row["template"]
+        lines += [f"Component `{ident}` (x-source: `{template['file']}`)", ""]
+        if template["inputs"]:
+            lines += ["| input | type | x-source |", "|---|---|---|"]
+            for item in template["inputs"]:
+                kind = f"{item['type'] or '-'}{' (inferred)' if item['inferred'] else ''}"
+                lines.append(f"| `{item['name']}` | {kind} | `{item.get('file', template['file'])}:{item['line']}` |")
+            lines.append("")
+        for label, key in (("Slots", "slots"), ("Outputs", "outputs")):
+            if template[key]:
+                lines.append(f"{label}: " + ", ".join(
+                    f"`{x['name']}` (`{x.get('file', template['file'])}:{x['line']}`)" for x in template[key]
+                ))
+                lines.append("")
+    return lines
+
+
+def _open_questions(context_id: str, rules: dict[str, list[dict]]) -> list[str]:
+    seen: dict[str, list[dict]] = {}
+    for members in rules.values():
+        if context_id not in {m.get("context") for m in members}:
+            continue
+        for rule in members:
+            if rule.get("divergent") and rule.get("group"):
+                seen.setdefault(rule["group"], []).append(rule)
+    if not seen:
+        return []
+    lines = ["## Open questions", ""]
+    for group, members in sorted(seen.items()):
+        cites = ", ".join(f"`{m['source']}` (`{m['expression']}`)" for m in members)
+        ids = ", ".join(f"`{m['id']}`" for m in members)
+        lines.append(f"- Which version of this rule is correct? Copies disagree ({group}): {cites}. Rules: {ids}.")
+    lines.append("")
+    return lines
+
+
 def _slug(context_id: str) -> str:
     return "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in context_id)
 
@@ -52,7 +112,8 @@ constitution and not an XP8 / React4XP port plan.
 """
 
 
-def _spec_md(context: dict, index: dict[str, dict]) -> str:
+def _spec_md(context: dict, index: dict[str, dict], rules: dict[str, list[dict]] | None = None) -> str:
+    rules = rules or {}
     ctx_id = str(context.get("id") or "context")
     title = str(context.get("title") or ctx_id)
     ids = [str(x) for x in (context.get("surfaces") or []) if x]
@@ -61,6 +122,7 @@ def _spec_md(context: dict, index: dict[str, dict]) -> str:
         "",
         f"Bounded context `{ctx_id}`. Mode: as-is. Not a port spec.",
         "",
+        *_components_section(ids, index),
         "## Requirements",
         "",
     ]
@@ -78,7 +140,7 @@ def _spec_md(context: dict, index: dict[str, dict]) -> str:
         row = index.get(ident) or {"id": ident}
         kind = row.get("kind") or "surface"
         status = row.get("status") or "unverified-live"
-        bullets = behavior.acceptance(row)
+        bullets = behavior.acceptance(row) + behavior.rule_bullets(rules.get(ident, []))
         lines += [
             f"### FR-{n} {kind} `{ident}` ({status})",
             "",
@@ -91,6 +153,7 @@ def _spec_md(context: dict, index: dict[str, dict]) -> str:
             lines += [f"- {bullet}" for bullet in bullets]
             lines.append("")
         lines += [behavior.evidence_line(behavior.evidence_refs(row)), ""]
+    lines += _open_questions(ctx_id, rules)
     return "\n".join(lines)
 
 
@@ -117,6 +180,7 @@ class SpeckitStep:
             "# As-is fragment\n\nSee the parent constitution.md.\n",
         )
         index = _surfaces(ctx)
+        rules = behavior.rules_by_component(ctx)
         contexts = _contexts(ctx)
         if not contexts:
             ctx.write_text(  # type: ignore[attr-defined]
@@ -129,7 +193,7 @@ class SpeckitStep:
             slug = _slug(str(context.get("id") or "context"))
             ctx.write_text(  # type: ignore[attr-defined]
                 f"spec-kit/specs/{slug}/spec.md",
-                _spec_md(context, index),
+                _spec_md(context, index, rules),
             )
             if getattr(ctx, "tasks", False):
                 ctx.write_text(  # type: ignore[attr-defined]

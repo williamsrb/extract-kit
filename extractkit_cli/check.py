@@ -95,6 +95,64 @@ def _descriptor_coverage(out: Path) -> list[str]:
     return missing
 
 
+def _template_gaps(out: Path) -> list[str]:
+    """Template files without a component surface, and surfaces that are not spec-ready."""
+    templates_path = out / "inventory" / "templates.json"
+    components_path = out / "map" / "component-map.json"
+    if not templates_path.is_file() or not components_path.is_file():
+        return []
+    components = load_json(components_path, "map/component-map.json").get("components") or []
+    mapped = {
+        (c.get("template") or {}).get("file") for c in components if isinstance(c, dict)
+    }
+    problems: list[str] = []
+    for entry in load_json(templates_path, "inventory/templates.json").get("files") or []:
+        if entry["path"] not in mapped:
+            problems.append(
+                f"template {entry['path']} is in inventory/templates.json but maps to no component surface"
+            )
+    for component in components:
+        template = component.get("template") if isinstance(component, dict) else None
+        if template is None:
+            continue
+        missing = [
+            name for name, present in (
+                ("entry", bool(component.get("entry"))),
+                ("inputs", isinstance(template.get("inputs"), list)),
+                ("children", all(c.get("status") for c in template.get("children") or [])),
+                ("dataSource", bool(template.get("dataSource"))),
+                ("status", bool(component.get("status"))),
+            ) if not present
+        ]
+        if missing:
+            problems.append(
+                f"component {component.get('id')} is not spec-ready: missing {', '.join(missing)}"
+            )
+    return problems
+
+
+def _rule_gaps(out: Path) -> list[str]:
+    """Business view rules that no spec FR cites and that review.md does not drop."""
+    from steps.core import view_rules
+
+    rules_path = out / "rules" / "view-rules.json"
+    specs = sorted((out / "spec-kit" / "specs").rglob("spec.md")) if (out / "spec-kit" / "specs").is_dir() else []
+    if not rules_path.is_file() or not specs:
+        return []
+    review = out / "rules" / "review.md"
+    dropped = {
+        ident for ident, row in view_rules.parse_review(review.read_text(encoding="utf-8")).items()
+        if row["outOfScope"]
+    } if review.is_file() else set()
+    cited = "\n".join(spec.read_text(encoding="utf-8") for spec in specs)
+    return [
+        f"business rule {rule['id']} ({rule['source']}) is not cited in any spec FR and not marked "
+        "out-of-scope in rules/review.md"
+        for rule in load_json(rules_path, "rules/view-rules.json").get("rules") or []
+        if rule["bucket"] == "business" and rule["id"] not in dropped and rule["id"] not in cited
+    ]
+
+
 def _operations(spec: dict) -> list[tuple[str, str, dict]]:
     found: list[tuple[str, str, dict]] = []
     paths = spec.get("paths") or {}
@@ -186,6 +244,8 @@ def check_tree(out: Path) -> list[str]:
         ("inventory/content-survey-resolved.json", "content-survey-resolved"),
         ("inventory/page-templates.json", "page-templates"),
         ("inventory/controllers.json", "controllers"),
+        ("inventory/templates.json", "templates"),
+        ("rules/view-rules.json", "view-rules"),
         ("inventory/content-volume.json", "content-volume"),
     ):
         extra = out / rel
@@ -206,6 +266,8 @@ def check_tree(out: Path) -> list[str]:
         except ExtractkitError as exc:
             problems.append(str(exc))
 
+    problems.extend(_template_gaps(out))
+    problems.extend(_rule_gaps(out))
     problems.extend(_spec_fr_gaps(out))
 
     return problems

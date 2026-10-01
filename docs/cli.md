@@ -8,24 +8,27 @@ your own command with that flag added.
 
 ## Commands
 
+<!-- markdownlint-disable MD013 -->
 | Command | Role |
 | --- | --- |
 | `profile list` / `show NAME` | Inspect YAML types |
-| `doctor [--profile NAME]` | Validate kit, composed profiles, and phases |
-| `deps [--profile NAME]` | Binaries on PATH (`provides`) |
+| `doctor [--profile NAME] [--source DIR]` | Validate kit, composed profiles, and phases; with `--source`, also the deps and the target's agent tooling |
+| `deps [--profile NAME]` | Every dep run, not just found: binaries, Python version and modules |
 | `run --profile NAME --source DIR` | Pipeline; `--from` / `--until` |
 | `step STEP --profile NAME --source DIR` | One phase or one slot |
 | `check --out DIR` | Schema, coverage, `x-source`, spec FR |
 | `status [--source DIR] [--out DIR]` | Phase checklist (alias `next`) |
 | `resume --profile NAME --source DIR` | Continue from first incomplete slot |
 | `promote --source DIR [--out DIR] [--force]` | Copy Spec Kit + PRODUCT |
+<!-- markdownlint-enable MD013 -->
 
 ## Defaults
 
 <!-- markdownlint-disable MD013 -->
 | Command | Default |
 | --- | --- |
-| `deps` | `core` unless `--profile`. Optional deps print `skipped` and never fail |
+| `deps` | `core` unless `--profile`. An optional tool that is absent prints `skipped`; one that is broken prints `BROKEN` but does not fail the exit code |
+| `doctor` | All profiles unless `--profile`. `--source` adds the deps of `--profile` (default `core`) and the readiness rows |
 | `run`, `step` | New sidecar unless `--out` names one. With `--out`, files are added or overwritten |
 | `status`, `resume`, `promote` | Latest sidecar under `<source>/.extract/` (by run id) unless `--out` |
 | `status` profile | `MANIFEST.yaml` `source.profile` when `--profile` is omitted |
@@ -65,9 +68,9 @@ as well as a slot or plugin id.
 | # | Phase | Slots or command |
 | --- | --- | --- |
 | 1 | `preflight` | `doctor` (command) |
-| 2 | `static` | map.code, map.semantic, inventory.descriptors, inventory.controllers, maps.normalize, inventory.integrations |
+| 2 | `static` | map.code, map.semantic, inventory.descriptors, inventory.controllers, inventory.templates, maps.normalize, inventory.integrations |
 | 3 | `cms` | inventory.runtime, inventory.baseline (optional) |
-| 4 | `merge` | maps.merge, inventory.docs |
+| 4 | `merge` | maps.merge, rules.view, inventory.docs |
 | 5 | `synthesis` | product.impeccable, docs.synthesize, use_cases, spec.kit, report.compat (optional) |
 | 6 | `check` | `check` (command) |
 | 7 | `promote` | `promote` (command) |
@@ -130,11 +133,52 @@ Errors go to stderr as `error:` then
 `fix:   $ <your command with the fix>` when a flag fixes it (with the
 prose as `hint:`), or a prose `fix:` otherwise.
 
+## Deps
+
+`deps` runs each declared `probe` (an argv list, exit 0 within 5 s means
+ok) and reports four states:
+
+<!-- markdownlint-disable MD013 -->
+| State | Meaning |
+| --- | --- |
+| `ok` | On PATH and the probe passed |
+| `MISSING` | Not on PATH |
+| `BROKEN` | On PATH but the probe failed. Prints the first stderr line (the last line of a Python traceback) and a `fix:` |
+| `skipped` | Optional and absent |
+<!-- markdownlint-enable MD013 -->
+
+Python rows (`python`, `python:<module>`) check the interpreter version
+against `python: ">=3.12"` and each `python_modules` entry with
+`importlib.util.find_spec`. A required row that is `MISSING` or `BROKEN`
+exits 1. A `BROKEN` optional tool, such as a `graphify` shim whose package
+is gone, prints a `note:` and does not change the exit code.
+
+## Preflight
+
+`doctor --source DIR` adds the target checkout to the profile check:
+
+<!-- markdownlint-disable MD013 -->
+| Row | Ready when | Missing |
+| --- | --- | --- |
+| `serena onboarding` | `.serena/project.yml` exists and `.serena/memories/` holds a `*.md` | exit 1; fix: open the source in an agent with Serena and run onboarding |
+| `graphify index` | `graphify-out/graph.json` exists | exit 1; fix: run `/graphify .` in the source |
+| `graft index` | `graft/` exists | warning only; fix: run `graft build` in the source |
+<!-- markdownlint-enable MD013 -->
+
+The kit never runs Serena, graphify or graft; it detects them and prints the
+fix. The check is presence only, not freshness. `run` is not gated by it:
+`map.code` and `map.semantic` still skip with the same fix, and
+`MANIFEST.yaml` `maps.serena` records the `.serena/` path or null. The
+`next` block after a failing `doctor --source` is the first fix, then the
+command to re-run. A clean `doctor --source` suggests `run --until static`
+on that source.
+
 ## CMS flags
 
 `--branch draft|master` is required when `inventory.runtime` is in the
 slice. `--storage-state` is required whenever `enonic.cms` runs.
 
+<!-- markdownlint-disable MD013 -->
 | Flag | Effect |
 | --- | --- |
 | `--xp-host URL` | XP origin |
@@ -145,6 +189,7 @@ slice. `--storage-state` is required whenever `enonic.cms` runs.
 | `--configenv URL` | Config Env HTML page. Default: `{host}` plus the profile's `live_config.configenv_path`; with neither, Config Env is skipped |
 | `--site-url URL` | Base URL for `inventory.baseline` page captures. Default: `{host}/admin/site/preview/{project}/{branch}` |
 | `--allow-production` | Lift the production refusal (unused in the DoD) |
+<!-- markdownlint-enable MD013 -->
 
 Each flag falls back to the profile's `cms` key, then a built-in default.
 The table is in [profiles](profiles.md#enonic). A key given with
@@ -170,8 +215,14 @@ tree.
 - `integrations/openapi.yaml` is missing, is not YAML, or has an
   operation without `x-source`
 - `inventory/runtime.json`, `inventory/controllers.json`,
+  `inventory/templates.json`, `rules/view-rules.json`,
   `inventory/content-volume.json`, the Enonic extras, or
   `map/bounded-contexts.json` exist and break their schema
+- a file in `inventory/templates.json` maps to no component surface, or a
+  surface with a `template` is not spec-ready (`entry`, `inputs`,
+  `children`, `dataSource`, `status`)
+- a `business` rule in `rules/view-rules.json` is cited by no spec while a
+  spec exists, and `rules/review.md` does not mark it `out-of-scope: yes`
 - a `spec-kit/specs/**/spec.md` has no `FR-N` heading, an FR section has
   no `Evidence:` line, or a paragraph marked `_(inferred)_` has no
   `Evidence:` line in it or right after it

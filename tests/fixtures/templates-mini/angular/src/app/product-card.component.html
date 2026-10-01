@@ -1,0 +1,9 @@
+<div class="card">
+  <h3>{{ title }}</h3>
+  <span *ngIf="price > 100" class="premium">Premium</span>
+  <ul *ngIf="items.length > 0">
+    <li *ngFor="let item of items">{{ item }}</li>
+  </ul>
+  <app-price-tag [price]="price"></app-price-tag>
+  <button (click)="buy.emit()">Buy</button>
+</div>

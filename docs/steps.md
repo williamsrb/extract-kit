@@ -18,11 +18,13 @@ its slot.
 | static | `map.semantic` | `map.semantic` | always (optional) |
 | static | `inventory.descriptors` | `enonic.descriptors` | `inventory/static.json` |
 | static | `inventory.controllers` | `enonic.controllers` | `inventory/controllers.json` |
+| static | `inventory.templates` | `core.templates` | `inventory/templates.json` |
 | static | `maps.normalize` | `maps.normalize` | the four `map/*-map.json` / `content-model.json` files |
 | static | `inventory.integrations` | `enonic.integrations` | `integrations/openapi.yaml`, `integrations/swagger-ui/` |
 | cms | `inventory.runtime` | `enonic.cms` | `inventory/runtime.json` |
 | cms | `inventory.baseline` | `enonic.baseline` | `baseline/INDEX.md` (optional slot) |
 | merge | `maps.merge` | `maps.merge` | `map/bounded-contexts.json`, `inventory/merge-report.md` |
+| merge | `rules.view` | `core.view_rules` | `rules/view-rules.json`, `rules/RULES.md` |
 | merge | `inventory.docs` | `enonic.docs` | `docs/harvest/INDEX.md` |
 | synthesis | `product.impeccable` | `product.impeccable` | `product/PRODUCT.md`, `design/DESIGN.md` |
 | synthesis | `docs.synthesize` | `docs.synthesize` | `docs/technical/overview.md`, `docs/guide/overview.md` |
@@ -125,6 +127,48 @@ Per file it records, each with its `line`:
 `maps.normalize` attaches the record to the surface of the same folder (or
 file) as `behavior`. A string built at run time is not recorded.
 
+## inventory.templates (`core.templates`)
+
+**Does.** Stack-neutral inventory of the view layer. Every profile binds
+it, so it runs on enonic, as, php and core checkouts alike. Stdlib only;
+the source stays read-only. It reads `inventory/controllers.json` when
+present, which is why it sits after `inventory.controllers`.
+
+Engines are detected from file globs, content signals and manifests
+(`package.json`, `pom.xml`, `build.gradle`):
+
+<!-- markdownlint-disable MD013 -->
+| Engine | Signals |
+| --- | --- |
+| `freemarker` | `*.ftl`, `*.ftlh`, `<#` / `<@` directives, `freemarker` dependency |
+| `thymeleaf` | `xmlns:th` or `th:*` attributes inside a tag, `thymeleaf` / `lib-thymeleaf` dependency |
+| Enonic render binding | a file named by a controller `resolve('…')` that imports a render lib gets that lib as engine (`high`) |
+| `mustache`, `handlebars` | `*.mustache`; `*.hbs`; `{{#` / `{{>` sections with the dependency; `registerHelper(` scripts |
+| `pebble` | `*.peb`, `{% tag %}` with the dependency |
+| `react` | `*.jsx` / `*.tsx` with JSX; `framework: react4xp` when a controller names it |
+| `nextjs` | `next.config.*`, `next` dependency, files under `pages/` or `app/` (also recorded as `react`) |
+| `angular` | `angular.json`, `@Component(`, `*.component.html` |
+| `vue` | `*.vue`, `vue` dependency |
+| `jquery` | an HTML page with `<script src=…jquery…>`, the `jquery` dependency, then `$(` / `jQuery(` usage in JS |
+<!-- markdownlint-enable MD013 -->
+
+Each engine row has `confidence` (`high`, `medium`, `low`) and its signals
+as `path:line` plus the rule. A file signal is `high`, a dependency only is
+`medium`, and jQuery found only through `$(` usage is `low`. The scan skips
+`node_modules`, `vendor`, `dist`, `build`, `target`, `.extract`, `.git`,
+`graft`, `graphify-out` and `.serena`, and files over 1 MB. Skips are
+listed under `coverage`.
+
+Per file it records, each with `line`: `inputs` (declared ones typed, the
+rest `inferred`), `children`, `slots`, `outputs`, loop and conditional
+counts (a conditional is a branch that shows or selects, not a derived
+value), `i18n`, `assets`, `dom` (jQuery selectors bound to the markup) and
+the `predicates` that `rules.view` reads. An Angular `templateUrl` file is a
+companion of its component, not a second file. `controllers[]` holds the
+branches of render controllers over `content.data.*` or app and site config.
+
+**Writes.** `inventory/templates.json` (`templates.schema.json`).
+
 ## maps.normalize
 
 **Does.** Turns `inventory/static.json` into stack-agnostic surfaces.
@@ -132,6 +176,21 @@ Each resource becomes one surface with id `<app>:<kind>:<name>`, status
 `unverified-live`, and the Enonic path under `stackRef.enonic`.
 `site.xml` `<mapping>` entries (controller or filter) become `mapping`
 routes.
+
+Template files become surfaces of kind `component`, or `partial` when only
+other templates include them or when they are helper scripts. The id is
+`<engine>:<kind>:<path without suffix>`, engine detail is under
+`stackRef.template`, and a `template` block carries `inputs`, `children`
+(each `resolved` to a surface id or `unresolved`), `slots`, `outputs`,
+`logic`, `i18n`, `assets`, `dom` and `dataSource`, every item with
+`path:line`. `dataSource` is a surface id, `next:route:<path>` for a
+Next.js page, or `none`.
+
+An Enonic descriptor and its view are one surface. The join reads the
+controller `views` rows: `resolve` and `React4xp` refs by name, and a
+`<lib>.render` call by the view file in the same folder. The surface keeps
+its `config` and `regions` and gains `template`. Joining here, not in
+`maps.merge`, keeps a `--until static` run spec-ready without CMS access.
 
 Facts carried onto the surface:
 
@@ -152,12 +211,16 @@ content types its `allowContentType` lists.
 **Writes.**
 
 - `map/project-map.json`: every surface
-- `map/component-map.json`: `page`, `layout`, `part`, `macro`
+- `map/component-map.json`: `page`, `layout`, `part`, `macro`, `component`, `partial`
 - `map/content-model.json`: `content-type`, `mixin`, `x-data`,
   `i18n-bundle`, and `references`
 - `map/route-map.json`: `service`, `task`, `site`, `filter`,
   `response-processor`, `error`, `webapp`, `id-provider`, `admin-tool`,
-  `admin-widget`, `mapping`
+  `admin-widget`, `mapping`, and `route` (Next.js pages)
+
+`check` fails when a file in `inventory/templates.json` maps to no
+surface, or when a surface with a `template` lacks `entry`, `inputs`,
+resolved or `unresolved` children, `dataSource` or `status`.
 
 **Skip.** Without `inventory/static.json` (for example `step
 maps.normalize` on an empty sidecar) it re-scans the source.
@@ -315,7 +378,7 @@ status needs a count; sampling alone never produces it.
 
 Bounded contexts, each emitted only when non-empty:
 
-- `presentation`: page, layout, part, macro
+- `presentation`: page, layout, part, macro, component, partial
 - `content`: content-type, mixin, x-data, i18n-bundle
 - `routing`: service, task, site, mapping, filter, response-processor,
   error, webapp, id-provider
@@ -328,6 +391,59 @@ journey.
 `map/bounded-contexts.json` and `inventory/merge-report.md` (status
 counts including `unobserved`, a surface table with a `usage` column,
 contradictions). `references` in `content-model.json` is kept.
+
+## rules.view (`core.view_rules`)
+
+**Does.** Surfaces business rules written in the view layer, with
+evidence. It reads `inventory/templates.json`, the merged maps and, when
+present, the CMS survey. It extracts, scores and groups. It never names a
+rule and never evaluates an expression.
+
+Every predicate the scanners recorded becomes a rule:
+
+- `id`: `VR-` plus a hash of file, line and shape. Stable across runs
+- `kind`: `visibility`, `eligibility`, `calculation`, `validation`,
+  `formatting`, `selection`, `routing` or `market`
+- `expression`, `shape` (operators unified, operands reduced to their leaf
+  name, literals normalized), `literals`, `effect`, `component`, `source`
+  (`path:line`)
+- `operands`: each resolved to a component input, a content-model field or
+  a config key, else `unresolved`
+
+Harvested per engine: Thymeleaf `th:if`, `th:unless`, `th:switch`,
+ternaries, `#numbers` / `#dates` / `#strings`, `th:with`; FreeMarker `<#if>`,
+`<#assign>` arithmetic, `?then`, `?string`, macro defaults; Mustache
+sections and Handlebars `if` blocks and helper bodies; Pebble `if`, `set`;
+JSX `&&`, ternaries, early `return null`, `className`, derived constants,
+`getServerSideProps` branches; Vue `v-if`, `v-show`, `computed`; Angular
+`*ngIf`, `@if`, pipes, `Validators.*`, `canActivate`; jQuery handler
+branches, `.toggle`, `.validate({rules})`, `$.ajax` data; and Enonic
+controller branches over content data or config before `render`.
+
+**Score.** A domain-term operand (price, amount, date, role, market,
+country, status, type, age, qty, discount, limit and a few more) adds 2, a
+non-trivial literal 2, a comparison with it 1, arithmetic 1. Length checks,
+null and empty guards, index checks, format calls and pure CSS toggles lower
+it. Two or more is `business`, otherwise `presentational`. The signals stay
+on the rule. Nothing is dropped.
+
+**Groups.** The same shape in several files is `repeated`. The same
+operands with a different literal or operator across files are
+`divergent`.
+
+**Runtime.** When `inventory/content-survey.json` or `inventory/runtime.json`
+holds sampled values, each rule records up to 10 distinct values per operand.
+A business rule whose sampled operands are always empty is `possiblyDead`.
+
+**Review.** `rules/review.md` has one checkbox per business rule with
+`name:`, `intent:` and `out-of-scope:` lines. The agent fills the first two
+and marks them `_(inferred)_`; an analyst ticks the box. A re-run carries
+all of it over by id, from the same sidecar or the newest sibling under
+`<source>/.extract/`, and lists ids that vanished under `Removed`.
+
+**Writes.** `rules/view-rules.json` (`view-rules.schema.json`),
+`rules/RULES.md` (coverage line first, divergent groups next, then context,
+component and kind), `rules/literals.md`, `rules/review.md`.
 
 ## inventory.docs (`enonic.docs`)
 
@@ -353,8 +469,9 @@ who wants a richer rewrite, which may replace these files.
 
 - `product/PRODUCT.md`: profile, source, capabilities with their status,
   link to harvested docs
-- `design/DESIGN.md`: one section per page/layout/part/macro with its
-  composition
+- `design/DESIGN.md`: one section per page, layout, part, macro, component
+  and partial, with its composition and, for a template, its file, inputs
+  and children
 - `design/design.json`
 
 ## docs.synthesize
@@ -380,6 +497,9 @@ to reading the extract.
 - A static context gets one journey per surface that has fields, config,
   regions, controller behavior or a composition. The **Then** lists the
   same bullets as the spec.
+- Each business view rule gets its own journey: **Given** the rule applies
+  to the component, **When** its expression is evaluated, **Then** the
+  effect applies, cited by `path:line` and rule id.
 - A context with none gets one journey saying nothing was extracted.
 
 Without `map/bounded-contexts.json` it writes only `use-cases/README.md`.
@@ -403,8 +523,18 @@ surface only:
   config keys, listeners, each with `file:line`
 - runtime: the composition
 
+- business view rules: one `Rule VR-…` bullet each, with kind, expression
+  and `path:line`
+
 `Evidence:` lists the map id, the descriptor path, `runtime:` / `usage:`
-refs and the controller file. The kit writes no `_(inferred)_` text.
+refs and the controller file. The kit writes no `_(inferred)_` text; a
+rule name from `rules/review.md` is carried with its own marker.
+
+Each context also gets a `## Components` section before the requirements:
+the component tree, and per component a table of inputs and its slots and
+outputs, every row with an `x-source` cite. Divergent rule groups end the
+spec as `## Open questions`. `check` fails a `business` rule that no spec
+cites unless `rules/review.md` marks it `out-of-scope: yes`.
 
 Without contexts it writes `spec-kit/specs/default/spec.md`. `--tasks`
 adds a stub `tasks.md` per context.

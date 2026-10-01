@@ -120,6 +120,36 @@
         "config": { "type": "array", "items": { "$ref": "#/$defs/field" } },
         "regions": { "type": "array", "items": { "type": "string" } },
         "behavior": { "type": "object" },
+        "template": {
+          "type": "object",
+          "required": ["engine", "file", "inputs", "children", "slots", "outputs", "logic", "i18n", "assets", "dom", "dataSource"],
+          "properties": {
+            "engine": { "type": "string" },
+            "framework": { "type": ["string", "null"] },
+            "file": { "type": "string" },
+            "inputs": { "type": "array" },
+            "children": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["ref", "line", "surface", "status"],
+                "properties": {
+                  "ref": { "type": "string" },
+                  "line": { "type": "integer", "minimum": 1 },
+                  "surface": { "type": ["string", "null"] },
+                  "status": { "enum": ["resolved", "unresolved"] }
+                }
+              }
+            },
+            "slots": { "type": "array" },
+            "outputs": { "type": "array" },
+            "logic": { "type": "object" },
+            "i18n": { "type": "array" },
+            "assets": { "type": "array" },
+            "dom": { "type": "array" },
+            "dataSource": { "type": "string", "minLength": 1 }
+          }
+        },
         "configKeys": { "type": "array", "items": { "type": "string" } },
         "listeners": { "type": "array", "items": { "type": "string" } },
         "usage": { "type": ["integer", "null"] }

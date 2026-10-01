@@ -22,7 +22,7 @@ Extractor types are YAML files under `profiles/`.
 | `pipeline` | Ordered slot ids. |
 | `phases` | `id`, `title`, and either `slots` (list) or `command` (`doctor`, `check`, `promote`). |
 | `adapters` | Slot → plugin id, or `null` for unbound. |
-| `deps` | Entries with `provides` (binaries on PATH), optional `optional: true`, and install hints `apt` / `dnf` / `pacman`. |
+| `deps` | Entries with `provides` (binaries on PATH), `optional: true`, install hints `apt` / `dnf` / `pacman`, `probe` (argv list; exit 0 within 5 s is ok), `python_modules` (importable names) and `python` (a version bound such as `">=3.12"`). `core` declares `python3`, `git`, `graft`, `serena` and `graphify`; every profile inherits them. |
 | `todo` | Unfinished work, printed when `run` refuses. |
 | `optional_slots` | Slots that may stay unbound or empty without blocking `run`, `status` or `resume` (`inventory.baseline`, `report.compat`). |
 | `cms` | Enonic CMS defaults (below). |
@@ -136,6 +136,8 @@ descriptors, controllers, integrations, runtime, and docs stay `null`.
 - `run --profile php` refuses
 - `doctor --profile php` is green
 - `php` and `composer` are optional deps
+- the core deps and the view-layer slots (`inventory.templates`,
+  `rules.view`) are inherited
 
 ## Adding a profile or adapter
 

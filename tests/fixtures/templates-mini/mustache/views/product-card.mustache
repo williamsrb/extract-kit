@@ -1,0 +1,10 @@
+<div class="card">
+  <h3>{{title}}</h3>
+  {{#discountEligible}}
+    <span class="premium">Discount</span>
+  {{/discountEligible}}
+  {{^items}}
+    <p>No items</p>
+  {{/items}}
+  {{> price-tag}}
+</div>

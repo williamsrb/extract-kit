@@ -1,0 +1,11 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="card(title, price)">
+  <h3 th:text="${title}">Title</h3>
+  <span th:if="${price > 100}" class="premium">Premium</span>
+  <ul th:if="${items.size() > 0}">
+    <li th:each="item : ${items}" th:text="${item.name}">Item</li>
+  </ul>
+  <div th:replace="~{fragments/price-tag :: tag}"></div>
+  <p th:text="#{card.buy}">Buy</p>
+</div>
+</html>

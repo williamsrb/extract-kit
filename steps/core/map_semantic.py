@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from extractkit_cli.readiness import GRAPHIFY_FIX
+
 
 class MapSemanticStep:
     id = "map.semantic"
@@ -23,7 +25,7 @@ class MapSemanticStep:
         ctx.record_skip(  # type: ignore[attr-defined]
             self.id,
             f"no graphify-out/ in {source}",
-            f"run graphify in {source} yourself if you want a semantic overlay",
+            GRAPHIFY_FIX.format(source=source),
         )
 
     def check(self, _ctx: object) -> list[str]:

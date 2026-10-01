@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.templates/v1",
+  "title": "templates v1",
+  "type": "object",
+  "required": ["schema", "engines", "files", "controllers", "coverage"],
+  "$defs": {
+    "line": { "type": "integer", "minimum": 1 },
+    "signal": {
+      "type": "object",
+      "required": ["path", "line", "rule"],
+      "properties": {
+        "path": { "type": "string" },
+        "line": { "$ref": "#/$defs/line" },
+        "rule": { "type": "string" }
+      }
+    },
+    "confidence": { "enum": ["high", "medium", "low"] },
+    "named": {
+      "type": "object",
+      "required": ["name", "line"],
+      "properties": { "name": { "type": "string" }, "line": { "$ref": "#/$defs/line" } }
+    },
+    "scan": {
+      "type": "object",
+      "required": [
+        "inputs", "children", "slots", "outputs", "logic", "i18n", "assets", "dom", "predicates"
+      ],
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type", "inferred", "line"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": ["string", "null"] },
+              "inferred": { "type": "boolean" },
+              "line": { "$ref": "#/$defs/line" }
+            }
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ref", "line"],
+            "properties": { "ref": { "type": "string" }, "line": { "$ref": "#/$defs/line" } }
+          }
+        },
+        "slots": { "type": "array", "items": { "$ref": "#/$defs/named" } },
+        "outputs": { "type": "array", "items": { "$ref": "#/$defs/named" } },
+        "logic": {
+          "type": "object",
+          "required": ["loops", "conditionals"],
+          "properties": {
+            "loops": { "type": "integer", "minimum": 0 },
+            "conditionals": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "i18n": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["key", "line"],
+            "properties": { "key": { "type": "string" }, "line": { "$ref": "#/$defs/line" } }
+          }
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ref", "line"],
+            "properties": { "ref": { "type": "string" }, "line": { "$ref": "#/$defs/line" } }
+          }
+        },
+        "dom": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["selector", "event", "line"],
+            "properties": {
+              "selector": { "type": "string" },
+              "event": { "type": "string" },
+              "script": { "type": "string" },
+              "line": { "$ref": "#/$defs/line" }
+            }
+          }
+        },
+        "predicates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["expr", "line", "construct", "effect"],
+            "properties": {
+              "expr": { "type": "string" },
+              "line": { "$ref": "#/$defs/line" },
+              "construct": { "type": "string" },
+              "effect": { "enum": ["show", "compute", "validate", "format", "select", "route", "css"] }
+            }
+          }
+        },
+        "meta": { "type": "object" }
+      }
+    }
+  },
+  "properties": {
+    "schema": { "const": "99x.extract.templates/v1" },
+    "engines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "confidence", "files", "signals"],
+        "properties": {
+          "id": { "type": "string" },
+          "confidence": { "$ref": "#/$defs/confidence" },
+          "files": { "type": "integer", "minimum": 0 },
+          "signals": { "type": "array", "items": { "$ref": "#/$defs/signal" } }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "engine", "framework", "role", "confidence", "signals", "scan"],
+        "properties": {
+          "path": { "type": "string" },
+          "engine": { "type": "string" },
+          "framework": { "type": ["string", "null"] },
+          "role": { "enum": ["template", "script"] },
+          "confidence": { "$ref": "#/$defs/confidence" },
+          "signals": { "type": "array", "items": { "$ref": "#/$defs/signal" } },
+          "companions": { "type": "array", "items": { "type": "string" } },
+          "route": { "type": "string" },
+          "controller": {
+            "type": "object",
+            "required": ["controller", "line"],
+            "properties": {
+              "controller": { "type": "string" },
+              "line": { "type": ["integer", "null"] }
+            }
+          },
+          "scan": { "$ref": "#/$defs/scan" }
+        }
+      }
+    },
+    "controllers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "predicates"],
+        "properties": {
+          "path": { "type": "string" },
+          "predicates": { "$ref": "#/$defs/scan/properties/predicates" }
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["scanned", "detected", "skipped", "excluded"],
+      "properties": {
+        "scanned": { "type": "integer", "minimum": 0 },
+        "detected": { "type": "integer", "minimum": 0 },
+        "skipped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "reason"],
+            "properties": { "path": { "type": "string" }, "reason": { "type": "string" } }
+          }
+        },
+        "excluded": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "additionalProperties": true
+}

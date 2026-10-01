@@ -1448,6 +1448,64 @@
   },
   {
     "type": "rectangle",
+    "id": "ln_bg",
+    "x": 80,
+    "y": 2120,
+    "width": 1450,
+    "height": 900,
+    "backgroundColor": "#f8f9fa",
+    "strokeColor": "#dee2e6",
+    "fillStyle": "solid",
+    "strokeWidth": 2,
+    "roughness": 1,
+    "roundness": {
+      "type": 3
+    }
+  },
+  {
+    "type": "text",
+    "id": "ln_title",
+    "x": 114,
+    "y": 2146,
+    "text": "Sidecar lineage",
+    "fontSize": 30,
+    "strokeColor": "#1e1e1e",
+    "fontFamily": 5
+  },
+  {
+    "type": "text",
+    "id": "ln_sub",
+    "x": 116,
+    "y": 2190,
+    "text": "Checkout is read-only until promote. Purple = CMS only. Grey dashed = optional, never promoted.",
+    "fontSize": 17,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
+    "type": "arrow",
+    "id": "ln_div",
+    "x": 114,
+    "y": 2232,
+    "width": 1382,
+    "height": 0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        1382,
+        0
+      ]
+    ],
+    "endArrowhead": null,
+    "strokeColor": "#ced4da",
+    "strokeWidth": 2,
+    "roughness": 1
+  },
+  {
+    "type": "rectangle",
     "id": "ph_p1",
     "x": 190,
     "y": 1520,
@@ -1833,69 +1891,21 @@
     }
   },
   {
-    "type": "rectangle",
-    "id": "ln_bg",
-    "x": 80,
-    "y": 2120,
-    "width": 1450,
-    "height": 900,
-    "backgroundColor": "#f8f9fa",
-    "strokeColor": "#dee2e6",
-    "fillStyle": "solid",
-    "strokeWidth": 2,
-    "roughness": 1,
-    "roundness": {
-      "type": 3
-    }
-  },
-  {
     "type": "text",
-    "id": "ln_title",
-    "x": 114,
-    "y": 2146,
-    "text": "Sidecar lineage",
-    "fontSize": 30,
-    "strokeColor": "#1e1e1e",
-    "fontFamily": 5
-  },
-  {
-    "type": "text",
-    "id": "ln_sub",
-    "x": 116,
-    "y": 2190,
-    "text": "Checkout is read-only until promote. Purple = CMS only. Grey dashed = optional, never promoted.",
-    "fontSize": 17,
+    "id": "ph_n1",
+    "x": 190,
+    "y": 1612,
+    "text": "+ doctor --source:\nSerena, Graphify\n(must pass)\ngraft (warning)",
+    "fontSize": 15,
     "strokeColor": "#5f6368",
     "fontFamily": 5
-  },
-  {
-    "type": "arrow",
-    "id": "ln_div",
-    "x": 114,
-    "y": 2232,
-    "width": 1382,
-    "height": 0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        1382,
-        0
-      ]
-    ],
-    "endArrowhead": null,
-    "strokeColor": "#ced4da",
-    "strokeWidth": 2,
-    "roughness": 1
   },
   {
     "type": "text",
     "id": "ph_n2",
     "x": 357,
     "y": 1612,
-    "text": "+ controllers",
+    "text": "+ controllers\n+ templates",
     "fontSize": 15,
     "strokeColor": "#5f6368",
     "fontFamily": 5
@@ -1906,6 +1916,16 @@
     "x": 524,
     "y": 1612,
     "text": "+ baseline (optional)",
+    "fontSize": 15,
+    "strokeColor": "#5f6368",
+    "fontFamily": 5
+  },
+  {
+    "type": "text",
+    "id": "ph_n4",
+    "x": 691,
+    "y": 1612,
+    "text": "+ rules.view",
     "fontSize": 15,
     "strokeColor": "#5f6368",
     "fontFamily": 5
@@ -2011,11 +2031,11 @@
     "x": 500,
     "y": 2770,
     "width": 220,
-    "height": 90,
+    "height": 110,
     "backgroundColor": "#c3fae8",
     "fillStyle": "solid",
     "label": {
-      "text": "static.json\ncontrollers.json",
+      "text": "static.json\ncontrollers.json\ntemplates.json",
       "fontSize": 16,
       "fontFamily": 5
     },
@@ -2030,6 +2050,10 @@
       },
       {
         "id": "ln_a9",
+        "type": "arrow"
+      },
+      {
+        "id": "ln_a10",
         "type": "arrow"
       }
     ],
@@ -2117,6 +2141,14 @@
       {
         "id": "ln_a7",
         "type": "arrow"
+      },
+      {
+        "id": "ln_a10",
+        "type": "arrow"
+      },
+      {
+        "id": "ln_a11",
+        "type": "arrow"
       }
     ],
     "roundness": {
@@ -2151,7 +2183,7 @@
     "type": "rectangle",
     "id": "ln_comp",
     "x": 860,
-    "y": 2777,
+    "y": 2787,
     "width": 230,
     "height": 76,
     "backgroundColor": "#e9ecef",
@@ -2172,6 +2204,30 @@
     },
     "strokeStyle": "dashed",
     "strokeColor": "#868e96"
+  },
+  {
+    "type": "rectangle",
+    "id": "ln_rules",
+    "x": 1160,
+    "y": 2760,
+    "width": 230,
+    "height": 120,
+    "backgroundColor": "#c3fae8",
+    "fillStyle": "solid",
+    "label": {
+      "text": "rules/\nview-rules.json\nRULES.md, literals.md\nreview.md",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "ln_a11",
+        "type": "arrow"
+      }
+    ],
+    "roundness": {
+      "type": 3
+    }
   },
   {
     "type": "arrow",
@@ -2245,7 +2301,7 @@
     "x": 347.0,
     "y": 2660,
     "width": 153.0,
-    "height": 155.0,
+    "height": 165.0,
     "points": [
       [
         0,
@@ -2253,7 +2309,7 @@
       ],
       [
         153.0,
-        155.0
+        165.0
       ]
     ],
     "endArrowhead": "arrow",
@@ -2445,9 +2501,9 @@
     "type": "arrow",
     "id": "ln_a9",
     "x": 720,
-    "y": 2815.0,
+    "y": 2825.0,
     "width": 140,
-    "height": 0.0,
+    "height": -10.0,
     "points": [
       [
         0,
@@ -2455,7 +2511,7 @@
       ],
       [
         140,
-        0.0
+        -10.0
       ]
     ],
     "endArrowhead": "arrow",
@@ -2477,11 +2533,78 @@
     "strokeColor": "#868e96"
   },
   {
+    "type": "arrow",
+    "id": "ln_a10",
+    "x": 720.0,
+    "y": 2786.0,
+    "width": 197.0,
+    "height": -126.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        197.0,
+        -126.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "ln_inv",
+      "fixedPoint": [
+        1,
+        0.15
+      ]
+    },
+    "endBinding": {
+      "elementId": "ln_syn",
+      "fixedPoint": [
+        0.25,
+        1
+      ]
+    }
+  },
+  {
+    "type": "arrow",
+    "id": "ln_a11",
+    "x": 1055.5,
+    "y": 2660,
+    "width": 219.5,
+    "height": 100,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        219.5,
+        100
+      ]
+    ],
+    "startArrowhead": "arrow",
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "ln_syn",
+      "fixedPoint": [
+        0.85,
+        1
+      ]
+    },
+    "endBinding": {
+      "elementId": "ln_rules",
+      "fixedPoint": [
+        0.5,
+        0
+      ]
+    }
+  },
+  {
     "type": "text",
     "id": "ln_a4_lbl",
     "x": 622.0,
-    "y": 2702.5,
-    "text": "surfaces + behavior",
+    "y": 2692.0,
+    "text": "surfaces + behavior\n+ views",
     "fontSize": 14,
     "fontFamily": 5,
     "strokeColor": "#495057"
@@ -2530,8 +2653,28 @@
     "type": "text",
     "id": "ln_a9_lbl",
     "x": 755.0,
-    "y": 2791.0,
+    "y": 2796.0,
     "text": "XP8 report",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "ln_a10_lbl",
+    "x": 812,
+    "y": 2742,
+    "text": "templates.json",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "ln_a11_lbl",
+    "x": 1010,
+    "y": 2722,
+    "text": "writes rules; spec.kit,\ncheck read them",
     "fontSize": 14,
     "fontFamily": 5,
     "strokeColor": "#495057"

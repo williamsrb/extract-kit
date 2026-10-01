@@ -9,11 +9,13 @@ adapters:
   map.semantic: map.semantic
   inventory.descriptors: enonic.descriptors
   inventory.controllers: enonic.controllers
+  inventory.templates: core.templates
   maps.normalize: maps.normalize
   inventory.integrations: enonic.integrations
   inventory.runtime: enonic.cms
   inventory.baseline: enonic.baseline
   maps.merge: maps.merge
+  rules.view: core.view_rules
   inventory.docs: enonic.docs
   product.impeccable: product.impeccable
   docs.synthesize: docs.synthesize

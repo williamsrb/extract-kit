@@ -17,8 +17,12 @@ Spec Kit files into the checkout. That is not an XP8 or React4XP port.
 
 Every command writes on the first call. There is no dry run.
 
-Docs: [flow](docs/flow.md), [CLI](docs/cli.md), [steps](docs/steps.md),
-[profiles](docs/profiles.md), [output](docs/output.md).
+Docs: [LLM instructions](docs/llm.md), [flow](docs/flow.md),
+[CLI](docs/cli.md), [steps](docs/steps.md), [profiles](docs/profiles.md),
+[output](docs/output.md).
+
+Agents: read [docs/llm.md](docs/llm.md) first. It is the instruction set for
+driving the kit and for the rule-naming step.
 
 ## Install
 
@@ -38,7 +42,8 @@ No bootstrap, no desktop forks, no writes into `~/.agents-profiles`.
 ./extractkit profile show enonic
 ./extractkit profile show php
 ./extractkit doctor --profile php          # empty PHP is allowed
-./extractkit deps --profile enonic
+./extractkit doctor --profile enonic --source /path/to/legacy  # + readiness
+./extractkit deps --profile enonic         # runs each probe
 ./extractkit run --profile enonic --source /path/to/legacy --until static
 ./extractkit status --source /path/to/legacy
 ./extractkit resume --profile enonic --source /path/to/legacy
@@ -134,6 +139,19 @@ fails a run. A skip prints the command to run.
 refuses production hosts. `--site-url` replaces the preview base URL.
 `reports/xp8-compat.md` is never promoted.
 
+## View layer
+
+Every profile also inventories the view layer. `inventory.templates` detects
+FreeMarker, Thymeleaf, Mustache, Handlebars, Pebble, React, Next.js,
+Angular, Vue and jQuery, and `maps.normalize` maps each template file into a
+spec-ready `component` or `partial` surface (inputs, children, slots,
+outputs, data source) without converting any code. `rules.view` then
+harvests the business rules hidden in templates and view scripts, scores
+them, flags rules that are repeated or that diverge between files, and
+writes `rules/`. The kit extracts; the agent names the rules; an analyst
+confirms them. Details: [steps](docs/steps.md#inventorytemplates-coretemplates),
+[rule naming](docs/llm.md#naming-the-rules).
+
 ## What the spec holds
 
 `spec.md` states behavior from extracted facts only: fields, config
@@ -158,4 +176,5 @@ destination. `--force` overwrites. Paths and the guard are in
 python3 -m unittest discover -s tests
 ```
 
-Fixtures: `tests/fixtures/enonic-mini/`. No GitLab CI in this kit.
+Fixtures: `tests/fixtures/enonic-mini/` and `tests/fixtures/templates-mini/`.
+No GitLab CI in this kit.

@@ -6,11 +6,13 @@ Comments are blanked before matching so commented-out code never reports.
 
 from __future__ import annotations
 
-import bisect
 import re
 from pathlib import Path
 
 from extractkit_cli import schema
+from steps.core.viewscan.base import Lines as _Lines
+from steps.core.viewscan.base import brace_block as _brace_block
+from steps.core.viewscan.base import strip_comments
 from steps.enonic.descriptors import (
     app_name_for,
     iter_resources_roots,
@@ -79,51 +81,6 @@ _CONTENT_TYPES = re.compile(
 )
 
 
-def strip_comments(text: str) -> str:
-    """Blank `//` and `/* */` comments, keep strings and every newline."""
-    out: list[str] = []
-    i, n = 0, len(text)
-    quote = ""
-    while i < n:
-        ch = text[i]
-        nxt = text[i + 1] if i + 1 < n else ""
-        if quote:
-            out.append(ch)
-            if ch == "\\" and i + 1 < n:
-                out.append(nxt)
-                i += 2
-                continue
-            if ch == quote or (ch == "\n" and quote != "`"):
-                quote = ""
-            i += 1
-            continue
-        if ch in "'\"`":
-            quote = ch
-            out.append(ch)
-        elif ch == "/" and nxt == "/":
-            while i < n and text[i] != "\n":
-                i += 1
-            continue
-        elif ch == "/" and nxt == "*":
-            end = text.find("*/", i + 2)
-            end = n if end < 0 else end + 2
-            out.append("".join("\n" if c == "\n" else " " for c in text[i:end]))
-            i = end
-            continue
-        else:
-            out.append(ch)
-        i += 1
-    return "".join(out)
-
-
-class _Lines:
-    def __init__(self, text: str) -> None:
-        self._breaks = [m.start() for m in re.finditer("\n", text)]
-
-    def at(self, offset: int) -> int:
-        return bisect.bisect_left(self._breaks, offset) + 1
-
-
 def _names(raw: str) -> list[tuple[str, str]]:
     """`a, b as c` -> [(imported, local)]."""
     pairs: list[tuple[str, str]] = []
@@ -132,22 +89,6 @@ def _names(raw: str) -> list[tuple[str, str]]:
         if bits:
             pairs.append((bits[0], bits[-1]))
     return pairs
-
-
-def _brace_block(text: str, start: int) -> tuple[int, int] | None:
-    """Span of the first `{...}` at or after `start`, balanced."""
-    open_at = text.find("{", start)
-    if open_at < 0:
-        return None
-    depth = 0
-    for index in range(open_at, len(text)):
-        if text[index] == "{":
-            depth += 1
-        elif text[index] == "}":
-            depth -= 1
-            if depth == 0:
-                return open_at, index + 1
-    return None
 
 
 def _imports(text: str, lines: _Lines) -> list[dict]:

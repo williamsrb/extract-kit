@@ -150,6 +150,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     doc = flat("doctor", "Validate kit identity and profile YAML (empty PHP is allowed).")
     doc.add_argument("--profile", metavar="NAME", help="Check only this profile.")
+    doc.add_argument(
+        "--source", metavar="DIR",
+        help="Also check dependencies and that the legacy checkout has Serena "
+             "onboarding, a Graphify index and a graft index.",
+    )
     _add_output_flags(doc)
     doc.set_defaults(func=profiles.cmd_doctor)
 

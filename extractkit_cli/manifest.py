@@ -99,6 +99,34 @@ def provided_binaries(profile: dict, include_optional: bool = True) -> list[str]
     return names
 
 
+def dependency_rows(profile: dict) -> list[dict]:
+    """One normalized row per provided binary, in declaration order.
+
+    Keys: name, required, probe, python_modules, python, install. The probe,
+    modules and Python bound belong to the dep's first binary.
+    """
+    rows: list[dict] = []
+    seen: set[str] = set()
+    for dep in dependencies(profile):
+        if not isinstance(dep, dict):
+            continue
+        install = {k: dep[k] for k in ("apt", "dnf", "pacman") if dep.get(k)}
+        for index, name in enumerate(dep.get("provides") or []):
+            if name in seen:
+                continue
+            seen.add(name)
+            first = index == 0
+            rows.append({
+                "name": name,
+                "required": not dep.get("optional"),
+                "probe": list(dep["probe"]) if first and dep.get("probe") else None,
+                "python_modules": list(dep.get("python_modules") or []) if first else [],
+                "python": dep.get("python") if first else None,
+                "install": install,
+            })
+    return rows
+
+
 def pipeline_ids(profile: dict) -> list[str]:
     raw = profile.get("pipeline") or []
     ids: list[str] = []

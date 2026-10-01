@@ -79,7 +79,7 @@ class SliceTests(unittest.TestCase):
     def test_until_static_stops_after_integrations(self) -> None:
         rows = _slice_pipeline(self.rows, None, "static", profile=self.profile)
         self.assertEqual(self._slots(rows)[-1], "inventory.integrations")
-        self.assertEqual(len(rows), 6)
+        self.assertEqual(len(rows), 7)
 
     def test_phase_range_equals_slot_range(self) -> None:
         by_phase = _slice_pipeline(self.rows, "merge", "synthesis", profile=self.profile)
@@ -88,7 +88,7 @@ class SliceTests(unittest.TestCase):
 
     def test_step_phase_number_runs_every_slot(self) -> None:
         rows = _slice_pipeline(self.rows, None, None, only="2", profile=self.profile)
-        self.assertEqual(len(rows), 6)
+        self.assertEqual(len(rows), 7)
 
     def test_step_slot_id_keeps_single_slot(self) -> None:
         rows = _slice_pipeline(self.rows, None, None, only="maps.merge", profile=self.profile)
@@ -370,8 +370,24 @@ class NextTransitionTests(unittest.TestCase):
                 "./extractkit run --profile enonic --source <legacy-checkout> --until static"
             ), argv)
 
+    def test_clean_doctor_with_a_source_runs_that_source(self) -> None:
+        args = self._args("doctor", "--profile", "enonic", "--source", "legacy",
+                          profile="enonic", source="legacy")
+        s = guide.next_for("doctor", "clean", args)
+        self.assertEqual(guide.join(s.argv), (
+            "./extractkit run --profile enonic --source legacy --until static"
+        ))
+
     def test_doctor_problems_have_no_next(self) -> None:
         self.assertIsNone(guide.next_for("doctor", "problems", self._args("doctor")))
+
+    def test_doctor_problems_with_a_fix_point_at_it_and_a_rerun(self) -> None:
+        args = self._args("doctor", "--profile", "enonic", "--source", "legacy", "-q")
+        s = guide.next_for("doctor", "problems", args, fix="run `graft build` in legacy")
+        self.assertEqual(s.reason, "run `graft build` in legacy, then re-run:")
+        self.assertEqual(guide.join(s.argv), (
+            "./extractkit doctor --profile enonic --source legacy -q"
+        ))
 
 
 class CliOutputTests(unittest.TestCase):

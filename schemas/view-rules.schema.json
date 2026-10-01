@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.view-rules/v1",
+  "title": "view-layer rules v1",
+  "type": "object",
+  "required": ["schema", "coverage", "rules", "groups", "removed"],
+  "properties": {
+    "schema": { "const": "99x.extract.view-rules/v1" },
+    "coverage": { "type": "object" },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id", "kind", "bucket", "score", "signals", "expression", "shape", "operands", "literals",
+          "effect", "component", "context", "source", "repeated", "divergent", "group", "status"
+        ],
+        "properties": {
+          "id": { "type": "string", "pattern": "^VR-[0-9a-f]{10}$" },
+          "kind": {
+            "enum": [
+              "visibility", "eligibility", "calculation", "validation", "formatting", "selection",
+              "routing", "market"
+            ]
+          },
+          "bucket": { "enum": ["business", "presentational"] },
+          "score": { "type": "integer" },
+          "signals": { "type": "array", "items": { "type": "string" } },
+          "expression": { "type": "string" },
+          "shape": { "type": "string" },
+          "operands": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "leaf", "resolved", "ref"],
+              "properties": {
+                "name": { "type": "string" },
+                "leaf": { "type": "string" },
+                "resolved": { "enum": ["input", "field", "config", "unresolved"] },
+                "ref": { "type": ["string", "null"] },
+                "sampleCount": { "type": "integer", "minimum": 0 }
+              }
+            }
+          },
+          "literals": { "type": "array", "items": { "type": "string" } },
+          "effect": { "enum": ["show", "compute", "validate", "format", "select", "route", "css"] },
+          "construct": { "type": "string" },
+          "component": { "type": ["string", "null"] },
+          "context": { "type": "string" },
+          "source": { "type": "string", "pattern": ":[0-9]+$" },
+          "repeated": { "type": "boolean" },
+          "divergent": { "type": "boolean" },
+          "group": { "type": ["string", "null"] },
+          "status": { "enum": ["extracted", "named", "confirmed"] },
+          "name": { "type": "string" },
+          "intent": { "type": "string" },
+          "outOfScope": { "type": "boolean" },
+          "samples": { "type": "object" },
+          "possiblyDead": { "type": "boolean" }
+        }
+      }
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "rules", "files"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "enum": ["repeated", "divergent"] },
+          "rules": { "type": "array", "items": { "type": "string" } },
+          "files": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "removed": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

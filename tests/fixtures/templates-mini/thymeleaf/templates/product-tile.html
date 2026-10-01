@@ -1,0 +1,7 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<div class="tile" th:with="total=${price * quantity}">
+  <span th:if="${price > 150}" class="premium">Premium</span>
+  <span th:text="${#numbers.formatDecimal(total, 1, 2)}">0.00</span>
+  <div th:insert="~{fragments/price-tag :: tag}"></div>
+</div>
+</html>

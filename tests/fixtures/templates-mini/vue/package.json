@@ -1,0 +1,6 @@
+{
+  "name": "vue-mini",
+  "dependencies": {
+    "vue": "^3.4.0"
+  }
+}

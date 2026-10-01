@@ -117,11 +117,11 @@
     "x": 340,
     "y": 530,
     "width": 220,
-    "height": 90,
+    "height": 110,
     "backgroundColor": "#c3fae8",
     "fillStyle": "solid",
     "label": {
-      "text": "static.json\ncontrollers.json",
+      "text": "static.json\ncontrollers.json\ntemplates.json",
       "fontSize": 16,
       "fontFamily": 5
     },
@@ -136,6 +136,10 @@
       },
       {
         "id": "a9",
+        "type": "arrow"
+      },
+      {
+        "id": "a10",
         "type": "arrow"
       }
     ],
@@ -223,6 +227,14 @@
       {
         "id": "a7",
         "type": "arrow"
+      },
+      {
+        "id": "a10",
+        "type": "arrow"
+      },
+      {
+        "id": "a11",
+        "type": "arrow"
       }
     ],
     "roundness": {
@@ -257,7 +269,7 @@
     "type": "rectangle",
     "id": "comp",
     "x": 700,
-    "y": 537,
+    "y": 547,
     "width": 230,
     "height": 76,
     "backgroundColor": "#e9ecef",
@@ -278,6 +290,30 @@
     },
     "strokeStyle": "dashed",
     "strokeColor": "#868e96"
+  },
+  {
+    "type": "rectangle",
+    "id": "rules",
+    "x": 1000,
+    "y": 520,
+    "width": 230,
+    "height": 120,
+    "backgroundColor": "#c3fae8",
+    "fillStyle": "solid",
+    "label": {
+      "text": "rules/\nview-rules.json\nRULES.md, literals.md\nreview.md",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a11",
+        "type": "arrow"
+      }
+    ],
+    "roundness": {
+      "type": 3
+    }
   },
   {
     "type": "arrow",
@@ -351,7 +387,7 @@
     "x": 187.0,
     "y": 420,
     "width": 153.0,
-    "height": 155.0,
+    "height": 165.0,
     "points": [
       [
         0,
@@ -359,7 +395,7 @@
       ],
       [
         153.0,
-        155.0
+        165.0
       ]
     ],
     "endArrowhead": "arrow",
@@ -551,9 +587,9 @@
     "type": "arrow",
     "id": "a9",
     "x": 560,
-    "y": 575.0,
+    "y": 585.0,
     "width": 140,
-    "height": 0.0,
+    "height": -10.0,
     "points": [
       [
         0,
@@ -561,7 +597,7 @@
       ],
       [
         140,
-        0.0
+        -10.0
       ]
     ],
     "endArrowhead": "arrow",
@@ -583,11 +619,78 @@
     "strokeColor": "#868e96"
   },
   {
+    "type": "arrow",
+    "id": "a10",
+    "x": 560.0,
+    "y": 546.0,
+    "width": 197.0,
+    "height": -126.0,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        197.0,
+        -126.0
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "inv",
+      "fixedPoint": [
+        1,
+        0.15
+      ]
+    },
+    "endBinding": {
+      "elementId": "syn",
+      "fixedPoint": [
+        0.25,
+        1
+      ]
+    }
+  },
+  {
+    "type": "arrow",
+    "id": "a11",
+    "x": 895.5,
+    "y": 420,
+    "width": 219.5,
+    "height": 100,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        219.5,
+        100
+      ]
+    ],
+    "startArrowhead": "arrow",
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "syn",
+      "fixedPoint": [
+        0.85,
+        1
+      ]
+    },
+    "endBinding": {
+      "elementId": "rules",
+      "fixedPoint": [
+        0.5,
+        0
+      ]
+    }
+  },
+  {
     "type": "text",
     "id": "a4_lbl",
     "x": 462.0,
-    "y": 462.5,
-    "text": "surfaces + behavior",
+    "y": 452.0,
+    "text": "surfaces + behavior\n+ views",
     "fontSize": 14,
     "fontFamily": 5,
     "strokeColor": "#495057"
@@ -636,8 +739,28 @@
     "type": "text",
     "id": "a9_lbl",
     "x": 595.0,
-    "y": 551.0,
+    "y": 556.0,
     "text": "XP8 report",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "a10_lbl",
+    "x": 652,
+    "y": 502,
+    "text": "templates.json",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "a11_lbl",
+    "x": 850,
+    "y": 482,
+    "text": "writes rules; spec.kit,\ncheck read them",
     "fontSize": 14,
     "fontFamily": 5,
     "strokeColor": "#495057"
