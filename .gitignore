@@ -10,3 +10,4 @@ __pycache__/
 # Local scan / browser session artifacts
 .security-local/
 .playwright-cli/
+.docs-rewrite-backup/

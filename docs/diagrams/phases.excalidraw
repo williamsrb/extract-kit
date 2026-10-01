@@ -30,7 +30,7 @@
       "y": 140,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#ffec99",
+      "backgroundColor": "#fff3bf",
       "fillStyle": "solid",
       "roundness": {
         "type": 3
@@ -68,8 +68,8 @@
       "y": 140,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -110,8 +110,8 @@
       "y": 140,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#d0bfff",
-      "fillStyle": "hachure",
+      "backgroundColor": "#e5dbff",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -152,8 +152,8 @@
       "y": 140,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -194,8 +194,8 @@
       "y": 140,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -236,7 +236,7 @@
       "y": 140,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#ffec99",
+      "backgroundColor": "#fff3bf",
       "fillStyle": "solid",
       "roundness": {
         "type": 3
@@ -278,7 +278,7 @@
       "y": 140,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#ffec99",
+      "backgroundColor": "#fff3bf",
       "fillStyle": "solid",
       "roundness": {
         "type": 3
@@ -320,8 +320,8 @@
       "y": 140,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },

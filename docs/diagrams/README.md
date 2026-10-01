@@ -11,16 +11,16 @@ works) is separate.
 
 - [extractkit-flow.excalidraw](extractkit-flow.excalidraw)
 - [extractkit-flow.png](extractkit-flow.png)
-- Open: <https://excalidraw.com/#json=HdG0QtExrbHqFzudyWc2W,ZakomTdCK53BknXacLfOBw>
+- Open: <https://excalidraw.com/#json=z5ERedSKICYHPJpD2kz1s,TGDd0RgMKkPK6LJ35nvSyg>
 
 ## Individual
 
 | Panel | Source | Preview | Open |
 | --- | --- | --- | --- |
-| How it works (README) | [how-it-works.excalidraw](how-it-works.excalidraw) | [how-it-works.png](how-it-works.png) | [excalidraw.com](https://excalidraw.com/#json=_PMZgJWcshcyKBXV1MiMW,LEHZgODOk3L_jYv5A6xANw) |
-| Operator path | [operator-path.excalidraw](operator-path.excalidraw) | [operator-path.png](operator-path.png) | [excalidraw.com](https://excalidraw.com/#json=VRj9O1Kx8rbQ9gI03nDO7,ByEfpTzNTB_39NdHCgPGpA) |
-| Phases | [phases.excalidraw](phases.excalidraw) | [phases.png](phases.png) | [excalidraw.com](https://excalidraw.com/#json=NRLOROenD9RN5s4QLz0tW,Dtsrb_MDsWYh1kx8-kid2g) |
-| Sidecar lineage | [sidecar-lineage.excalidraw](sidecar-lineage.excalidraw) | [sidecar-lineage.png](sidecar-lineage.png) | [excalidraw.com](https://excalidraw.com/#json=Ws3smI7T3XBd9sySeZxFH,Ie0BSD-OhQeRdDseTAyqIQ) |
+| How it works (README) | [how-it-works.excalidraw](how-it-works.excalidraw) | [how-it-works.png](how-it-works.png) | [excalidraw.com](https://excalidraw.com/#json=YOYx5xxsGH4sCXVr_60dG,ftJ1lMLobKgKIBvTbubRig) |
+| Operator path | [operator-path.excalidraw](operator-path.excalidraw) | [operator-path.png](operator-path.png) | [excalidraw.com](https://excalidraw.com/#json=wgM7IlNk94rTPeSScP48a,OkNnYG3bDm0NH95uf-Itew) |
+| Phases | [phases.excalidraw](phases.excalidraw) | [phases.png](phases.png) | [excalidraw.com](https://excalidraw.com/#json=dylOuyIv5hbBYLR35NX58,XuJnf_Ubw76bj7sefLwPPQ) |
+| Sidecar lineage | [sidecar-lineage.excalidraw](sidecar-lineage.excalidraw) | [sidecar-lineage.png](sidecar-lineage.png) | [excalidraw.com](https://excalidraw.com/#json=vodirsb4Bz7qhr-IzMZ_A,vi3SC-JeP707JmO7sO8i7w) |
 
 The excalidraw.com links above open the version of 1 Oct, which matches
 the local `.excalidraw` and `.png` files: the eight-phase pipeline with the

@@ -90,7 +90,7 @@
       ],
       "y": 320,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#a5d8ff",
+      "backgroundColor": "#d0ebff",
       "width": 200,
       "roughness": 2
     },
@@ -134,7 +134,7 @@
       "id": "op_run",
       "frameId": null,
       "locked": false,
-      "fillStyle": "hachure",
+      "fillStyle": "solid",
       "strokeStyle": "solid",
       "angle": 0,
       "x": 470,
@@ -158,7 +158,7 @@
       ],
       "y": 320,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#b2f2bb",
+      "backgroundColor": "#d3f9d8",
       "width": 230,
       "roughness": 2
     },
@@ -202,7 +202,7 @@
       "id": "op_st",
       "frameId": null,
       "locked": false,
-      "fillStyle": "hachure",
+      "fillStyle": "solid",
       "strokeStyle": "solid",
       "angle": 0,
       "x": 770,
@@ -226,7 +226,7 @@
       ],
       "y": 320,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffec99",
+      "backgroundColor": "#fff3bf",
       "width": 160,
       "roughness": 2
     },
@@ -298,7 +298,7 @@
       ],
       "y": 443.855054,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffec99",
+      "backgroundColor": "#fff3bf",
       "width": 200,
       "roughness": 2
     },
@@ -342,7 +342,7 @@
       "id": "op_cms",
       "frameId": null,
       "locked": false,
-      "fillStyle": "hachure",
+      "fillStyle": "solid",
       "strokeStyle": "solid",
       "angle": 0,
       "x": 360,
@@ -366,7 +366,7 @@
       ],
       "y": 623,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#b2f2bb",
+      "backgroundColor": "#d3f9d8",
       "width": 220,
       "roughness": 2
     },
@@ -410,7 +410,7 @@
       "id": "op_skip",
       "frameId": null,
       "locked": false,
-      "fillStyle": "hachure",
+      "fillStyle": "solid",
       "strokeStyle": "solid",
       "angle": 0,
       "x": 880,
@@ -434,7 +434,7 @@
       ],
       "y": 623,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#d0bfff",
+      "backgroundColor": "#e5dbff",
       "width": 240,
       "roughness": 2
     },
@@ -478,7 +478,7 @@
       "id": "op_syn",
       "frameId": null,
       "locked": false,
-      "fillStyle": "hachure",
+      "fillStyle": "solid",
       "strokeStyle": "solid",
       "angle": 0,
       "x": 520,
@@ -506,7 +506,7 @@
       ],
       "y": 813,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#b2f2bb",
+      "backgroundColor": "#d3f9d8",
       "width": 260,
       "roughness": 2
     },
@@ -550,7 +550,7 @@
       "id": "op_agent",
       "frameId": null,
       "locked": false,
-      "fillStyle": "hachure",
+      "fillStyle": "solid",
       "strokeStyle": "solid",
       "angle": 0,
       "x": 829,
@@ -574,7 +574,7 @@
       ],
       "y": 813,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffec99",
+      "backgroundColor": "#fff3bf",
       "width": 150,
       "roughness": 2
     },
@@ -618,7 +618,7 @@
       "id": "op_chk",
       "frameId": null,
       "locked": false,
-      "fillStyle": "hachure",
+      "fillStyle": "solid",
       "strokeStyle": "solid",
       "angle": 0,
       "x": 1028,
@@ -642,7 +642,7 @@
       ],
       "y": 813,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffec99",
+      "backgroundColor": "#fff3bf",
       "width": 180,
       "roughness": 2
     },
@@ -686,7 +686,7 @@
       "id": "op_pro",
       "frameId": null,
       "locked": false,
-      "fillStyle": "hachure",
+      "fillStyle": "solid",
       "strokeStyle": "solid",
       "angle": 0,
       "x": 1299,
@@ -710,7 +710,7 @@
       ],
       "y": 813,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#b2f2bb",
+      "backgroundColor": "#d3f9d8",
       "width": 160,
       "roughness": 2
     },
@@ -774,7 +774,7 @@
       ],
       "y": 978,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffc9c9",
+      "backgroundColor": "#ffe3e3",
       "width": 200,
       "roughness": 2
     },
@@ -1626,7 +1626,7 @@
       "y": 1520,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#ffec99",
+      "backgroundColor": "#fff3bf",
       "fillStyle": "solid",
       "roundness": {
         "type": 3
@@ -1664,8 +1664,8 @@
       "y": 1520,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -1706,8 +1706,8 @@
       "y": 1520,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#d0bfff",
-      "fillStyle": "hachure",
+      "backgroundColor": "#e5dbff",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -1748,8 +1748,8 @@
       "y": 1520,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -1790,8 +1790,8 @@
       "y": 1520,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -1832,7 +1832,7 @@
       "y": 1520,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#ffec99",
+      "backgroundColor": "#fff3bf",
       "fillStyle": "solid",
       "roundness": {
         "type": 3
@@ -1874,7 +1874,7 @@
       "y": 1520,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#ffec99",
+      "backgroundColor": "#fff3bf",
       "fillStyle": "solid",
       "roundness": {
         "type": 3
@@ -1916,8 +1916,8 @@
       "y": 1520,
       "width": 145,
       "height": 80,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -2252,7 +2252,7 @@
       "y": 2570,
       "width": 210,
       "height": 90,
-      "backgroundColor": "#a5d8ff",
+      "backgroundColor": "#d0ebff",
       "fillStyle": "solid",
       "boundElements": [
         {
@@ -2298,7 +2298,7 @@
       "y": 2380,
       "width": 220,
       "height": 76,
-      "backgroundColor": "#c3fae8",
+      "backgroundColor": "#e6fcf5",
       "fillStyle": "solid",
       "boundElements": [
         {
@@ -2336,7 +2336,7 @@
       "y": 2577,
       "width": 220,
       "height": 76,
-      "backgroundColor": "#c3fae8",
+      "backgroundColor": "#e6fcf5",
       "fillStyle": "solid",
       "boundElements": [
         {
@@ -2382,7 +2382,7 @@
       "y": 2770,
       "width": 220,
       "height": 110,
-      "backgroundColor": "#c3fae8",
+      "backgroundColor": "#e6fcf5",
       "fillStyle": "solid",
       "boundElements": [
         {
@@ -2432,7 +2432,7 @@
       "y": 2380,
       "width": 230,
       "height": 76,
-      "backgroundColor": "#d0bfff",
+      "backgroundColor": "#e5dbff",
       "fillStyle": "solid",
       "boundElements": [
         {
@@ -2515,8 +2515,8 @@
       "y": 2570,
       "width": 230,
       "height": 90,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "boundElements": [
         {
           "id": "ln_a5",
@@ -2569,7 +2569,7 @@
       "y": 2570,
       "width": 210,
       "height": 90,
-      "backgroundColor": "#b2f2bb",
+      "backgroundColor": "#d3f9d8",
       "fillStyle": "solid",
       "boundElements": [
         {
@@ -2652,7 +2652,7 @@
       "y": 2760,
       "width": 230,
       "height": 120,
-      "backgroundColor": "#c3fae8",
+      "backgroundColor": "#e6fcf5",
       "fillStyle": "solid",
       "boundElements": [
         {
@@ -3071,7 +3071,7 @@
       "y": 2492,
       "width": 210,
       "height": 48,
-      "backgroundColor": "#c3fae8",
+      "backgroundColor": "#e6fcf5",
       "fillStyle": "solid",
       "boundElements": [
         {

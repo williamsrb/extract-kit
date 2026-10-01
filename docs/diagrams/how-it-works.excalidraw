@@ -30,8 +30,8 @@
       "y": 130,
       "width": 240,
       "height": 100,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -68,8 +68,8 @@
       "y": 130,
       "width": 240,
       "height": 100,
-      "backgroundColor": "#d0bfff",
-      "fillStyle": "hachure",
+      "backgroundColor": "#e5dbff",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -111,8 +111,8 @@
       "y": 130,
       "width": 240,
       "height": 100,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -153,8 +153,8 @@
       "y": 130,
       "width": 240,
       "height": 100,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -195,8 +195,8 @@
       "y": 340,
       "width": 240,
       "height": 100,
-      "backgroundColor": "#ffec99",
-      "fillStyle": "hachure",
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -237,8 +237,8 @@
       "y": 340,
       "width": 240,
       "height": 100,
-      "backgroundColor": "#ffc9c9",
-      "fillStyle": "hachure",
+      "backgroundColor": "#ffe3e3",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -279,7 +279,7 @@
       "y": 340,
       "width": 240,
       "height": 100,
-      "backgroundColor": "#a5d8ff",
+      "backgroundColor": "#d0ebff",
       "fillStyle": "solid",
       "roundness": {
         "type": 3
@@ -535,8 +535,8 @@
       "y": 490,
       "width": 28,
       "height": 22,
-      "backgroundColor": "#b2f2bb",
-      "fillStyle": "hachure",
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -559,8 +559,8 @@
       "y": 490,
       "width": 28,
       "height": 22,
-      "backgroundColor": "#d0bfff",
-      "fillStyle": "hachure",
+      "backgroundColor": "#e5dbff",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -584,8 +584,8 @@
       "y": 490,
       "width": 28,
       "height": 22,
-      "backgroundColor": "#ffec99",
-      "fillStyle": "hachure",
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
@@ -608,8 +608,8 @@
       "y": 490,
       "width": 28,
       "height": 22,
-      "backgroundColor": "#ffc9c9",
-      "fillStyle": "hachure",
+      "backgroundColor": "#ffe3e3",
+      "fillStyle": "solid",
       "roundness": {
         "type": 3
       },
