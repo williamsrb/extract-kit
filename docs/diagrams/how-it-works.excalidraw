@@ -1,0 +1,634 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "excalidraw-cli",
+  "elements": [
+    {
+      "type": "text",
+      "id": "t",
+      "x": 40,
+      "y": 24,
+      "text": "How Extract Kit works",
+      "fontSize": 30,
+      "strokeColor": "#1e1e1e",
+      "fontFamily": 5
+    },
+    {
+      "type": "text",
+      "id": "st",
+      "x": 40,
+      "y": 66,
+      "text": "The original project is only read. Production systems are refused.",
+      "fontSize": 17,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "rectangle",
+      "id": "s1",
+      "x": 40,
+      "y": 130,
+      "width": 240,
+      "height": 100,
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "hachure",
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "a1",
+          "type": "arrow"
+        },
+        {
+          "id": "s1_label",
+          "type": "text"
+        }
+      ],
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "s1_label",
+      "x": 50,
+      "y": 140,
+      "width": 220,
+      "height": 80,
+      "text": "1  Read the project\ncode, config, docs",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "s1"
+    },
+    {
+      "type": "rectangle",
+      "id": "s2",
+      "x": 350,
+      "y": 130,
+      "width": 240,
+      "height": 100,
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "hachure",
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "a1",
+          "type": "arrow"
+        },
+        {
+          "id": "a2",
+          "type": "arrow"
+        },
+        {
+          "id": "s2_label",
+          "type": "text"
+        }
+      ],
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "s2_label",
+      "x": 360,
+      "y": 140,
+      "width": 220,
+      "height": 80,
+      "text": "2  Observe the site\ntest copy, screenshots\n(optional)",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "s2"
+    },
+    {
+      "type": "rectangle",
+      "id": "s3",
+      "x": 660,
+      "y": 130,
+      "width": 240,
+      "height": 100,
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "hachure",
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "a2",
+          "type": "arrow"
+        },
+        {
+          "id": "a3",
+          "type": "arrow"
+        },
+        {
+          "id": "s3_label",
+          "type": "text"
+        }
+      ],
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "s3_label",
+      "x": 670,
+      "y": 140,
+      "width": 220,
+      "height": 80,
+      "text": "3  Cross-check\ncode vs. the test copy",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "s3"
+    },
+    {
+      "type": "rectangle",
+      "id": "s4",
+      "x": 970,
+      "y": 130,
+      "width": 240,
+      "height": 100,
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "hachure",
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "a3",
+          "type": "arrow"
+        },
+        {
+          "id": "a4",
+          "type": "arrow"
+        },
+        {
+          "id": "s4_label",
+          "type": "text"
+        }
+      ],
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "s4_label",
+      "x": 980,
+      "y": 140,
+      "width": 220,
+      "height": 80,
+      "text": "4  Write the documents\nspecs, rules, API, design",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "s4"
+    },
+    {
+      "type": "rectangle",
+      "id": "s5",
+      "x": 195,
+      "y": 340,
+      "width": 240,
+      "height": 100,
+      "backgroundColor": "#ffec99",
+      "fillStyle": "hachure",
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "a4",
+          "type": "arrow"
+        },
+        {
+          "id": "a5",
+          "type": "arrow"
+        },
+        {
+          "id": "s5_label",
+          "type": "text"
+        }
+      ],
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "s5_label",
+      "x": 205,
+      "y": 350,
+      "width": 220,
+      "height": 80,
+      "text": "5  AI steps\nname rules, write\nthe business overview",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "s5"
+    },
+    {
+      "type": "rectangle",
+      "id": "s6",
+      "x": 505,
+      "y": 340,
+      "width": 240,
+      "height": 100,
+      "backgroundColor": "#ffc9c9",
+      "fillStyle": "hachure",
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "a5",
+          "type": "arrow"
+        },
+        {
+          "id": "a6",
+          "type": "arrow"
+        },
+        {
+          "id": "s6_label",
+          "type": "text"
+        }
+      ],
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "s6_label",
+      "x": 515,
+      "y": 350,
+      "width": 220,
+      "height": 80,
+      "text": "6  Validate\nrequirements and rules\ncite their evidence",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "s6"
+    },
+    {
+      "type": "rectangle",
+      "id": "s7",
+      "x": 815,
+      "y": 340,
+      "width": 240,
+      "height": 100,
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "a6",
+          "type": "arrow"
+        },
+        {
+          "id": "s7_label",
+          "type": "text"
+        }
+      ],
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "s7_label",
+      "x": 825,
+      "y": 350,
+      "width": 220,
+      "height": 80,
+      "text": "7  Hand over\ncopy the documents\ninto the project",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "s7"
+    },
+    {
+      "type": "arrow",
+      "id": "a1",
+      "x": 280,
+      "y": 180,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeWidth": 2,
+      "startBinding": {
+        "elementId": "s1",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "s2",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "a2",
+      "x": 590,
+      "y": 180,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeWidth": 2,
+      "startBinding": {
+        "elementId": "s2",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "s3",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "a3",
+      "x": 900,
+      "y": 180,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeWidth": 2,
+      "startBinding": {
+        "elementId": "s3",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "s4",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "a4",
+      "x": 1090,
+      "y": 230,
+      "width": 775,
+      "height": 110,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          55
+        ],
+        [
+          -775,
+          55
+        ],
+        [
+          -775,
+          110
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeWidth": 2,
+      "startBinding": {
+        "elementId": "s4",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "endBinding": {
+        "elementId": "s5",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "a5",
+      "x": 435,
+      "y": 390,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeWidth": 2,
+      "startBinding": {
+        "elementId": "s5",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "s6",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "a6",
+      "x": 745,
+      "y": 390,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeWidth": 2,
+      "startBinding": {
+        "elementId": "s6",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "s7",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "rectangle",
+      "id": "l0",
+      "x": 195,
+      "y": 490,
+      "width": 28,
+      "height": 22,
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "hachure",
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "lt0",
+      "x": 233,
+      "y": 491,
+      "text": "Built from rules, repeatable",
+      "fontSize": 15,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "rectangle",
+      "id": "l1",
+      "x": 487,
+      "y": 490,
+      "width": 28,
+      "height": 22,
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "hachure",
+      "roundness": {
+        "type": 3
+      },
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "lt1",
+      "x": 525,
+      "y": 491,
+      "text": "Optional",
+      "fontSize": 15,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "rectangle",
+      "id": "l2",
+      "x": 633,
+      "y": 490,
+      "width": 28,
+      "height": 22,
+      "backgroundColor": "#ffec99",
+      "fillStyle": "hachure",
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "lt2",
+      "x": 671,
+      "y": 491,
+      "text": "AI assistant, checked by the kit",
+      "fontSize": 15,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "rectangle",
+      "id": "l3",
+      "x": 954,
+      "y": 490,
+      "width": 28,
+      "height": 22,
+      "backgroundColor": "#ffc9c9",
+      "fillStyle": "hachure",
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "lt3",
+      "x": 992,
+      "y": 491,
+      "text": "Automatic check",
+      "fontSize": 15,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  },
+  "files": {}
+}

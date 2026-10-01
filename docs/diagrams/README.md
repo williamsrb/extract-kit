@@ -6,7 +6,8 @@ Excalifont (`fontFamily: 5`).
 
 ## Combined canvas (primary)
 
-All three panels on one board.
+The three operator panels on one board. The README diagram (how it
+works) is separate.
 
 - [extractkit-flow.excalidraw](extractkit-flow.excalidraw)
 - [extractkit-flow.png](extractkit-flow.png)
@@ -16,6 +17,7 @@ All three panels on one board.
 
 | Panel | Source | Preview | Open |
 | --- | --- | --- | --- |
+| How it works (README) | [how-it-works.excalidraw](how-it-works.excalidraw) | [how-it-works.png](how-it-works.png) | [excalidraw.com](https://excalidraw.com/#json=_PMZgJWcshcyKBXV1MiMW,LEHZgODOk3L_jYv5A6xANw) |
 | Operator path | [operator-path.excalidraw](operator-path.excalidraw) | [operator-path.png](operator-path.png) | [excalidraw.com](https://excalidraw.com/#json=VRj9O1Kx8rbQ9gI03nDO7,ByEfpTzNTB_39NdHCgPGpA) |
 | Phases | [phases.excalidraw](phases.excalidraw) | [phases.png](phases.png) | [excalidraw.com](https://excalidraw.com/#json=NRLOROenD9RN5s4QLz0tW,Dtsrb_MDsWYh1kx8-kid2g) |
 | Sidecar lineage | [sidecar-lineage.excalidraw](sidecar-lineage.excalidraw) | [sidecar-lineage.png](sidecar-lineage.png) | [excalidraw.com](https://excalidraw.com/#json=Ws3smI7T3XBd9sySeZxFH,Ie0BSD-OhQeRdDseTAyqIQ) |

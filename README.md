@@ -33,15 +33,7 @@ must cite its evidence too.
 
 ## How it works
 
-```mermaid
-flowchart LR
-  A[Read the project] --> B[Observe the running site]
-  B --> C[Cross-check]
-  C --> D[Write the documents]
-  D --> E[AI steps]
-  E --> F[Validate]
-  F --> G[Hand over]
-```
+![How Extract Kit works: seven steps from reading the project to handing over the documents](docs/diagrams/how-it-works.png)
 
 1. **Read the project.** Scan the source code, configuration, page
    templates, and existing documentation.
