@@ -101,6 +101,7 @@ def build_manifest(
         },
         "maps": maps or {},
         "exclude": list(exclude or []),
+        "context": {"layers": list(profile.get("overlays") or [])},
         "skips": skips,
     }
 

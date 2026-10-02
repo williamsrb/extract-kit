@@ -573,6 +573,48 @@ def _pipeline_next(
     profile: dict,
     out: Path | None,
 ) -> Suggestion | None:
+    base = _route_next(state, argv, prog, profile, out)
+    task = _pending_context_task(profile, out) if state == "cms" or str(state).startswith("other:") else None
+    if base is None or task is None:
+        return base
+    agent_phase = phase_for_command(profile, "agent")
+    tag = f"[{agent_phase.number}/{len(phases(profile))}] " if agent_phase else ""
+    tokens = rewrite(argv, command="agent", keep=OUTPUT_FLAGS, set={"--out": str(out)})
+    return Suggestion(
+        f"{tag}Agent task {task.id} is ready, and it changes what the next steps read:",
+        [prog, tokens[0], "show", task.id, *tokens[1:]],
+        "continue the pipeline without it",
+        base.argv,
+    )
+
+
+def _pending_context_task(profile: dict, out: Path | None):
+    """The first `context.*` agent task whose input slot is done and whose overlay key is missing."""
+    if out is None:
+        return None
+    from . import agent_tasks, progress
+    from .runner import _bound_pipeline
+
+    bound = dict(_bound_pipeline(profile))
+    for task in agent_tasks.pending(out, profile):
+        plugin = bound.get(task.after)
+        if (
+            task.id.startswith("context.")
+            and plugin
+            and progress.step_complete(out, plugin)
+            and not agent_tasks.missing_reads(task, out)
+        ):
+            return task
+    return None
+
+
+def _route_next(
+    state: str | None,
+    argv: list[str],
+    prog: str,
+    profile: dict,
+    out: Path | None,
+) -> Suggestion | None:
     if out is None:
         return None
     derived = sidecar_source(out)

@@ -28,8 +28,8 @@ class NextPromoteTests(unittest.TestCase):
             self.assertEqual(applied.returncode, 0, applied.stderr + applied.stdout)
             result = run("status", "--source", str(source))
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
-            self.assertIn("✓ 2 static", result.stdout)
-            self.assertIn("→ 3 cms", result.stdout)
+            self.assertIn("✓ 3 static", result.stdout)
+            self.assertIn("→ 4 cms", result.stdout)
             self.assertIn("skills: extract-legacy", result.stdout)
             alias = run("next", "--source", str(source))
             self.assertEqual(alias.returncode, 0, alias.stderr + alias.stdout)
@@ -53,7 +53,7 @@ class NextPromoteTests(unittest.TestCase):
             )
             nxt = run("next", "--source", str(source), "--out", str(out))
             self.assertEqual(nxt.returncode, 0, nxt.stderr + nxt.stdout)
-            self.assertIn("→ 4 merge", nxt.stdout)
+            self.assertIn("→ 5 merge", nxt.stdout)
             resumed = run(
                 "resume", "--profile", "enonic", "--source", str(source),
                 "--out", str(out), "--until", "spec.kit",
@@ -62,14 +62,14 @@ class NextPromoteTests(unittest.TestCase):
             self.assertTrue((out / "spec-kit" / "constitution.md").is_file())
             done = run("next", "--source", str(source), "--out", str(out))
             self.assertEqual(done.returncode, 0, done.stderr + done.stdout)
-            self.assertIn("→ 6 agent", done.stdout)
+            self.assertIn("→ 7 agent", done.stdout)
             self.assertIn("agent next --out", done.stdout)
             self.assertIn("or skip to check:", done.stdout)
             (out / "business").mkdir()
             (out / "business" / "BUSINESS.md").write_text(valid_business(), encoding="utf-8")
             back = run("next", "--source", str(source), "--out", str(out))
-            self.assertIn("✓ 6 agent", back.stdout)
-            self.assertIn("→ 7 check", back.stdout)
+            self.assertIn("✓ 7 agent", back.stdout)
+            self.assertIn("→ 8 check", back.stdout)
             self.assertIn("check --out", back.stdout)
             self.assertNotIn("agent next", back.stdout)
 

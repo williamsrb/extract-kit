@@ -14,6 +14,7 @@ from collections.abc import Callable
 from . import (
     agent_tasks,
     check,
+    context,
     deps,
     guide,
     install,
@@ -29,12 +30,13 @@ Read a legacy checkout and write a stack-agnostic extract tree.
 
 extractkit is profile-driven: YAML types under profiles/ declare a pipeline
 and bind stack adapters. Enonic XP7 is the first adapter. PHP is an empty
-placeholder. Every command writes on the first call: run writes a sidecar
+placeholder. The stack is detected from the checkout (pass --profile to
+override). Every command writes on the first call: run writes a sidecar
 under <source>/.extract/<run-id>/ and never mutates the source tree.
 
-The pipeline is grouped into eight phases: 1 preflight, 2 static, 3 cms,
-4 merge, 5 synthesis, 6 agent, 7 check, 8 promote. --from, --until and step accept a
-phase id or number. Every run ends with the next command to paste.
+The pipeline is grouped into nine phases: 1 preflight, 2 context, 3 static,
+4 cms, 5 merge, 6 synthesis, 7 agent, 8 check, 9 promote. --from, --until and
+step accept a phase id or number. Every run ends with the next command to paste.
 
 Runtime CMS (enonic.cms) is local or review XP only. Pass --branch,
 --storage-state and a Guillotine URL; production hosts are refused.
@@ -48,12 +50,13 @@ Common examples:
   extractkit profile show enonic
   extractkit doctor --profile php
   extractkit deps --profile enonic
-  extractkit run --profile enonic --source . --until static
+  extractkit context --source .
+  extractkit run --source . --until static
   extractkit status --source .
-  extractkit resume --profile enonic --source . \\
+  extractkit resume --source . \\
       --branch draft --storage-state ~/.agents/.auth/xp7-localhost.json \\
       --guillotine http://localhost:8080/admin/site/preview/en/draft
-  extractkit run --profile enonic --source . \\
+  extractkit run --source . \\
       --out .extract/<run-id> --from merge --until synthesis
   extractkit check --out .extract/<run-id>
   extractkit promote --source . --out .extract/<run-id>
@@ -114,6 +117,14 @@ def _add_cms_flags(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _add_profile_flag(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--profile", metavar="NAME",
+        help="Stack profile (enonic, php). Default: MANIFEST.yaml source.profile, "
+             "else detected from the checkout.",
+    )
+
+
 def _add_exclude_flag(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--exclude", action="append", metavar="PATH",
@@ -168,6 +179,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_list.set_defaults(func=profiles.cmd_list)
     p_show = profile.add_parser("show", help="Show one profile's composed YAML.")
     p_show.add_argument("name")
+    p_show.add_argument("--out", metavar="DIR",
+                        help="Extract sidecar. Also composes its context overlay and the "
+                             "source's .extractkit/profile.yaml, as a run sees them.")
     p_show.set_defaults(func=profiles.cmd_show)
 
     agent = group("agent", "List, show and pick the next agent task. The kit never calls a model.")
@@ -214,8 +228,17 @@ def build_parser() -> argparse.ArgumentParser:
     _add_output_flags(dep)
     dep.set_defaults(func=deps.cmd_deps)
 
+    ctx = flat("context", "Detect the stack and record the build scope (phase 2, writes context/).")
+    ctx.add_argument("--source", required=True, metavar="DIR", help="Legacy checkout (read-only).")
+    ctx.add_argument("--out", metavar="DIR",
+                     help="Extract tree. Default: <source>/.extract/<run-id>/.")
+    _add_profile_flag(ctx)
+    _add_exclude_flag(ctx)
+    _add_output_flags(ctx)
+    ctx.set_defaults(func=context.cmd_context)
+
     run = flat("run", "Execute a profile pipeline and write the sidecar.")
-    run.add_argument("--profile", required=True, metavar="NAME")
+    _add_profile_flag(run)
     run.add_argument("--source", required=True, metavar="DIR",
                      help="Legacy checkout (read-only).")
     run.add_argument("--out", metavar="DIR",
@@ -232,7 +255,7 @@ def build_parser() -> argparse.ArgumentParser:
     step = flat("step", "Execute one phase or pipeline slot and write its artifacts.")
     step.add_argument("step_id", metavar="STEP",
                       help="Phase id or number (runs its slots), slot, or plugin id.")
-    step.add_argument("--profile", required=True, metavar="NAME")
+    _add_profile_flag(step)
     step.add_argument("--source", required=True, metavar="DIR")
     step.add_argument("--out", metavar="DIR")
     _add_cms_flags(step)
@@ -262,7 +285,7 @@ def build_parser() -> argparse.ArgumentParser:
     nxt.set_defaults(func=progress.cmd_status)
 
     res = flat("resume", "Continue a sidecar from the first incomplete pipeline slot.")
-    res.add_argument("--profile", required=True, metavar="NAME")
+    _add_profile_flag(res)
     res.add_argument("--source", required=True, metavar="DIR")
     res.add_argument("--out", metavar="DIR",
                      help="Extract tree. Default: latest <source>/.extract/<run-id>/.")

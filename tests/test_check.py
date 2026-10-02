@@ -208,7 +208,7 @@ class BusinessCheckTests(unittest.TestCase):
         self.assertIn("section '## Open questions' has an `_(inferred)_` paragraph without", problems[0])
 
     def test_every_named_check_exists(self) -> None:
-        self.assertEqual(set(check.NAMED_CHECKS), {"business", "spec_fr", "spec_review"})
+        self.assertEqual(set(check.NAMED_CHECKS), {"context_grounded", "business", "spec_fr", "spec_review"})
 
 
 VALID_FINDING = """### SR-1: FR-1 misreads the site descriptor

@@ -10,9 +10,9 @@ from pathlib import Path
 
 import yaml
 
-from extractkit_cli import buildscope, manifest, scope
+from extractkit_cli import buildscope, scope
 from extractkit_cli.errors import ExtractkitError
-from tests.support import STATIC_UNTIL, copy_fixture, run, sidecar_run_dir
+from tests.support import STATIC_UNTIL, as_profile, copy_fixture, run, sidecar_run_dir
 
 
 def _write(path: Path, text: str) -> None:
@@ -99,8 +99,8 @@ class ExcludeRunTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("not a path relative to the source", result.stdout + result.stderr)
 
-    def test_as_profile_excludes_the_prototypes(self) -> None:
-        self.assertEqual(manifest.load("as").get("exclude"), ["prototype", "prototype-old"])
+    def test_the_as_override_excludes_the_prototypes(self) -> None:
+        self.assertEqual(as_profile().get("exclude"), ["prototype", "prototype-old"])
 
 
 CI = """\

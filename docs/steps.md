@@ -14,6 +14,7 @@ its slot.
 <!-- markdownlint-disable MD013 -->
 | Phase | Slot | Enonic plugin | Done when present |
 | --- | --- | --- | --- |
+| context | (command `context`) | — | `context/profile.yaml` |
 | static | `map.code` | `map.code` | always (optional) |
 | static | `map.semantic` | `map.semantic` | always (optional) |
 | static | `inventory.descriptors` | `enonic.descriptors` | `inventory/static.json` |
@@ -40,6 +41,30 @@ captured` and prints the `step` command that would produce it.
 
 Every run, whatever its slice, also rewrites `MANIFEST.yaml` and
 `hygiene/dead-code.md` (see [output](output.md)).
+
+## context (command)
+
+**Does.** Phase 2, not a slot: `run` and `resume` call it when the sidecar
+has no overlay, and `extractkit context --source DIR` runs it alone. It
+detects the stack from the checkout (`--profile` wins), runs the build-scope
+analysis without executing any build, and writes the overlay that every
+later slot composes on top of the stack profile. It excludes nothing by
+itself.
+
+**Needs.** Required: `--source`, and exactly one stack marker unless
+`--profile` is given (`src/main/resources/application.xml` or
+`site/site.xml` for `enonic`, a root `composer.json` for `php`).
+Optional: `--profile`, `--exclude`, `<source>/.extractkit/profile.yaml`.
+
+**Writes.** `context/build-scope.json` (`branch`, `entry_points`,
+`in_scope`, `out_of_scope`) and `context/profile.yaml` (`extends: <stack>`,
+plus `exclude: []` when the build scope has no entry point or nothing
+outside it). A re-run refreshes both and keeps the `exclude` and
+`live_config` keys the agent tasks wrote.
+
+**Refuse.** No marker, or markers for both stacks: exit 1 with a `fix:`
+that passes `--profile enonic`. `step context` is refused with the
+`extractkit context` command.
 
 ## map.code
 
@@ -279,8 +304,12 @@ HTTP with cookies from the Playwright storage-state file.
    implicit `data.supports` in `/_templates` folder order.
 5. Read Site Config (Content Studio REST) for the pinned keys only, and
    the Config Env table (`--configenv`, or the profile's
-   `live_config.configenv_path`). With neither, Config Env is skipped with a
-   fix; the step does not fail.
+   `live_config.configenv_path`, which `enonic` defaults to the seeds
+   Config Env tool). With neither, Config Env is skipped with a fix; the
+   step does not fail. List every public Site Config and Config Env key whose
+   value is a URL or a host map in `inventory/live-config-candidates.json`
+   (`origin`, `key`, `kind: url|hostmap`, `covered`). The agent task
+   `context.live_config` reads that file.
 6. Count usage: for each page, layout and part descriptor, one Guillotine
    `queryConnection(query: "components.<kind>.descriptor = '<app>:<name>'",
    first: 0) { totalCount }`. A GraphQL error records every count as
@@ -303,7 +332,8 @@ Site Config lists them under `redacted`. Config Env keeps the key with
 
 - 401/403: refuse, with a fix to mint a fresh storage-state
 - Site Config 404: skip that key
-- Config Env 404/405/501: treat as "app not installed" and skip
+- Config Env 404/405/501: treat as "app not installed", skip, and record
+  the skip `enonic.cms.configenv` with a fix that names `--configenv`
 - any other non-200: refuse
 
 ### Content volume
@@ -564,13 +594,56 @@ says an API is removed unless that page does. `promote` does not copy
 
 ## Agent tasks
 
-Not pipeline slots. The agent phase (phase 6) lists the tasks in
+Not pipeline slots. The agent phase (phase 7) lists the tasks in
 `agent-tasks/<id>/`; `extractkit agent list|show|next` renders them and the
 [extract-agentic skill](../skills/extract-agentic/SKILL.md) runs them. The
 kit never calls a model. `status` counts the phase done when every required
 task is done. Output rules are the same as for the kit: every claim beyond
 an extracted fact ends with `_(inferred)_` and sits under an `Evidence:`
 line.
+
+### context.exclude
+
+**Does.** Required while the build scope leaves folders undecided. After
+`inventory.integrations` (the end of the static phase), before CMS and
+merge, so the later scans skip what it excludes. Reads
+`context/build-scope.json` and the checkout, and picks the folders of
+`out_of_scope` that are not part of the product (old prototypes, for
+example), keeping the ones the product runs (a payment cron script that no
+build names, for example). Each pick cites its evidence as a YAML comment.
+
+**Writes.** The `exclude` key of `context/profile.yaml`, and nothing else
+in it. `[]` is a valid decision, and a folder it cannot judge stays in:
+an exclusion cannot be undone in the same sidecar. Then it re-runs
+`run --from static --until synthesis` with the CMS flags of the earlier
+run, or stops at `--until inventory.integrations` when there were none.
+
+**Done when.** The overlay has an `exclude` key. The `context` phase
+already writes `exclude: []` when the build scope has nothing to decide.
+
+**Check.** `context_grounded` fails an entry that is not in
+`context/build-scope.json` `out_of_scope`.
+
+### context.live_config
+
+**Does.** Required after a live harvest. After `inventory.runtime`. Reads
+`inventory/runtime.json`, `inventory/live-config-candidates.json`,
+`integrations/openapi.yaml` and `site/site.xml` in the checkout, and writes
+the rules that turn the project's Site Config and Config Env values into
+provider endpoints: `site_url_keys`, `hostmap_keys`, `providers` and
+`env_endpoints` (see [profiles](profiles.md#live_config)).
+
+**Writes.** The `live_config` key of `context/profile.yaml`, and nothing
+else in it. Then it re-runs `step inventory.runtime` with the CMS flags of
+the earlier run, so `runtime.json` and `openapi.yaml` carry the endpoints.
+
+**Done when.** The overlay has a `live_config` key (an empty mapping
+counts), or `inventory/live-config-candidates.json` does not exist: an
+offline run, or a stack with no CMS step, has nothing to ground.
+
+**Check.** `context_grounded` fails a key, path, URL path or origin host
+that is in neither the checkout nor the harvested config (see
+[CLI](cli.md#context)).
 
 ### rules.name
 

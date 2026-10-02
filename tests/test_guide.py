@@ -26,22 +26,22 @@ class PhaseModelTests(unittest.TestCase):
         self.enonic = manifest.load("enonic")
 
     def test_resolve_by_id_and_number(self) -> None:
-        self.assertEqual(guide.resolve_phase(self.enonic, "static").number, 2)
-        self.assertEqual(guide.resolve_phase(self.enonic, "5").id, "synthesis")
+        self.assertEqual(guide.resolve_phase(self.enonic, "static").number, 3)
+        self.assertEqual(guide.resolve_phase(self.enonic, "6").id, "synthesis")
 
     def test_resolve_unknown_is_none(self) -> None:
         self.assertIsNone(guide.resolve_phase(self.enonic, "nope"))
-        self.assertIsNone(guide.resolve_phase(self.enonic, "9"))
+        self.assertIsNone(guide.resolve_phase(self.enonic, "10"))
 
     def test_command_phase_has_no_slots(self) -> None:
         check = guide.resolve_phase(self.enonic, "check")
-        self.assertEqual((check.number, check.command, check.slots), (7, "check", ()))
+        self.assertEqual((check.number, check.command, check.slots), (8, "check", ()))
 
     def test_agent_phase_sits_between_synthesis_and_check(self) -> None:
         agent = guide.resolve_phase(self.enonic, "agent")
-        self.assertEqual((agent.number, agent.command, agent.slots), (6, "agent", ()))
+        self.assertEqual((agent.number, agent.command, agent.slots), (7, "agent", ()))
         self.assertEqual(
-            [p.id for p in guide.phases(self.enonic)][4:],
+            [p.id for p in guide.phases(self.enonic)][5:],
             ["synthesis", "agent", "check", "promote"],
         )
 
@@ -96,7 +96,7 @@ class SliceTests(unittest.TestCase):
         self.assertEqual(by_phase, by_slot)
 
     def test_step_phase_number_runs_every_slot(self) -> None:
-        rows = _slice_pipeline(self.rows, None, None, only="2", profile=self.profile)
+        rows = _slice_pipeline(self.rows, None, None, only="3", profile=self.profile)
         self.assertEqual(len(rows), 7)
 
     def test_step_slot_id_keeps_single_slot(self) -> None:
@@ -105,7 +105,8 @@ class SliceTests(unittest.TestCase):
 
     def test_command_phase_is_refused_with_command_fix(self) -> None:
         for token, fix in (
-            ("7", "extractkit check --out <sidecar>"),
+            ("8", "extractkit check --out <sidecar>"),
+            ("context", "extractkit context --source <legacy-checkout>"),
             ("agent", "extractkit agent next --out <sidecar>"),
         ):
             with self.subTest(token=token), self.assertRaises(ExtractkitError) as caught:
@@ -115,7 +116,7 @@ class SliceTests(unittest.TestCase):
     def test_unknown_token_lists_phases(self) -> None:
         with self.assertRaises(ExtractkitError) as caught:
             _slice_pipeline(self.rows, "nope", None, profile=self.profile)
-        self.assertIn("static (2)", caught.exception.fix)
+        self.assertIn("static (3)", caught.exception.fix)
 
 
 class RewriteTests(unittest.TestCase):
@@ -232,7 +233,7 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(lines, [
             "extractkit · enonic · sidecar /nowhere/legacy/.extract/run1 (new)",
             "",
-            "[2/8] Static inventory",
+            "[3/9] Static inventory",
             "  – map.code               skipped: no graft/ index",
             "  ✓ inventory.descriptors  inventory/static.json",
             (
@@ -240,7 +241,7 @@ class RendererTests(unittest.TestCase):
                 "map/content-model.json, +1 more"
             ),
             "",
-            "[4/8] Merge",
+            "[5/9] Merge",
             "  ✓ inventory.docs         docs/harvest/INDEX.md",
             "  8 files written",
         ])
@@ -322,7 +323,7 @@ class NextTransitionTests(unittest.TestCase):
     def test_other_next_is_resume_without_range(self) -> None:
         s = self._run("other:maps.merge", "run", "--profile", "enonic", "--source", "legacy",
                       "--from", "cms", "--until", "cms", "--branch", "draft")
-        self.assertEqual(s.reason, "[4/8] Merge is next:")
+        self.assertEqual(s.reason, "[5/9] Merge is next:")
         self.assertEqual(guide.join(s.argv), (
             "./extractkit resume --profile enonic --source legacy --branch draft "
             "--out /nowhere/legacy/.extract/run1"
@@ -350,7 +351,7 @@ class NextTransitionTests(unittest.TestCase):
         for state in ("complete", "offline"):
             with self.subTest(state=state):
                 s = self._run(state)
-                self.assertEqual(s.reason, "[6/8] Agent is next:")
+                self.assertEqual(s.reason, "[7/9] Agent is next:")
                 self.assertEqual(
                     guide.join(s.argv),
                     "./extractkit agent next --out /nowhere/legacy/.extract/run1",
@@ -451,9 +452,9 @@ class CliOutputTests(unittest.TestCase):
             result = run("run", "--profile", "enonic", "--source", str(source), *STATIC_UNTIL)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn("\033", result.stdout)
-        self.assertIn("[2/8] Static inventory", result.stdout)
+        self.assertIn("[3/9] Static inventory", result.stdout)
         self.assertIn("tip   map.code:", result.stdout)
-        self.assertIn("next  [3/8] CMS needs a local XP", result.stdout)
+        self.assertIn("next  [4/9] CMS needs a local XP", result.stdout)
         self.assertIn("  or continue without CMS:", result.stdout)
 
     def test_quiet_suppresses_tips_only(self) -> None:

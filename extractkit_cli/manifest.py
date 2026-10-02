@@ -3,6 +3,11 @@
 Port of 99x-dev-kit `devkit_cli/manifest.py` `load()` for YAML: `_seen` loop
 detection, parent-first lists, child replace for adapter slots and the
 unfinished-work field. `@allowlist:` is not ported (no consumer).
+
+After the stack chain, `compose_overlays` layers the facts extractkit works
+out for a project on top: the sidecar's `context/profile.yaml`, then the
+operator's `<source>/.extractkit/profile.yaml`. An overlay sets only
+`exclude` and `live_config`.
 """
 
 from __future__ import annotations
@@ -16,6 +21,13 @@ from .errors import ExtractkitError
 # (core leaves slots null; enonic fills them). `todo` is the unfinished-work
 # list: a PHP profile that declares work items means exactly those items.
 OVERRIDE_KEYS = ("todo", "adapters")
+
+# The only keys an overlay layer may set. `_comment`, `extends` and `name` are
+# ignored; anything else (adapters, pipeline, phases) is the stack's business.
+OVERLAY_KEYS = ("exclude", "live_config")
+OVERLAY_IGNORED = ("_comment", "extends", "name")
+GENERATED_OVERLAY = Path("context") / "profile.yaml"
+OPERATOR_OVERLAY = Path(".extractkit") / "profile.yaml"
 
 
 def profile_path(name: str, kit_root: Path | None = None) -> Path:
@@ -47,8 +59,22 @@ def load(name: str, _seen: set[str] | None = None,
     parent_name = profile.get("extends")
     composed: dict = load(parent_name, seen, root) if parent_name else {}
 
-    for key, value in profile.items():
-        if key in ("_comment", "extends"):
+    _merge(composed, profile, ("_comment", "extends"))
+
+    if "name" not in profile:
+        raise ExtractkitError(
+            f"profile {name!r} has no 'name' field",
+            f"set name: {name} in {path}",
+        )
+    composed["name"] = profile["name"]
+    composed["lineage"] = [*composed.get("lineage", []), profile["name"]]
+    return composed
+
+
+def _merge(composed: dict, layer: dict, ignored: tuple[str, ...]) -> None:
+    """Fold one layer into `composed`: child replace, parent-first lists, shallow dicts."""
+    for key, value in layer.items():
+        if key in ignored:
             continue
         if key in OVERRIDE_KEYS:
             composed[key] = value
@@ -61,14 +87,38 @@ def load(name: str, _seen: set[str] | None = None,
         else:
             composed[key] = value
 
-    if "name" not in profile:
-        raise ExtractkitError(
-            f"profile {name!r} has no 'name' field",
-            f"set name: {name} in {path}",
-        )
-    composed["name"] = profile["name"]
-    composed["lineage"] = [*composed.get("lineage", []), profile["name"]]
-    return composed
+
+def overlay_paths(out: Path | None, source: Path | None) -> list[Path]:
+    """Overlay files that exist, lowest layer first."""
+    candidates = [
+        out / GENERATED_OVERLAY if out else None,
+        source / OPERATOR_OVERLAY if source else None,
+    ]
+    return [p for p in candidates if p is not None and p.is_file()]
+
+
+def compose_overlays(
+    composed: dict, out: Path | None, source: Path | None,
+) -> tuple[dict, list[str]]:
+    """Fold the sidecar overlay, then the operator override, into a stack profile.
+
+    Returns a new profile and the layer paths that took part. Same merge rules
+    as `load`. A key outside `OVERLAY_KEYS` is an error naming layer and key.
+    """
+    result = {**composed}
+    layers: list[str] = []
+    for path in overlay_paths(out, source):
+        layer = load_yaml(path, "profile overlay")
+        stray = [k for k in layer if k not in OVERLAY_KEYS and k not in OVERLAY_IGNORED]
+        if stray:
+            raise ExtractkitError(
+                f"profile overlay {path} sets {', '.join(repr(k) for k in stray)}; "
+                f"an overlay may set only {', '.join(OVERLAY_KEYS)}",
+                "move the stack bindings to profiles/, or drop the key from the overlay",
+            )
+        _merge(result, layer, OVERLAY_IGNORED)
+        layers.append(str(path))
+    return result, layers
 
 
 def available(kit_root: Path | None = None) -> list[str]:

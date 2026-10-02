@@ -45,6 +45,27 @@ def copy_fixture(parent: Path) -> Path:
     return dest
 
 
+AS_OVERLAY = REPO / "tests" / "fixtures" / "profiles" / "as.yaml"
+
+
+def install_override(source: Path, overlay: Path = AS_OVERLAY) -> Path:
+    """Copy `overlay` to `<source>/.extractkit/profile.yaml`, the operator override."""
+    dest = source / ".extractkit" / "profile.yaml"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(overlay, dest)
+    return dest
+
+
+def as_profile() -> dict:
+    """The enonic stack with the AS fixture composed on top, as a run would see it."""
+    from extractkit_cli import manifest
+
+    with tempfile.TemporaryDirectory() as raw:
+        source = Path(raw)
+        install_override(source)
+        return manifest.compose_overlays(manifest.load("enonic"), None, source)[0]
+
+
 def git_init(path: Path) -> None:
     subprocess.run(
         ["git", "init"], cwd=path, check=True, capture_output=True, text=True,

@@ -1,8 +1,8 @@
 """enonic.cms — live XP7 survey via Playwright storage-state + Guillotine.
 
 Auth is a Playwright storage-state file (cookies). Transport is HTTP POST to
-the Guillotine GraphQL URL passed as a run parameter. The as app-own service
-(`POST /_/service/no.seeds.as/graphql`) is not assumed.
+the Guillotine GraphQL URL passed as a run parameter. An app-own GraphQL
+service is not assumed.
 """
 
 from __future__ import annotations
@@ -124,7 +124,7 @@ def resolve_cms(ctx: Any) -> CmsConfig:
             raise ExtractkitError(
                 "enonic.cms has no Guillotine URL",
                 "pass --guillotine (XP7 preview POST /admin/site/preview/"
-                "<project>/<branch>, or the as app-own service when that is "
+                "<project>/<branch>, or an app-own GraphQL service when that is "
                 "the intended endpoint) or set cms.project so a preview URL "
                 "can be built",
                 fix_args={"--guillotine": "<preview-graphql-url>"},
@@ -250,7 +250,7 @@ def post_graphql(
             f"Guillotine POST {url} returned HTTP {exc.code}",
             "pass --guillotine at the preview GraphQL URL "
             "(POST /admin/site/preview/<project>/<branch>); do not assume "
-            "the as app-own /_/service/no.seeds.as/graphql endpoint",
+            "an app-own GraphQL service endpoint",
             fix_args={"--guillotine": "<preview-graphql-url>"},
         ) from None
     except urlerror.URLError as exc:
@@ -796,6 +796,8 @@ class EnonicCmsStep:
         "inventory/content-volume.json",
         "inventory/content-volume.md",
     )
+    # inventory/live-config-candidates.json is written too, but is not listed:
+    # phase completeness keys on runtime.json (progress.DISTINCTIVE).
     required = True
 
     def plan(self, ctx: object) -> list[str]:
@@ -880,9 +882,10 @@ class EnonicCmsStep:
                     )
                 )
                 seen_keys.add(path)
-        site_configs, config_env, endpoints = _harvest_live_config(
+        site_configs, config_env, endpoints, candidates = _harvest_live_config(
             ctx, cfg, pages, cookie,
         )
+        ctx.write_json("inventory/live-config-candidates.json", candidates)  # type: ignore[attr-defined]
         usage = probe_usage(cfg.guillotine, cookie, resources)
         payload = {
             "schema": "99x.extract.runtime-inventory/v1",
@@ -916,8 +919,9 @@ def _harvest_live_config(
     cfg: CmsConfig,
     pages: list[dict],
     cookie: str,
-) -> tuple[list[dict], list[dict], list[dict]]:
+) -> tuple[list[dict], list[dict], list[dict], list[dict]]:
     site_configs: list[dict] = []
+    site_public: list[dict] = []
     endpoints: list[dict] = []
     seen_ids: set[str] = set()
     project = cfg.project or "en"
@@ -951,6 +955,9 @@ def _harvest_live_config(
             continue
         record = live_config.site_config_record(key, content_id, body, cfg.rules)
         site_configs.append(record)
+        site_public.append(live_config.public_fields(
+            live_config.flatten_properties(body.get("data")),
+        )[0])
         endpoints.extend(
             live_config.endpoints_from_site_fields(
                 record.get("fields") or {}, content_key=key, rules=cfg.rules,
@@ -963,21 +970,41 @@ def _harvest_live_config(
             "no Config Env URL: the profile sets no live_config.configenv_path "
             "and --configenv was not given",
             "pass --configenv <config-env-tool-url>, or set live_config.configenv_path "
-            "in a client profile (see profiles/as.yaml)",
+            "in <source>/.extractkit/profile.yaml",
         )
-        return site_configs, config_env, live_config.dedupe_endpoints(endpoints)
+        return _live_config_result(
+            site_configs, site_public, config_env, endpoints, cfg.rules,
+        )
     status, raw = http_get(cfg.configenv, cookie, accept="text/html")
     if status == 200:
         config_env = live_config.parse_configenv_html(raw.decode("utf-8", "replace"))
         endpoints.extend(live_config.endpoints_from_config_env(config_env, cfg.rules))
-    elif status not in (404, 405, 501):
+    elif status in (404, 405, 501):
+        ctx.record_skip(
+            "enonic.cms.configenv",
+            f"Config Env GET {cfg.configenv} returned HTTP {status}: that admin tool "
+            "is not installed on this XP",
+            "pass --configenv <config-env-tool-url> if the tool lives at another path",
+        )
+    else:
         raise ExtractkitError(
             f"Config Env GET {cfg.configenv} returned HTTP {status}",
             "pass --configenv at the Config Env admin tool URL, or skip it if "
             "that tool is not installed",
             fix_args={"--configenv": "<config-env-url>"},
         )
-    return site_configs, config_env, live_config.dedupe_endpoints(endpoints)
+    return _live_config_result(site_configs, site_public, config_env, endpoints, cfg.rules)
+
+
+def _live_config_result(
+    site_configs: list[dict],
+    site_public: list[dict],
+    config_env: list[dict],
+    endpoints: list[dict],
+    rules: live_config.Rules,
+) -> tuple[list[dict], list[dict], list[dict], list[dict]]:
+    candidates = live_config.config_candidates(site_public, config_env, rules)
+    return site_configs, config_env, live_config.dedupe_endpoints(endpoints), candidates
 
 
 def _patch_openapi(ctx: object, endpoints: list[dict]) -> None:

@@ -140,7 +140,30 @@ def rules_named(out: Path) -> bool:
     return not any(r.get("bucket") == "business" and r.get("status") == "extracted" for r in rules)
 
 
-DONE_CHECKS = {"rules_named": rules_named}
+def _overlay(out: Path) -> dict | None:
+    path = out / "context" / "profile.yaml"
+    return load_yaml(path, "context/profile.yaml") if path.is_file() else None
+
+
+def exclude_decided(out: Path) -> bool:
+    """The context overlay has an `exclude` key (an empty list counts)."""
+    overlay = _overlay(out)
+    return overlay is not None and "exclude" in overlay
+
+
+def live_config_written(out: Path) -> bool:
+    """The overlay has a `live_config` key, or no live harvest ran so there is nothing to ground."""
+    if not (out / "inventory" / "live-config-candidates.json").is_file():
+        return True
+    overlay = _overlay(out)
+    return overlay is not None and "live_config" in overlay
+
+
+DONE_CHECKS = {
+    "rules_named": rules_named,
+    "exclude_decided": exclude_decided,
+    "live_config_written": live_config_written,
+}
 
 
 def is_done(task: Task, out: Path) -> bool:

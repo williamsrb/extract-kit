@@ -13,7 +13,10 @@ Canonical extract tree. Enonic details live only under `stackRef`.
   inventory/static.json
   inventory/controllers.json
   inventory/templates.json
+  context/build-scope.json
+  context/profile.yaml            # overlay: exclude and live_config
   inventory/runtime.json          # optional
+  inventory/live-config-candidates.json  # optional, with runtime
   inventory/content-volume.json   # optional, with runtime
   inventory/content-volume.md     # optional, with runtime
   baseline/INDEX.md               # optional
@@ -56,6 +59,9 @@ Rewritten at the end of every `run`, `step` and `resume`:
 - `maps`: `code` / `semantic` / `serena` pointers to reused source indexes, or null
 - `exclude`: source-relative paths every scan left out (profile `exclude:`
   plus `--exclude`); kept by later runs on the same sidecar
+- `context`: `layers`, the overlay files composed on top of the stack
+  profile (`context/profile.yaml`, and the operator's
+  `<source>/.extractkit/profile.yaml` when it exists)
 - `skips`: `step`, `reason`, `fix` for each slot skipped in that run
 
 ## Schemas

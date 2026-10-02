@@ -6,7 +6,7 @@ from argparse import Namespace
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import guide, manifest, readiness, registry, schema, scope
+from . import context, guide, manifest, readiness, registry, schema, scope
 from .common import Plan, load_yaml, timestamp, write_json, write_text, write_yaml
 from .errors import ExtractkitError
 from .hygiene import after_step
@@ -143,6 +143,7 @@ def _slice_pipeline(
 
 COMMAND_FIX = {
     "doctor": "extractkit doctor",
+    "context": "extractkit context --source <legacy-checkout>",
     "agent": "extractkit agent next --out <sidecar>",
     "check": "extractkit check --out <sidecar>",
     "promote": "extractkit promote --source <legacy-checkout> --out <sidecar>",
@@ -210,10 +211,10 @@ def _execute(ctx: RunContext, rows: list[tuple[str, str]]) -> None:
 
 
 def _context_from_args(args: Namespace) -> RunContext:
-    profile = validate_profile(args.profile)
     source = resolve_source(getattr(args, "source", None))
     run_id = timestamp()
     out = resolve_out(source, getattr(args, "out", None))
+    profile = context.resolve_profile(args, source, out)
     if getattr(args, "out", None) is None:
         # default_out already embeds run_id via timestamp(); keep them aligned.
         run_id = out.name
@@ -239,6 +240,19 @@ def _context_from_args(args: Namespace) -> RunContext:
         },
         tasks=bool(getattr(args, "tasks", False)),
     )
+
+
+def _ensure_context(ctx: RunContext, args: Namespace) -> None:
+    """Write the context overlay when the sidecar has none, then recompose the profile."""
+    if context.overlay_path(ctx.out).is_file():
+        return
+    if out_inside_source(ctx.source, ctx.out):
+        ensure_self_ignore(ctx.source, ctx.plan.record)
+        write_self_ignore(ctx.source)
+    stack = str(ctx.profile["name"])
+    context.write_overlay(ctx.out, ctx.source, stack, ctx.exclude, ctx.plan.record)
+    ctx.profile = validate_profile(stack, ctx.out, ctx.source)
+    ctx.exclude = _excludes(ctx.profile, args, ctx.out)
 
 
 def _excludes(profile: dict, args: Namespace, out: Path) -> list[str]:
@@ -278,6 +292,7 @@ def report_run(ctx: RunContext, rows: list[tuple[str, str]], args: Namespace) ->
 
 def cmd_run(args: Namespace) -> int:
     ctx = _context_from_args(args)
+    _ensure_context(ctx, args)
     rows = _slice_pipeline(
         _bound_pipeline(ctx.profile),
         getattr(args, "from_step", None),

@@ -1,0 +1,13 @@
+id: context.live_config
+title: Write the live_config rules from the source and the harvested live config
+after: inventory.runtime
+reads:
+  - inventory/runtime.json
+  - inventory/live-config-candidates.json
+  - integrations/openapi.yaml
+writes:
+  - context/profile.yaml
+done_check: live_config_written
+rerun: step inventory.runtime
+checks:
+  - context_grounded

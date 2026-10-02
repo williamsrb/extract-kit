@@ -12,7 +12,9 @@ to, how an environment value maps to an origin) comes from the profile key
 
 from __future__ import annotations
 
+import json
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from html import unescape
 from typing import Any
@@ -278,6 +280,77 @@ def dedupe_endpoints(rows: list[dict[str, str]]) -> list[dict[str, str]]:
         seen.add(stamp)
         out.append(row)
     return out
+
+
+_HOSTMAP_PAIR = re.compile(r"^[^=,\s]+=(?:https?://)?[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+(?::\d+)?(?:/\S*)?$")
+
+
+def _is_hostmap(value: object) -> bool:
+    """A mapping, a JSON object string, or a comma list of `<key>=<host-or-url>` pairs."""
+    if isinstance(value, dict):
+        return bool(value)
+    if not isinstance(value, str):
+        return False
+    text = value.strip()
+    if text.startswith("{"):
+        try:
+            return isinstance(json.loads(text), dict)
+        except ValueError:
+            return False
+    parts = text.replace(" ", "").split(",")
+    return bool(parts) and all(_HOSTMAP_PAIR.match(part) for part in parts)
+
+
+def _candidate_kind(value: object) -> str | None:
+    if _is_hostmap(value):
+        return "hostmap"
+    return "url" if _http_url(value) else None
+
+
+def _site_covered(path: str, kind: str, rules: Rules) -> bool:
+    if kind != "url":
+        return False
+    return _leaf(path).casefold() in rules.site_url_keys or any(
+        rule.matches(path) for rule in rules.env_endpoints
+    )
+
+
+def _env_covered(key: str, kind: str, rules: Rules) -> bool:
+    folded = key.casefold()
+    if kind == "hostmap":
+        return folded in rules.hostmap_keys or any(folded.endswith(k) for k in rules.hostmap_keys)
+    return folded.endswith(CONFIG_URL_SUFFIXES)
+
+
+def config_candidates(
+    site_rows: list[dict[str, object]],
+    configenv_items: list[dict[str, str]],
+    rules: Rules,
+) -> list[dict[str, object]]:
+    """Every public Site Config and Config Env key whose value is a URL or a host map.
+
+    `covered` says whether the current rules already turn the key into endpoints.
+    The agent task that writes `live_config` reads this list; secrets never appear.
+    """
+    rows: list[dict[str, object]] = []
+    seen: set[tuple[str, str]] = set()
+
+    def add(origin: str, key: str, value: object, covered: Callable[[str, str], bool]) -> None:
+        kind = _candidate_kind(value)
+        if kind is None or is_secret(key) or (origin, key) in seen:
+            return
+        seen.add((origin, key))
+        rows.append({"origin": origin, "key": key, "kind": kind, "covered": covered(key, kind)})
+
+    for fields in site_rows:
+        for path, value in fields.items():
+            add("siteConfig", path, value, lambda k, kind: _site_covered(k, kind, rules))
+    for item in configenv_items:
+        if item.get("redacted") == "true":
+            continue
+        add("configEnv", item.get("key") or "", item.get("value"),
+            lambda k, kind: _env_covered(k, kind, rules))
+    return rows
 
 
 def cs_content_url(host: str, project: str, content_id: str) -> str:

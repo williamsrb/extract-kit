@@ -5,13 +5,13 @@
   "type": "object",
   "required": ["id", "title", "after", "reads", "writes"],
   "properties": {
-    "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)*$" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$" },
     "title": { "type": "string", "minLength": 1 },
     "after": { "type": "string", "minLength": 1 },
     "reads": { "type": "array", "items": { "type": "string", "minLength": 1 } },
     "writes": { "type": "array", "items": { "type": "string", "minLength": 1 } },
     "done": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-    "done_check": { "enum": ["rules_named"] },
+    "done_check": { "enum": ["rules_named", "exclude_decided", "live_config_written"] },
     "rerun": { "type": "string", "minLength": 1 },
     "promote": {
       "type": "array",

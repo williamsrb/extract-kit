@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 from argparse import Namespace
+from pathlib import Path
 
 from . import (
     buildscope,
+    context,
     deps,
     guide,
     install,
@@ -37,8 +39,15 @@ def _assert_known_adapters(profile: dict) -> None:
             )
 
 
-def validate_profile(name: str) -> dict:
+def validate_profile(name: str, out: Path | None = None, source: Path | None = None) -> dict:
+    """The stack profile `name`, with the overlay layers of `out` / `source` composed in.
+
+    `overlays` on the result lists the layer files that took part.
+    """
     composed = manifest.load(name)
+    if out is not None or source is not None:
+        composed, layers = manifest.compose_overlays(composed, out, source)
+        composed["overlays"] = layers
     schema.validate(composed, "profile", what=f"profile {name}")
     _assert_known_adapters(composed)
     return composed
@@ -60,7 +69,9 @@ def cmd_list(_args: Namespace) -> int:
 
 
 def cmd_show(args: Namespace) -> int:
-    profile = validate_profile(args.name)
+    out = getattr(args, "out", None)
+    sidecar = Path(out).expanduser().resolve() if out else None
+    profile = validate_profile(args.name, sidecar, context.source_of(sidecar) if sidecar else None)
     required = manifest.provided_binaries(profile, include_optional=False)
     summary = {
         "name": profile["name"],
@@ -74,6 +85,10 @@ def cmd_show(args: Namespace) -> int:
         ],
         "deps": profile.get("deps") or [],
     }
+    if sidecar is not None:
+        summary["overlays"] = profile.get("overlays") or []
+        summary["exclude"] = profile.get("exclude") or []
+        summary["live_config"] = profile.get("live_config") or {}
     print(json.dumps(summary, indent=2))
     return 0
 
@@ -134,5 +149,21 @@ def _preflight_rows(args: Namespace) -> list[Row]:
     exclude = scope.normalize(profile.get("exclude") or [])
     return [
         *install.install(), *deps.check_deps(profile), *readiness.check_source(source),
+        _stack_row(source, exclude, getattr(args, "profile", None)),
         buildscope.check(source, exclude),
     ]
+
+
+def _stack_row(source: Path, exclude: list[str], explicit: str | None) -> Row:
+    """What `run` would pick for this checkout without `--profile`."""
+    if explicit:
+        return Row("stack", "ok", f"{explicit} (from --profile)", required=False)
+    found = context.stack_markers(source, exclude)
+    if len(found) == 1:
+        name, marker = next(iter(found.items()))
+        return Row("stack", "ok", f"{name} (detected from {marker})", required=False)
+    detail = (
+        "markers for more than one stack: " + ", ".join(f"{n} ({m})" for n, m in found.items())
+        if found else "no src/main/resources/application.xml, site/site.xml or root composer.json"
+    )
+    return Row("stack", "warn", detail, "pass --profile enonic (or php) to run", required=False)

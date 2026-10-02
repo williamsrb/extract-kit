@@ -50,6 +50,9 @@ phases:
   - id: preflight
     title: Preflight
     command: doctor
+  - id: context
+    title: Context
+    command: context
   - id: static
     title: Static inventory
     slots: [map.code, map.semantic, inventory.descriptors, inventory.controllers, inventory.templates, maps.normalize, inventory.integrations]

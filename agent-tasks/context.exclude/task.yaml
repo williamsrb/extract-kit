@@ -1,0 +1,11 @@
+id: context.exclude
+title: Decide which folders outside the default-branch build are not part of the product
+after: inventory.integrations
+reads:
+  - context/build-scope.json
+writes:
+  - context/profile.yaml
+done_check: exclude_decided
+rerun: run --from static --until synthesis
+checks:
+  - context_grounded

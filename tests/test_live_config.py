@@ -6,11 +6,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from extractkit_cli import manifest
 from extractkit_cli.errors import ExtractkitError
 from steps.enonic import live_config
+from tests.support import as_profile
 
-AS_RULES = live_config.rules_from_profile(manifest.load("as"))
+AS_RULES = live_config.rules_from_profile(as_profile())
 
 
 class LiveConfigTests(unittest.TestCase):

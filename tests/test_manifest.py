@@ -93,5 +93,48 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(php["pipeline"], enonic["pipeline"])
 
 
+class OverlayTests(unittest.TestCase):
+    def _layers(self, raw: str, generated: str | None, override: str | None):
+        root = Path(raw)
+        out, source = root / "out", root / "src"
+        if generated is not None:
+            (out / "context").mkdir(parents=True)
+            (out / "context" / "profile.yaml").write_text(generated, encoding="utf-8")
+        if override is not None:
+            (source / ".extractkit").mkdir(parents=True)
+            (source / ".extractkit" / "profile.yaml").write_text(override, encoding="utf-8")
+        base = manifest.load("enonic")
+        return manifest.compose_overlays(base, out, source)
+
+    def test_no_layer_leaves_the_stack_profile_alone(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            composed, layers = self._layers(raw, None, None)
+            self.assertEqual(layers, [])
+            self.assertEqual(composed, manifest.load("enonic"))
+
+    def test_layers_compose_in_order_and_the_override_wins(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            composed, layers = self._layers(
+                raw,
+                "extends: enonic\nexclude: [prototype]\nlive_config:\n  site_url_keys: [a]\n  hostmap_keys: [h]\n",
+                "exclude: [legacy]\nlive_config:\n  site_url_keys: [b]\n",
+            )
+            self.assertEqual([Path(p).parts[-2:] for p in layers], [
+                ("context", "profile.yaml"), (".extractkit", "profile.yaml"),
+            ])
+            self.assertEqual(composed["exclude"], ["prototype", "legacy"])
+            self.assertEqual(composed["live_config"], {
+                **manifest.load("enonic")["live_config"],
+                "site_url_keys": ["b"], "hostmap_keys": ["h"],
+            })
+
+    def test_an_overlay_cannot_rebind_the_stack(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            with self.assertRaises(ExtractkitError) as caught:
+                self._layers(raw, "adapters: {map.code: null}\n", None)
+            self.assertIn("adapters", str(caught.exception))
+            self.assertIn("context", str(caught.exception))
+
+
 if __name__ == "__main__":
     unittest.main()

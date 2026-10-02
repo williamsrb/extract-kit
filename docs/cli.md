@@ -11,15 +11,16 @@ your own command with that flag added.
 <!-- markdownlint-disable MD013 -->
 | Command | Role |
 | --- | --- |
-| `profile list` / `show NAME` | Inspect YAML types |
-| `doctor [--profile NAME] [--source DIR]` | Validate kit, composed profiles, and phases; with `--source`, also the deps and the target's agent tooling |
+| `profile list` / `show NAME [--out DIR]` | Inspect YAML types; with `--out`, the profile as that sidecar's run sees it, overlays included |
+| `doctor [--profile NAME] [--source DIR]` | Validate kit, composed profiles, and phases; with `--source`, also the deps, the target's agent tooling and the stack it would detect |
 | `deps [--profile NAME]` | Every dep run, not just found: binaries, Python version and modules |
-| `run --profile NAME --source DIR` | Pipeline; `--from` / `--until` |
-| `step STEP --profile NAME --source DIR` | One phase or one slot |
+| `context --source DIR [--out DIR]` | Detect the stack and record the build scope (phase 2); `run` and `resume` call it when the sidecar has none |
+| `run --source DIR [--profile NAME]` | Pipeline; `--from` / `--until` |
+| `step STEP --source DIR [--profile NAME]` | One phase or one slot |
 | `agent list\|show ID\|next [--out DIR] [--json]` | List, render and pick agent tasks. The kit never calls a model |
 | `check --out DIR` | Schema, coverage, `x-source`, spec FR, `BUSINESS.md` when present |
 | `status [--source DIR] [--out DIR]` | Phase checklist (alias `next`) |
-| `resume --profile NAME --source DIR` | Continue from first incomplete slot |
+| `resume --source DIR [--profile NAME]` | Continue from first incomplete slot |
 | `promote --source DIR [--out DIR] [--force]` | Copy Spec Kit + PRODUCT |
 <!-- markdownlint-enable MD013 -->
 
@@ -32,7 +33,7 @@ your own command with that flag added.
 | `doctor` | All profiles unless `--profile`. `--source` adds the deps of `--profile` (default `core`) and the readiness rows |
 | `run`, `step` | New sidecar unless `--out` names one. With `--out`, files are added or overwritten |
 | `status`, `resume`, `promote` | Latest sidecar under `<source>/.extract/` (by run id) unless `--out` |
-| `status` profile | `MANIFEST.yaml` `source.profile` when `--profile` is omitted |
+| `run`, `step`, `resume`, `status` profile | `--profile`, else `MANIFEST.yaml` `source.profile`, else the stack detected from the checkout (see [Context](#context)). No marker, or markers for both stacks, is refused with a `fix:` that passes `--profile` |
 | `resume` | First slot that is not done, through the end or `--until` |
 | `check` | Reads the sidecar only |
 | `agent` | Latest sidecar under `<source>/.extract/` when `--source` is given; otherwise `--out` is required. `next` lists required tasks only; `show spec.enrich` or `show spec.review` runs an optional one |
@@ -62,7 +63,7 @@ Bare `extractkit` and any `--help` print help and exit 0.
 
 The operator path and sidecar lineage are in [flow](flow.md).
 
-`profiles/core.yaml` groups the pipeline into eight phases. Every profile
+`profiles/core.yaml` groups the pipeline into nine phases. Every profile
 inherits them. `--from`, `--until` and `step` accept a phase id or number
 as well as a slot or plugin id.
 
@@ -70,13 +71,14 @@ as well as a slot or plugin id.
 | # | Phase | Slots or command |
 | --- | --- | --- |
 | 1 | `preflight` | `doctor` (command) |
-| 2 | `static` | map.code, map.semantic, inventory.descriptors, inventory.controllers, inventory.templates, maps.normalize, inventory.integrations |
-| 3 | `cms` | inventory.runtime, inventory.baseline (optional) |
-| 4 | `merge` | maps.merge, rules.view, inventory.docs |
-| 5 | `synthesis` | product.impeccable, docs.synthesize, use_cases, spec.kit, report.compat (optional) |
-| 6 | `agent` | `agent` (command) |
-| 7 | `check` | `check` (command) |
-| 8 | `promote` | `promote` (command) |
+| 2 | `context` | `context` (command) |
+| 3 | `static` | map.code, map.semantic, inventory.descriptors, inventory.controllers, inventory.templates, maps.normalize, inventory.integrations |
+| 4 | `cms` | inventory.runtime, inventory.baseline (optional) |
+| 5 | `merge` | maps.merge, rules.view, inventory.docs |
+| 6 | `synthesis` | product.impeccable, docs.synthesize, use_cases, spec.kit, report.compat (optional) |
+| 7 | `agent` | `agent` (command) |
+| 8 | `check` | `check` (command) |
+| 9 | `promote` | `promote` (command) |
 <!-- markdownlint-enable MD013 -->
 
 <!-- markdownlint-disable MD013 -->
@@ -88,9 +90,49 @@ as well as a slot or plugin id.
 | slot or plugin id | Single-slot meaning, as before |
 <!-- markdownlint-enable MD013 -->
 
-Phases 1, 6, 7 and 8 are commands. Passing them to `--from` / `--until` /
+Phases 1, 2, 7, 8 and 9 are commands. Passing them to `--from` / `--until` /
 `step` is refused, with the command to run instead (`run --from agent` names
-`extractkit agent next --out <sidecar>`).
+`extractkit agent next --out <sidecar>`, and `step context` names
+`extractkit context --source <legacy-checkout>`).
+
+## Context
+
+The `context` phase works out the project, so no client profile ships in
+the kit. `extractkit context --source DIR` (called by `run` and `resume` when
+the sidecar has no overlay) writes two files under the sidecar:
+
+- `context/build-scope.json`: `branch`, `entry_points`, `in_scope` and
+  `out_of_scope` from the build scope (the folders no default-branch build
+  names). It never excludes any of them.
+- `context/profile.yaml`: the overlay, with `extends: <stack>` and, when the
+  build scope has nothing to decide, `exclude: []`. The agent tasks
+  `context.exclude` and `context.live_config` write its `exclude` and
+  `live_config` keys. A re-run refreshes `extends` and the build scope and
+  keeps those two keys.
+
+The stack is `enonic` when `src/main/resources/application.xml` or
+`src/main/resources/site/site.xml` exists under a folder no exclude covers,
+and `php` when `composer.json` is at the root. `--profile` always wins.
+
+A run composes the profile in layers, each with the same merge rules as
+`extends`: the stack chain (`core`, then `enonic`), then
+`<sidecar>/context/profile.yaml`, then the operator's override
+`<source>/.extractkit/profile.yaml`. The kit reads the override and never
+writes it. A layer after the stack may set only `exclude` and `live_config`;
+any other key is refused, naming the file and the key. `exclude` lists merge
+as a union, so a later layer cannot drop an entry, and a resumed run keeps
+what `MANIFEST.yaml` already excluded: correcting an exclusion means a new
+sidecar. `live_config` merges one level deep, so an override replaces a whole
+sub-key such as `env_endpoints`. `MANIFEST.yaml` `context.layers` lists the
+files that took part, and `profile show NAME --out DIR` prints the result.
+
+`check` runs `context_grounded` on `context/profile.yaml` only (the override
+is exempt). An `exclude` entry must be in `build-scope.json` `out_of_scope`. A
+`live_config` key, `env_endpoints` path or URL path must occur in the source
+(any file outside the built-in skip folders, whatever `exclude` says) or among
+the harvested config keys and values, case-insensitively. An origin host must
+occur literally there, or every dot-separated label of it must appear on one
+source line (a template literal builds `test.` and `epayment.nets.eu` apart).
 
 ## Agent
 
@@ -105,8 +147,14 @@ Phases 1, 6, 7 and 8 are commands. Passing them to `--from` / `--until` /
 | `agent next` | The first pending required task whose inputs exist, then a pasteable `agent show`. With none pending it points at `check`; with only blocked tasks it names the missing inputs and points at `status` |
 <!-- markdownlint-enable MD013 -->
 
-A task is done when its `done` markers exist, or, for `rules.name`, when no
-business rule in `rules/view-rules.json` is still `extracted`. The agent
+A task is done when its `done` markers exist, or when its `done_check` holds:
+for `rules.name`, no business rule in `rules/view-rules.json` is still
+`extracted`; for `context.exclude`, the overlay has an `exclude` key; for
+`context.live_config`, the overlay has a `live_config` key or no
+`inventory/live-config-candidates.json` exists (nothing was harvested).
+`context.exclude` is ready after the static phase and `context.live_config`
+after the CMS slot, so `next` offers `agent show context.exclude` while the
+pipeline is still before the CMS and merge phases. The agent
 phase is done when every required task is done. `spec.enrich` and
 `spec.review` are optional and never block it.
 
@@ -120,11 +168,13 @@ run still passes.
 `--tasks` writes Spec Kit `tasks.md` (off by default). Accepted by `run`,
 `step` and `resume`. It only affects `spec.kit`.
 
+<!-- markdownlint-disable MD013 -->
 | Flag | Effect |
 | --- | --- |
 | `--exclude PATH` | Leave a source-relative folder or file out of every scan. Repeatable; `run`, `step` and `resume` |
 | `-v`, `--verbose` | List every recorded action with its path |
 | `-q`, `--quiet` | Suppress tips |
+<!-- markdownlint-enable MD013 -->
 
 `--exclude` adds to the profile's `exclude:` list. The union is written to
 `MANIFEST.yaml` `exclude`, and a later `run`, `step` or `resume` on the same
@@ -144,7 +194,7 @@ is new or existing.
 
 ### Slot rows
 
-One `[N/8] <Phase>` block per phase touched. Each slot is a row: `✓` with
+One `[N/9] <Phase>` block per phase touched. Each slot is a row: `✓` with
 up to three artifacts relative to the sidecar (then `+N more`), or `–`
 with the skip reason. The body ends with `N files written`.
 
@@ -300,6 +350,9 @@ tree.
 - a `spec-kit/specs/**/spec.md` has no `FR-N` heading, an FR section has
   no `Evidence:` line, or a paragraph marked `_(inferred)_` has no
   `Evidence:` line in it or right after it
+- `context/profile.yaml` names an `exclude` entry outside
+  `context/build-scope.json` `out_of_scope`, or a `live_config` fact the
+  source and the harvested config do not support (see [Context](#context))
 
 Optional files that are absent are not problems.
 
@@ -309,8 +362,8 @@ A full `run` without `--until` includes CMS and needs `--branch` and
 `--storage-state`.
 
 ```bash
-extractkit run --profile enonic --source . --until static
-extractkit run --profile enonic --source . --out <sidecar> \
+extractkit run --source . --until static
+extractkit run --source . --out <sidecar> \
   --from merge --until synthesis
 ```
 

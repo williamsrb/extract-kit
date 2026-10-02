@@ -34,20 +34,34 @@ the agent phase. This skill only adds what is specific to a skill run.
 - Spec Kit mode is as-is. Do not write port plans, `DECISIONS.md`, or
   `IMPLEMENTATION.md`.
 - PHP profile is empty on purpose. Do not guess Laravel/Symfony parsers.
+- No client profile lives in the kit. Never create or edit
+  `<source>/.extractkit/profile.yaml`; it is the operator's override. The
+  only profile file an agent edits is `<sidecar>/context/profile.yaml`, and
+  only through `context.exclude` and `context.live_config`.
 
 ## Graph
 
-Diagrams: `docs/flow.md` and `docs/diagrams/*.png`.
+Diagrams: `docs/flow.md` and `docs/diagrams/*.png`. Required and optional
+inputs and the output of every phase and agent task:
+`docs/flow.md#inputs-and-outputs`.
 
 1. `extractkit deps --profile enonic` and
-   `extractkit doctor --profile enonic --source <legacy>` (Serena onboarding
-   and a Graphify index must be ready; the operator fixes them). A
-   `build scope` warning lists top-level folders no default-branch build
-   names: ask the operator which to drop before step 2
-2. Static: `extractkit run --profile enonic --source <legacy> --until static`,
-   with one `--exclude <folder>` per folder the operator dropped
+   `extractkit doctor --source <legacy>` (Serena onboarding and a Graphify
+   index must be ready; the operator fixes them). The `stack` row says what
+   detection would pick; a `build scope` warning lists top-level folders no
+   default-branch build names
+2. Context and static: `extractkit run --source <legacy> --until static`.
+   The `context` phase runs first on its own: it detects the stack (pass
+   `--profile enonic` only when it finds no marker), writes
+   `context/build-scope.json` and the overlay `context/profile.yaml`. An
+   operator who already knows a folder is not the product can add
+   `--exclude <folder>`; otherwise the `context.exclude` task decides
 3. `extractkit status --source <legacy>` — every phase as done / current /
-   pending, the current phase's missing artifacts, and skill names
+   pending, the current phase's missing artifacts, and skill names. While
+   `context.exclude` is undecided its `next` block offers
+   `extractkit agent show context.exclude`: invoke the `extract-agentic`
+   skill for it before step 4, because the CMS and merge scans read what it
+   excludes
 4. Optional live CMS (Enonic profile only):
 
    `extractkit step enonic.cms ... --branch draft --storage-state <file>
@@ -58,11 +72,15 @@ Diagrams: `docs/flow.md` and `docs/diagrams/*.png`.
 
    Resolve order and the 3-per-type cap are Enonic-only. Do not invent
    them for PHP.
-5. Merge and synthesis: `extractkit resume --profile enonic --source
-   <legacy> --until synthesis` (or, without CMS, `extractkit run --profile
-   enonic --source <legacy> --out <sidecar> --from merge --until synthesis`)
-6. Agent phase (name the rules, write `BUSINESS.md`): invoke the
-   `extract-agentic` skill. It runs `extractkit agent next --out <sidecar>`
+   After the CMS step, `inventory/live-config-candidates.json` lists the
+   Site Config and Config Env keys that hold URLs or host maps. The
+   `context.live_config` task (`extract-agentic`) writes the project's
+   `live_config` rules from it, and its re-run repeats this step.
+5. Merge and synthesis: `extractkit resume --source <legacy> --until
+   synthesis` (or, without CMS, `extractkit run --source <legacy> --out
+   <sidecar> --from merge --until synthesis`)
+6. Agent phase (decide the context, name the rules, write `BUSINESS.md`):
+   invoke the `extract-agentic` skill. It runs `extractkit agent next --out <sidecar>`
    until nothing is pending, then `extractkit check --out <sidecar>`
 7. Promote only when asked: `extractkit promote --source <legacy>
    --out <sidecar>`

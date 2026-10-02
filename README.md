@@ -35,8 +35,10 @@ must cite its evidence too.
 
 ![How Extract Kit works: seven steps from reading the project to handing over the documents](docs/diagrams/how-it-works.png)
 
-1. **Read the project.** Scan the source code, configuration, page
-   templates, and existing documentation.
+1. **Read the project.** Work out the stack and which folders a build
+   touches, then scan the source code, configuration, page templates, and
+   existing documentation. There is no project profile to write: the kit
+   detects the stack from the checkout.
 2. **Observe the running site.** Visit a test copy with sample content to
    see which pages and components are really in use, and take desktop and
    mobile screenshots. Optional.
@@ -45,8 +47,11 @@ must cite its evidence too.
    sometimes, or not observed.
 4. **Write the documents.** Turn the collected facts into the documents
    listed below.
-5. **AI steps.** An AI assistant names the business rules and writes the
-   business overview. See [AI steps](#ai-steps) below.
+5. **AI steps.** An AI assistant decides which folders and configuration
+   keys belong to the project, names the business rules, and writes the
+   business overview. The two context decisions come early, after steps 1
+   and 2, because the later steps read them. See
+   [AI steps](#ai-steps) below.
 6. **Validate.** Check that every requirement and rule cites its evidence.
 7. **Hand over.** Copy the main documents into the project, where the next
    team picks them up.
@@ -62,6 +67,7 @@ not connect to an AI model itself, so you choose which assistant runs them.
 <!-- markdownlint-disable MD013 -->
 | AI step | What the assistant does | Required |
 | --- | --- | --- |
+| Decide the context | Picks which folders outside the main build are not part of the product, and which configuration keys carry the project's service addresses; the kit checks both against the code | Yes (the service-address half only after a live capture) |
 | Name the business rules | Gives each extracted rule a plain business name and a one-sentence purpose | Yes |
 | Write the business overview | Writes BUSINESS.md from the extracted facts: purpose, actors, capabilities, business flow, rules, glossary, integrations, open questions | Yes |
 | Polish the specifications | Rewrites the requirement and journey text so it reads better, without changing the facts | No |

@@ -17,6 +17,10 @@ them.
   `<source>/.extract/<run-id>/`. Only `promote` writes into the checkout, and
   only when the operator asked for it.
 - There is no dry run. Every command writes on its first call.
+- The profile is not yours to write. The only profile file an agent task
+  edits is `<sidecar>/context/profile.yaml`, and only the key the task names.
+  `<source>/.extractkit/profile.yaml` is the operator's override: read it,
+  never create or edit it.
 - The kit never runs Serena, graphify or graft. It detects them and prints
   the fix. Do not run them inside the source yourself; tell the operator and
   wait.
@@ -31,13 +35,14 @@ them.
 ## Command sequence
 
 Run the phases in order. Each command ends with a `next` block; paste it
-instead of rebuilding the command.
+instead of rebuilding the command. The stack comes from the checkout: pass
+`--profile` only when a command says it cannot detect one.
 
 ### 1 Preflight
 
 ```bash
 extractkit deps --profile enonic
-extractkit doctor --profile enonic --source .
+extractkit doctor --source .
 ```
 
 Both first install the kit: the CLI link in `~/.local/bin` and the skill
@@ -45,50 +50,76 @@ links in `~/.agents/skills` and `~/.claude/skills`. An install row that
 fails names its fix (`--force` for a foreign symlink, an `export PATH` line
 when `~/.local/bin` is not on PATH). `deps` then runs every probe.
 `doctor --source` adds the target's readiness: Serena onboarding, a
-Graphify index (both must pass), a graft index (a warning) and the build
-scope (a warning that lists top-level folders no default-branch build
-names). The operator produces the indexes in a session opened in the
-checkout. Show the operator the build scope folders before the static run
-and pass each one they drop with `--exclude`. Do not exclude on your own: a
-folder outside the build can still be live.
+Graphify index (both must pass), a graft index (a warning), the stack it
+would detect, and the build scope (a warning that lists top-level folders no
+default-branch build names). The operator produces the indexes in a session
+opened in the checkout.
 
-### 2 Static
+### 2 Context
 
 ```bash
-extractkit run --profile enonic --source <legacy> --until static
+extractkit context --source <legacy>
+```
+
+`run` and `resume` do this on their own when the sidecar has no context yet,
+so you rarely call it. It detects the stack (`enonic` from
+`src/main/resources/application.xml` or `site/site.xml`, `php` from a root
+`composer.json`), writes `context/build-scope.json` (the top-level folders
+no default-branch build names) and the overlay `context/profile.yaml`. It
+excludes nothing by itself. The overlay gets `exclude: []` only when the
+build scope has nothing to decide. Otherwise `context.exclude` (an agent
+task, below) decides, and the operator can still pass `--exclude` on the
+first run. A checkout with no marker, or markers for both stacks, fails with
+a `fix:` that passes `--profile`.
+
+### 3 Static
+
+```bash
+extractkit run --source <legacy> --until static
 extractkit status --source <legacy>
 ```
 
 This writes the template inventory, the component map and the OpenAPI
-harvest. Use `--profile enonic` for any stack that has no adapter of its
-own: `core` cannot run alone, and `php` refuses on purpose.
+harvest. When detection fails, pass `--profile enonic` for any stack that
+has no adapter of its own: `core` cannot run alone, and `php` refuses on
+purpose.
 
-### 3 CMS (optional)
+When the build scope left folders undecided, the `next` block now offers
+`agent show context.exclude`. Run that task before the CMS and merge slots,
+so the later scans skip what it excludes.
+
+### 4 CMS (optional)
 
 <!-- markdownlint-disable MD013 -->
 ```bash
-extractkit resume --profile enonic --source <legacy> --branch draft --storage-state <state.json>
+extractkit resume --source <legacy> --branch draft --storage-state <state.json>
 ```
 <!-- markdownlint-enable MD013 -->
 
 Local or review XP only. Skip it with `--from merge` in the next phase.
+`enonic.cms` also writes `inventory/live-config-candidates.json`: the
+Site Config and Config Env keys whose value is a URL or a host map, and
+whether the current `live_config` rules cover them. The task
+`context.live_config` reads it.
 
-### 4 Merge and 5 Synthesis
+### 5 Merge and 6 Synthesis
 
 <!-- markdownlint-disable MD013 -->
 ```bash
-extractkit run --profile enonic --source <legacy> --out <sidecar> --from merge --until synthesis
+extractkit run --source <legacy> --out <sidecar> --from merge --until synthesis
 ```
 <!-- markdownlint-enable MD013 -->
 
 Merge also writes `rules/`. Synthesis cites the rules in the specs. The
-next phase is the agent phase (6); `run` and `step` refuse it.
+next phase is the agent phase (7); `run` and `step` refuse it.
 
-### 6 Agent
+### 7 Agent
 
 The kit stores each agent step as a prompt in `agent-tasks/<id>/`. It never
 calls a model. After synthesis, `extractkit status` shows the agent phase as
-current while a required task is pending.
+current while a required task is pending. Two tasks come earlier, because
+the later phases read what they write: `context.exclude` is ready after the
+static phase, and `context.live_config` after the CMS slot.
 
 ```bash
 extractkit agent list --out <sidecar>
@@ -98,25 +129,36 @@ extractkit agent show <id> --out <sidecar>
 
 `agent next` names the first required task whose inputs exist. `agent show`
 prints its prompt with the real sidecar and source paths, then the input and
-output files. Do the task, run its `rerun` command when it declares one, run
-`check`, and ask for the next task. Stop when `agent next` reports none
-pending. The `extract-agentic` skill runs this loop.
+output files. Do the task, run its `rerun` command when it declares one
+(with the CMS flags of the earlier run added), run `check`, and ask for the
+next task. Stop when `agent next` reports none pending. The `extract-agentic`
+skill runs this loop.
 
 <!-- markdownlint-disable MD013 -->
 | Task | Writes | Done when |
 | --- | --- | --- |
+| `context.exclude` | `exclude` in `context/profile.yaml` | the overlay has an `exclude` key; `[]` counts. It is already `[]` when the build scope has nothing to decide |
+| `context.live_config` | `live_config` in `context/profile.yaml` | the overlay has a `live_config` key, or there is no `inventory/live-config-candidates.json` (no live harvest) |
 | `rules.name` | `rules/review.md` (names and intents) | no business rule in `rules/view-rules.json` is still `extracted` |
 | `business` | `business/BUSINESS.md` | the file exists |
 | `spec.enrich` | `spec-kit/specs/`, `use-cases/` (prose only) | optional, never blocks |
 | `spec.review` | `reports/spec-review.md` (findings only; edits no spec) | optional, never blocks |
 <!-- markdownlint-enable MD013 -->
 
-`rules.name` needs a re-run: the names reach `rules/view-rules.json` only
-when you run the merge and synthesis slice. The procedure and the analyst
-gates are in each task's prompt. The agent never ticks `[x]` in
-`rules/review.md`.
+The two `context.*` tasks decide, they do not invent: `check` rejects an
+`exclude` entry that is not in `context/build-scope.json` `out_of_scope`,
+and a `live_config` key, URL path or origin host that is in neither the
+source nor the harvested live config. `context.exclude` re-runs
+`run --from static --until synthesis`. `context.live_config` re-runs
+`step inventory.runtime`. The `Re-run:` line prints only those tokens, so
+add `--source`, `--out` and the CMS flags (`--branch`, `--storage-state`,
+`--guillotine` or `--xp-host`, `--cms-key`) of the run that wrote the
+sidecar. `rules.name` needs a re-run too: the names reach
+`rules/view-rules.json` only when you run the merge and synthesis slice. The
+procedure and the analyst gates are in each task's prompt. The agent never
+ticks `[x]` in `rules/review.md`.
 
-### 7 Check and 8 Promote
+### 8 Check and 9 Promote
 
 ```bash
 extractkit check --out <sidecar>
@@ -152,9 +194,14 @@ when the operator asks.
 | `serena onboarding` MISSING | No `.serena/project.yml` or no memory file | Ask the operator to onboard the project in an agent session opened in the checkout, not in the kit |
 | `graphify index` MISSING | No `graphify-out/graph.json` | Ask the operator to build a Graphify index from a session opened in the checkout (the graphify skill, for example `/graphify .`) |
 | `graft index` warning | No `graft/` | Optional. `map.code` skips until the operator runs `graft build` |
-| `build scope` warning | A top-level folder no default-branch build names | Ask the operator; pass the folders they drop with `--exclude` on the first `run` (the sidecar keeps it) |
+| `build scope` warning | A top-level folder no default-branch build names | Advisory. `context.exclude` decides which are not part of the product; the operator can also pass `--exclude` on the first `run` (the sidecar keeps it) |
+| `no stack marker found` or `markers for more than one stack` | Detection found no `application.xml`, `site/site.xml` or root `composer.json`, or found both stacks | Run the printed `fix:` (it passes `--profile`); pick the stack the operator wants |
+| `context/profile.yaml: … is in neither the source nor the harvested live config` | The agent wrote a key, URL path or host it did not see | Remove it, or cite where it is; do not widen the source. Fix only the overlay, then `check` again |
+| `context/profile.yaml: exclude '…' is not in context/build-scope.json out_of_scope` | `exclude` names a folder the build scope did not report | Choose from `out_of_scope` only |
+| `enonic.cms.configenv` skip, HTTP 404 | The Config Env admin tool is not installed on that XP | Harmless. Pass `--configenv <url>` if it lives elsewhere |
+| `profile overlay … sets 'adapters'` | An overlay set a key other than `exclude` or `live_config` | Remove the key; the stack is not an overlay's to change |
 | `exclude … is not a path relative to the source` | An absolute `--exclude` or one with `..` | Name the folder relative to `--source` |
-| `profile 'core' has unbound required adapters` | `core` has no stack adapters | Use `enonic` (or `as`) |
+| `profile 'core' has unbound required adapters` | `core` has no stack adapters | Pass `--profile enonic`, or let detection pick the stack |
 | `enonic.cms requires --branch` | The slice includes CMS | Add `--branch draft`, or stop at `--until static` |
 | a production host is refused | The URL is not local or review | Use a local or review XP; never override |
 | `promote` refuses | A destination git cannot restore | Commit or stash it. `--force` only on the operator's word |

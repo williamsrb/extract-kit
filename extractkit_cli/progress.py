@@ -5,11 +5,9 @@ from __future__ import annotations
 from argparse import Namespace
 from pathlib import Path
 
-from . import guide, registry, runner
-from .common import load_yaml
+from . import context, guide, registry, runner
 from .errors import ExtractkitError
 from .outtree import EXTRACT_DIRNAME, latest_run, resolve_source
-from .profiles import validate_profile
 
 # Distinctive artifacts so overlapping produces (e.g. project-map.json) do not
 # mark a later step complete.
@@ -104,20 +102,9 @@ def first_incomplete(
 
 
 def _profile_from_args(args: Namespace, out: Path) -> dict:
-    name = getattr(args, "profile", None)
-    if name:
-        return validate_profile(name)
-    manifest_path = out / "MANIFEST.yaml"
-    if manifest_path.is_file():
-        payload = load_yaml(manifest_path, "MANIFEST.yaml")
-        recorded = (payload.get("source") or {}).get("profile")
-        if recorded:
-            return validate_profile(str(recorded))
-    raise ExtractkitError(
-        "no --profile and MANIFEST.yaml has no source.profile",
-        "pass --profile enonic (or php)",
-        fix_args={"--profile": "enonic"},
-    )
+    raw = getattr(args, "source", None)
+    source = resolve_source(raw) if raw else context.source_of(out)
+    return context.resolve_profile(args, source, out)
 
 
 def pipeline_state(profile: dict, out: Path) -> str:
@@ -155,6 +142,12 @@ def status_rows(profile: dict, out: Path, style: guide.Style) -> list[str]:
         note = ""
         if phase.command == "doctor":
             mark = style.blank()
+        elif phase.command == "context":
+            if context.overlay_path(out).is_file():
+                mark = style.glyph("done")
+            else:
+                mark = style.glyph("current" if not current_seen else "pending")
+                current_seen = True
         elif phase.command == "agent":
             from . import agent_tasks
 
@@ -245,6 +238,7 @@ def cmd_resume(args: Namespace) -> int:
         if latest is not None:
             args.out = str(latest)
     ctx = runner._context_from_args(args)
+    runner._ensure_context(ctx, args)
     pending = first_incomplete(ctx.profile, ctx.out)
     if pending is None:
         style = guide.style_for()

@@ -36,7 +36,10 @@ def _rules(out: Path, *statuses: str, bucket: str = "business") -> None:
 class RegistryTests(unittest.TestCase):
     def test_shipped_tasks_load_and_validate(self) -> None:
         tasks = agent_tasks.load()
-        self.assertEqual({t.id for t in tasks}, {"rules.name", "business", "spec.enrich", "spec.review"})
+        self.assertEqual({t.id for t in tasks}, {
+            "context.exclude", "context.live_config", "rules.name", "business",
+            "spec.enrich", "spec.review",
+        })
         for task in tasks:
             with self.subTest(task=task.id):
                 self.assertTrue(task.prompt.is_file())
@@ -44,11 +47,24 @@ class RegistryTests(unittest.TestCase):
                 for name in task.checks:
                     self.assertIn(name, check.NAMED_CHECKS)
 
-    def test_order_is_rules_then_business_then_spec_enrich_then_spec_review(self) -> None:
+    def test_order_follows_the_pipeline_then_the_task_id(self) -> None:
         self.assertEqual(
             [t.id for t in agent_tasks.ordered(manifest.load("enonic"))],
-            ["rules.name", "business", "spec.enrich", "spec.review"],
+            ["context.exclude", "context.live_config", "rules.name", "business",
+             "spec.enrich", "spec.review"],
         )
+
+    def test_context_tasks_sit_after_the_slots_they_wait_for(self) -> None:
+        by_id = {t.id: t for t in agent_tasks.load()}
+        self.assertEqual(by_id["context.exclude"].after, "inventory.integrations")
+        self.assertEqual(by_id["context.exclude"].done_check, "exclude_decided")
+        self.assertEqual(by_id["context.exclude"].rerun, ("run", "--from", "static", "--until", "synthesis"))
+        self.assertEqual(by_id["context.live_config"].after, "inventory.runtime")
+        self.assertEqual(by_id["context.live_config"].done_check, "live_config_written")
+        self.assertEqual(by_id["context.live_config"].rerun, ("step", "inventory.runtime"))
+        for task_id in ("context.exclude", "context.live_config"):
+            self.assertEqual(by_id[task_id].writes, ("context/profile.yaml",))
+            self.assertEqual(by_id[task_id].checks, ("context_grounded",))
 
     def test_declared_fields(self) -> None:
         by_id = {t.id: t for t in agent_tasks.load()}
@@ -83,6 +99,66 @@ class RegistryTests(unittest.TestCase):
             (root / "a").rename(root / "b")
             with self.assertRaises(ExtractkitError):
                 agent_tasks.load(root)
+
+
+def _overlay(out: Path, **keys: object) -> None:
+    (out / "context").mkdir(exist_ok=True)
+    (out / "context" / "profile.yaml").write_text(
+        "\n".join(f"{k}: {json.dumps(v)}" for k, v in {"extends": "enonic", **keys}.items()) + "\n",
+        encoding="utf-8",
+    )
+
+
+class ContextTaskStateTests(unittest.TestCase):
+    """`context.exclude` and `context.live_config` are done by their overlay key."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._tmp = tempfile.TemporaryDirectory()
+        _source, cls.template = build_sidecar(Path(cls._tmp.name))
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls._tmp.cleanup()
+
+    def setUp(self) -> None:
+        self._copy_dir = tempfile.TemporaryDirectory()
+        self.out = Path(self._copy_dir.name) / "sidecar"
+        shutil.copytree(self.template, self.out)
+        (self.out / "business").mkdir(exist_ok=True)
+        (self.out / "business" / "BUSINESS.md").write_text(valid_business(), encoding="utf-8")
+
+    def tearDown(self) -> None:
+        self._copy_dir.cleanup()
+
+    def _pending(self) -> list[str]:
+        return [t.id for t in agent_tasks.pending(self.out, manifest.load("enonic"))]
+
+    def test_exclude_is_pending_until_the_overlay_has_the_key(self) -> None:
+        _overlay(self.out)
+        self.assertEqual(self._pending(), ["context.exclude"])
+        self.assertEqual(agent_tasks.next_task(self.out, manifest.load("enonic")).id, "context.exclude")
+        _overlay(self.out, exclude=[])
+        self.assertEqual(self._pending(), [])
+
+    def test_a_sidecar_without_a_context_phase_leaves_exclude_pending_and_blocked(self) -> None:
+        shutil.rmtree(self.out / "context")
+        self.assertEqual(self._pending(), ["context.exclude"])
+        self.assertIsNone(agent_tasks.next_task(self.out, manifest.load("enonic")))
+
+    def test_live_config_is_done_without_a_live_harvest(self) -> None:
+        self.assertFalse((self.out / "inventory" / "live-config-candidates.json").exists())
+        _overlay(self.out, exclude=[])
+        self.assertEqual(self._pending(), [])
+
+    def test_live_config_is_pending_while_candidates_exist_and_the_key_is_missing(self) -> None:
+        (self.out / "inventory" / "live-config-candidates.json").write_text("[]\n", encoding="utf-8")
+        (self.out / "inventory" / "runtime.json").write_text("{}\n", encoding="utf-8")
+        _overlay(self.out, exclude=[])
+        self.assertEqual(self._pending(), ["context.live_config"])
+        self.assertEqual(agent_tasks.next_task(self.out, manifest.load("enonic")).id, "context.live_config")
+        _overlay(self.out, exclude=[], live_config={})
+        self.assertEqual(self._pending(), [])
 
 
 class RenderTests(unittest.TestCase):
@@ -190,7 +266,12 @@ class AgentCommandTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual(payload["next"], "business")
         rows = {t["id"]: t for t in payload["tasks"]}
-        self.assertEqual(list(rows), ["rules.name", "business", "spec.enrich", "spec.review"])
+        self.assertEqual(list(rows), [
+            "context.exclude", "context.live_config", "rules.name", "business",
+            "spec.enrich", "spec.review",
+        ])
+        self.assertEqual(rows["context.exclude"]["state"], "done")
+        self.assertEqual(rows["context.live_config"]["state"], "done")
         self.assertEqual(rows["rules.name"]["state"], "done")
         self.assertEqual(rows["business"]["state"], "pending")
         self.assertEqual(rows["business"]["missing_reads"], [])
@@ -261,13 +342,13 @@ class AgentCommandTests(unittest.TestCase):
         self.assertEqual(text.returncode, 0)
         self.assertIn("business is waiting on map/route-map.json", text.stdout)
 
-    def test_status_shows_eight_phases_with_the_agent_phase_current(self) -> None:
+    def test_status_shows_nine_phases_with_the_agent_phase_current(self) -> None:
         result = run("status", "--out", str(self.out))
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertRegex(result.stdout, r"→ 6 agent\s+pending business · skills: extract-agentic")
-        self.assertRegex(result.stdout, r"· 7 check")
-        self.assertRegex(result.stdout, r"· 8 promote")
-        self.assertIn("next  [6/8] Agent is next:", result.stdout)
+        self.assertRegex(result.stdout, r"→ 7 agent\s+pending business · skills: extract-agentic")
+        self.assertRegex(result.stdout, r"· 8 check")
+        self.assertRegex(result.stdout, r"· 9 promote")
+        self.assertIn("next  [7/9] Agent is next:", result.stdout)
         self.assertIn("agent next --out", result.stdout)
 
     def test_status_returns_to_check_once_the_required_tasks_are_done(self) -> None:
@@ -275,9 +356,9 @@ class AgentCommandTests(unittest.TestCase):
         (out / "business").mkdir()
         (out / "business" / "BUSINESS.md").write_text(valid_business(), encoding="utf-8")
         result = run("status", "--out", str(out))
-        self.assertRegex(result.stdout, r"✓ 6 agent\s*\n")
-        self.assertRegex(result.stdout, r"→ 7 check")
-        self.assertIn("next  [7/8] Check the extract tree (CMS was not captured):", result.stdout)
+        self.assertRegex(result.stdout, r"✓ 7 agent\s*\n")
+        self.assertRegex(result.stdout, r"→ 8 check")
+        self.assertIn("next  [8/9] Check the extract tree (CMS was not captured):", result.stdout)
         self.assertIn("or add CMS data and rebuild merge and synthesis:", result.stdout)
 
     def test_run_from_agent_is_refused_and_names_the_command(self) -> None:

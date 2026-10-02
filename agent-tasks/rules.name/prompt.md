@@ -17,6 +17,10 @@ Run: `{run_id}`
   `<source>/.extract/<run-id>/`. Only `promote` writes into the checkout, and
   only when the operator asked for it.
 - There is no dry run. Every command writes on its first call.
+- The profile is not yours to write. The only profile file an agent task
+  edits is `<sidecar>/context/profile.yaml`, and only the key the task names.
+  `<source>/.extractkit/profile.yaml` is the operator's override: read it,
+  never create or edit it.
 - The kit never runs Serena, graphify or graft. It detects them and prints
   the fix. Do not run them inside the source yourself; tell the operator and
   wait.

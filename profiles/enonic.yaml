@@ -30,7 +30,8 @@ cms:
     - /en
   sample_per_type: 3
 round2: []
-live_config: {}
+live_config:
+  configenv_path: /admin/tool/no.seeds.configenv/module-config
 deps:
   - provides: [playwright-cli]
     optional: true

@@ -25,6 +25,13 @@
       "type": "array",
       "items": { "type": "string", "minLength": 1 }
     },
+    "context": {
+      "type": "object",
+      "properties": {
+        "layers": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      },
+      "additionalProperties": true
+    },
     "maps": {
       "type": "object",
       "additionalProperties": { "type": ["string", "null"] }

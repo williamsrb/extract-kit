@@ -1,523 +1,523 @@
 [
-  {
-    "type": "cameraUpdate",
-    "width": 1200,
-    "height": 900,
-    "x": 0,
-    "y": 0
+ {
+  "type": "cameraUpdate",
+  "width": 1200,
+  "height": 900,
+  "x": 0,
+  "y": 0
+ },
+ {
+  "type": "text",
+  "id": "t",
+  "x": 40,
+  "y": 24,
+  "text": "How Extract Kit works",
+  "fontSize": 30,
+  "strokeColor": "#1e1e1e",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "st",
+  "x": 40,
+  "y": 66,
+  "text": "The original project is only read. Production systems are refused.",
+  "fontSize": 17,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "s1",
+  "x": 40,
+  "y": 130,
+  "width": 240,
+  "height": 100,
+  "backgroundColor": "#d3f9d8",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
   },
-  {
-    "type": "text",
-    "id": "t",
-    "x": 40,
-    "y": 24,
-    "text": "How Extract Kit works",
-    "fontSize": 30,
-    "strokeColor": "#1e1e1e",
-    "fontFamily": 5
+  "label": {
+   "text": "1  Read the project\nstack, build scope,\ncode, config, docs",
+   "fontSize": 16,
+   "fontFamily": 5
   },
-  {
-    "type": "text",
-    "id": "st",
-    "x": 40,
-    "y": 66,
-    "text": "The original project is only read. Production systems are refused.",
-    "fontSize": 17,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
-  },
-  {
-    "type": "rectangle",
-    "id": "s1",
-    "x": 40,
-    "y": 130,
-    "width": 240,
-    "height": 100,
-    "backgroundColor": "#d3f9d8",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "1  Read the project\ncode, config, docs",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a1",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "s2",
-    "x": 350,
-    "y": 130,
-    "width": 240,
-    "height": 100,
-    "backgroundColor": "#e5dbff",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "2  Observe the site\ntest copy, screenshots\n(optional)",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a1",
-        "type": "arrow"
-      },
-      {
-        "id": "a2",
-        "type": "arrow"
-      }
-    ],
-    "strokeStyle": "dashed"
-  },
-  {
-    "type": "rectangle",
-    "id": "s3",
-    "x": 660,
-    "y": 130,
-    "width": 240,
-    "height": 100,
-    "backgroundColor": "#d3f9d8",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "3  Cross-check\ncode vs. the test copy",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a2",
-        "type": "arrow"
-      },
-      {
-        "id": "a3",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "s4",
-    "x": 970,
-    "y": 130,
-    "width": 240,
-    "height": 100,
-    "backgroundColor": "#d3f9d8",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "4  Write the documents\nspecs, rules, API, design",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a3",
-        "type": "arrow"
-      },
-      {
-        "id": "a4",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "s5",
-    "x": 195,
-    "y": 340,
-    "width": 240,
-    "height": 100,
-    "backgroundColor": "#fff3bf",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "5  AI steps\nname rules, write\nthe business overview",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a4",
-        "type": "arrow"
-      },
-      {
-        "id": "a5",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "s6",
-    "x": 505,
-    "y": 340,
-    "width": 240,
-    "height": 100,
-    "backgroundColor": "#ffe3e3",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "6  Validate\nrequirements and rules\ncite their evidence",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a5",
-        "type": "arrow"
-      },
-      {
-        "id": "a6",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "s7",
-    "x": 815,
-    "y": 340,
-    "width": 240,
-    "height": 100,
-    "backgroundColor": "#d0ebff",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "7  Hand over\ncopy the documents\ninto the project",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a6",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "arrow",
+  "boundElements": [
+   {
     "id": "a1",
-    "x": 280,
-    "y": 180.0,
-    "width": 70,
-    "height": 0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        70,
-        0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "strokeWidth": 2,
-    "startBinding": {
-      "elementId": "s1",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "s2",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
+    "type": "arrow"
+   }
+  ]
+ },
+ {
+  "type": "rectangle",
+  "id": "s2",
+  "x": 350,
+  "y": 130,
+  "width": 240,
+  "height": 100,
+  "backgroundColor": "#e5dbff",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
   },
-  {
-    "type": "arrow",
+  "label": {
+   "text": "2  Observe the site\ntest copy, screenshots\n(optional)",
+   "fontSize": 16,
+   "fontFamily": 5
+  },
+  "boundElements": [
+   {
+    "id": "a1",
+    "type": "arrow"
+   },
+   {
     "id": "a2",
-    "x": 590,
-    "y": 180.0,
-    "width": 70,
-    "height": 0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        70,
-        0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "strokeWidth": 2,
-    "startBinding": {
-      "elementId": "s2",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "s3",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
+    "type": "arrow"
+   }
+  ],
+  "strokeStyle": "dashed"
+ },
+ {
+  "type": "rectangle",
+  "id": "s3",
+  "x": 660,
+  "y": 130,
+  "width": 240,
+  "height": 100,
+  "backgroundColor": "#d3f9d8",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
   },
-  {
-    "type": "arrow",
+  "label": {
+   "text": "3  Cross-check\ncode vs. the test copy",
+   "fontSize": 16,
+   "fontFamily": 5
+  },
+  "boundElements": [
+   {
+    "id": "a2",
+    "type": "arrow"
+   },
+   {
     "id": "a3",
-    "x": 900,
-    "y": 180.0,
-    "width": 70,
-    "height": 0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        70,
-        0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "strokeWidth": 2,
-    "startBinding": {
-      "elementId": "s3",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "s4",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
+    "type": "arrow"
+   }
+  ]
+ },
+ {
+  "type": "rectangle",
+  "id": "s4",
+  "x": 970,
+  "y": 130,
+  "width": 240,
+  "height": 100,
+  "backgroundColor": "#d3f9d8",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
   },
-  {
-    "type": "arrow",
+  "label": {
+   "text": "4  Write the documents\nspecs, rules, API, design",
+   "fontSize": 16,
+   "fontFamily": 5
+  },
+  "boundElements": [
+   {
+    "id": "a3",
+    "type": "arrow"
+   },
+   {
     "id": "a4",
-    "x": 1090.0,
-    "y": 230,
-    "width": 775.0,
-    "height": 110,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        0,
-        55.0
-      ],
-      [
-        -775.0,
-        55.0
-      ],
-      [
-        -775.0,
-        110
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "strokeWidth": 2,
-    "startBinding": {
-      "elementId": "s4",
-      "fixedPoint": [
-        0.5,
-        1
-      ]
-    },
-    "endBinding": {
-      "elementId": "s5",
-      "fixedPoint": [
-        0.5,
-        0
-      ]
-    }
+    "type": "arrow"
+   }
+  ]
+ },
+ {
+  "type": "rectangle",
+  "id": "s5",
+  "x": 195,
+  "y": 340,
+  "width": 240,
+  "height": 100,
+  "backgroundColor": "#fff3bf",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
   },
-  {
-    "type": "arrow",
+  "label": {
+   "text": "5  AI steps\ndecide the context, name\nrules, write the overview",
+   "fontSize": 16,
+   "fontFamily": 5
+  },
+  "boundElements": [
+   {
+    "id": "a4",
+    "type": "arrow"
+   },
+   {
     "id": "a5",
-    "x": 435,
-    "y": 390.0,
-    "width": 70,
-    "height": 0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        70,
-        0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "strokeWidth": 2,
-    "startBinding": {
-      "elementId": "s5",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "s6",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
+    "type": "arrow"
+   }
+  ]
+ },
+ {
+  "type": "rectangle",
+  "id": "s6",
+  "x": 505,
+  "y": 340,
+  "width": 240,
+  "height": 100,
+  "backgroundColor": "#ffe3e3",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
   },
-  {
-    "type": "arrow",
+  "label": {
+   "text": "6  Validate\nrequirements and rules\ncite their evidence",
+   "fontSize": 16,
+   "fontFamily": 5
+  },
+  "boundElements": [
+   {
+    "id": "a5",
+    "type": "arrow"
+   },
+   {
     "id": "a6",
-    "x": 745,
-    "y": 390.0,
-    "width": 70,
-    "height": 0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        70,
-        0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "strokeWidth": 2,
-    "startBinding": {
-      "elementId": "s6",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "s7",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
+    "type": "arrow"
+   }
+  ]
+ },
+ {
+  "type": "rectangle",
+  "id": "s7",
+  "x": 815,
+  "y": 340,
+  "width": 240,
+  "height": 100,
+  "backgroundColor": "#d0ebff",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
   },
-  {
-    "type": "rectangle",
-    "id": "l0",
-    "x": 195,
-    "y": 490,
-    "width": 28,
-    "height": 22,
-    "backgroundColor": "#d3f9d8",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    }
+  "label": {
+   "text": "7  Hand over\ncopy the documents\ninto the project",
+   "fontSize": 16,
+   "fontFamily": 5
   },
-  {
-    "type": "text",
-    "id": "lt0",
-    "x": 233,
-    "y": 491,
-    "text": "Built from rules, repeatable",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
+  "boundElements": [
+   {
+    "id": "a6",
+    "type": "arrow"
+   }
+  ]
+ },
+ {
+  "type": "arrow",
+  "id": "a1",
+  "x": 280,
+  "y": 180.0,
+  "width": 70,
+  "height": 0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    70,
+    0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "strokeWidth": 2,
+  "startBinding": {
+   "elementId": "s1",
+   "fixedPoint": [
+    1,
+    0.5
+   ]
   },
-  {
-    "type": "rectangle",
-    "id": "l1",
-    "x": 487,
-    "y": 490,
-    "width": 28,
-    "height": 22,
-    "backgroundColor": "#e5dbff",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "strokeStyle": "dashed"
-  },
-  {
-    "type": "text",
-    "id": "lt1",
-    "x": 525,
-    "y": 491,
-    "text": "Optional",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
-  },
-  {
-    "type": "rectangle",
-    "id": "l2",
-    "x": 633,
-    "y": 490,
-    "width": 28,
-    "height": 22,
-    "backgroundColor": "#fff3bf",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    }
-  },
-  {
-    "type": "text",
-    "id": "lt2",
-    "x": 671,
-    "y": 491,
-    "text": "AI assistant, checked by the kit",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
-  },
-  {
-    "type": "rectangle",
-    "id": "l3",
-    "x": 954,
-    "y": 490,
-    "width": 28,
-    "height": 22,
-    "backgroundColor": "#ffe3e3",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    }
-  },
-  {
-    "type": "text",
-    "id": "lt3",
-    "x": 992,
-    "y": 491,
-    "text": "Automatic check",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
+  "endBinding": {
+   "elementId": "s2",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
   }
+ },
+ {
+  "type": "arrow",
+  "id": "a2",
+  "x": 590,
+  "y": 180.0,
+  "width": 70,
+  "height": 0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    70,
+    0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "strokeWidth": 2,
+  "startBinding": {
+   "elementId": "s2",
+   "fixedPoint": [
+    1,
+    0.5
+   ]
+  },
+  "endBinding": {
+   "elementId": "s3",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a3",
+  "x": 900,
+  "y": 180.0,
+  "width": 70,
+  "height": 0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    70,
+    0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "strokeWidth": 2,
+  "startBinding": {
+   "elementId": "s3",
+   "fixedPoint": [
+    1,
+    0.5
+   ]
+  },
+  "endBinding": {
+   "elementId": "s4",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a4",
+  "x": 1090.0,
+  "y": 230,
+  "width": 775.0,
+  "height": 110,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    55.0
+   ],
+   [
+    -775.0,
+    55.0
+   ],
+   [
+    -775.0,
+    110
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "strokeWidth": 2,
+  "startBinding": {
+   "elementId": "s4",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "s5",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a5",
+  "x": 435,
+  "y": 390.0,
+  "width": 70,
+  "height": 0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    70,
+    0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "strokeWidth": 2,
+  "startBinding": {
+   "elementId": "s5",
+   "fixedPoint": [
+    1,
+    0.5
+   ]
+  },
+  "endBinding": {
+   "elementId": "s6",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a6",
+  "x": 745,
+  "y": 390.0,
+  "width": 70,
+  "height": 0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    70,
+    0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "strokeWidth": 2,
+  "startBinding": {
+   "elementId": "s6",
+   "fixedPoint": [
+    1,
+    0.5
+   ]
+  },
+  "endBinding": {
+   "elementId": "s7",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "l0",
+  "x": 195,
+  "y": 490,
+  "width": 28,
+  "height": 22,
+  "backgroundColor": "#d3f9d8",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
+  }
+ },
+ {
+  "type": "text",
+  "id": "lt0",
+  "x": 233,
+  "y": 491,
+  "text": "Built from rules, repeatable",
+  "fontSize": 15,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "l1",
+  "x": 487,
+  "y": 490,
+  "width": 28,
+  "height": 22,
+  "backgroundColor": "#e5dbff",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
+  },
+  "strokeStyle": "dashed"
+ },
+ {
+  "type": "text",
+  "id": "lt1",
+  "x": 525,
+  "y": 491,
+  "text": "Optional",
+  "fontSize": 15,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "l2",
+  "x": 633,
+  "y": 490,
+  "width": 28,
+  "height": 22,
+  "backgroundColor": "#fff3bf",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
+  }
+ },
+ {
+  "type": "text",
+  "id": "lt2",
+  "x": 671,
+  "y": 491,
+  "text": "AI assistant, checked by the kit",
+  "fontSize": 15,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "l3",
+  "x": 954,
+  "y": 490,
+  "width": 28,
+  "height": 22,
+  "backgroundColor": "#ffe3e3",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
+  }
+ },
+ {
+  "type": "text",
+  "id": "lt3",
+  "x": 992,
+  "y": 491,
+  "text": "Automatic check",
+  "fontSize": 15,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ }
 ]

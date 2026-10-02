@@ -18,21 +18,81 @@
       "id": "s",
       "x": 40,
       "y": 54,
-      "text": "Checkout is read-only until promote. Purple = CMS only. Grey dashed = optional, never promoted.",
+      "text": "Checkout is read-only until promote. Yellow = written by an AI step and checked by the kit.",
       "fontSize": 16,
       "strokeColor": "#5f6368",
       "fontFamily": 5
     },
     {
+      "type": "text",
+      "id": "s2",
+      "x": 40,
+      "y": 76,
+      "text": "Purple = CMS only. Grey dashed = optional, never promoted.",
+      "fontSize": 16,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "rectangle",
+      "id": "ctx",
+      "x": 40,
+      "y": 180,
+      "width": 210,
+      "height": 90,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "a0",
+          "type": "arrow"
+        },
+        {
+          "id": "ax",
+          "type": "arrow"
+        },
+        {
+          "id": "ay",
+          "type": "arrow"
+        },
+        {
+          "id": "ctx_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "ctx_label",
+      "x": 50,
+      "y": 190,
+      "width": 190,
+      "height": 70,
+      "text": "context/profile.yaml\n+ build-scope.json",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "ctx"
+    },
+    {
       "type": "ellipse",
       "id": "src",
       "x": 40,
-      "y": 330,
+      "y": 370,
       "width": 210,
       "height": 90,
       "backgroundColor": "#d0ebff",
       "fillStyle": "solid",
       "boundElements": [
+        {
+          "id": "a0",
+          "type": "arrow"
+        },
         {
           "id": "a1",
           "type": "arrow"
@@ -59,7 +119,7 @@
       "type": "text",
       "id": "src_label",
       "x": 50,
-      "y": 340,
+      "y": 380,
       "width": 190,
       "height": 70,
       "text": "legacy checkout",
@@ -73,12 +133,16 @@
       "type": "rectangle",
       "id": "oas",
       "x": 340,
-      "y": 140,
+      "y": 180,
       "width": 220,
       "height": 76,
       "backgroundColor": "#e6fcf5",
       "fillStyle": "solid",
       "boundElements": [
+        {
+          "id": "ax",
+          "type": "arrow"
+        },
         {
           "id": "a1",
           "type": "arrow"
@@ -97,7 +161,7 @@
       "type": "text",
       "id": "oas_label",
       "x": 350,
-      "y": 150,
+      "y": 190,
       "width": 200,
       "height": 56,
       "text": "openapi.yaml",
@@ -111,7 +175,7 @@
       "type": "rectangle",
       "id": "maps",
       "x": 340,
-      "y": 337,
+      "y": 377,
       "width": 220,
       "height": 76,
       "backgroundColor": "#e6fcf5",
@@ -143,7 +207,7 @@
       "type": "text",
       "id": "maps_label",
       "x": 350,
-      "y": 347,
+      "y": 387,
       "width": 200,
       "height": 56,
       "text": "map/*.json",
@@ -157,7 +221,7 @@
       "type": "rectangle",
       "id": "inv",
       "x": 340,
-      "y": 530,
+      "y": 570,
       "width": 220,
       "height": 110,
       "backgroundColor": "#e6fcf5",
@@ -193,7 +257,7 @@
       "type": "text",
       "id": "inv_label",
       "x": 350,
-      "y": 540,
+      "y": 580,
       "width": 200,
       "height": 90,
       "text": "static.json\ncontrollers.json\ntemplates.json",
@@ -206,13 +270,17 @@
     {
       "type": "rectangle",
       "id": "rt",
-      "x": 700,
-      "y": 140,
-      "width": 230,
+      "x": 680,
+      "y": 180,
+      "width": 270,
       "height": 76,
       "backgroundColor": "#e5dbff",
       "fillStyle": "solid",
       "boundElements": [
+        {
+          "id": "ay",
+          "type": "arrow"
+        },
         {
           "id": "a6",
           "type": "arrow"
@@ -234,11 +302,11 @@
     {
       "type": "text",
       "id": "rt_label",
-      "x": 710,
-      "y": 150,
-      "width": 210,
+      "x": 690,
+      "y": 190,
+      "width": 250,
       "height": 56,
-      "text": "runtime.json",
+      "text": "runtime.json\n+ live-config-candidates",
       "fontSize": 16,
       "fontFamily": 5,
       "textAlign": "center",
@@ -249,7 +317,7 @@
       "type": "rectangle",
       "id": "base",
       "x": 1020,
-      "y": 140,
+      "y": 180,
       "width": 210,
       "height": 76,
       "backgroundColor": "#e9ecef",
@@ -268,14 +336,13 @@
         "type": 3
       },
       "strokeStyle": "dashed",
-      "strokeColor": "#868e96",
       "roughness": 2
     },
     {
       "type": "text",
       "id": "base_label",
       "x": 1030,
-      "y": 150,
+      "y": 190,
       "width": 190,
       "height": 56,
       "text": "baseline/",
@@ -283,14 +350,13 @@
       "fontFamily": 5,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "base",
-      "strokeColor": "#868e96"
+      "containerId": "base"
     },
     {
       "type": "rectangle",
       "id": "syn",
       "x": 700,
-      "y": 330,
+      "y": 370,
       "width": 230,
       "height": 90,
       "backgroundColor": "#d3f9d8",
@@ -334,7 +400,7 @@
       "type": "text",
       "id": "syn_label",
       "x": 710,
-      "y": 340,
+      "y": 380,
       "width": 210,
       "height": 70,
       "text": "merge + spec-kit",
@@ -348,7 +414,7 @@
       "type": "rectangle",
       "id": "dest",
       "x": 1020,
-      "y": 330,
+      "y": 370,
       "width": 210,
       "height": 90,
       "backgroundColor": "#d3f9d8",
@@ -376,7 +442,7 @@
       "type": "text",
       "id": "dest_label",
       "x": 1030,
-      "y": 340,
+      "y": 380,
       "width": 190,
       "height": 70,
       "text": "promoted files",
@@ -390,7 +456,7 @@
       "type": "rectangle",
       "id": "comp",
       "x": 700,
-      "y": 660,
+      "y": 700,
       "width": 230,
       "height": 76,
       "backgroundColor": "#e9ecef",
@@ -409,14 +475,13 @@
         "type": 3
       },
       "strokeStyle": "dashed",
-      "strokeColor": "#868e96",
       "roughness": 2
     },
     {
       "type": "text",
       "id": "comp_label",
       "x": 710,
-      "y": 670,
+      "y": 710,
       "width": 210,
       "height": 56,
       "text": "reports/xp8-compat.md",
@@ -424,14 +489,13 @@
       "fontFamily": 5,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "comp",
-      "strokeColor": "#868e96"
+      "containerId": "comp"
     },
     {
       "type": "rectangle",
       "id": "spec",
       "x": 700,
-      "y": 540,
+      "y": 580,
       "width": 230,
       "height": 64,
       "backgroundColor": "#e9ecef",
@@ -450,14 +514,13 @@
         "type": 3
       },
       "strokeStyle": "dashed",
-      "strokeColor": "#868e96",
       "roughness": 2
     },
     {
       "type": "text",
       "id": "spec_label",
       "x": 710,
-      "y": 550,
+      "y": 590,
       "width": 210,
       "height": 44,
       "text": "reports/spec-review.md",
@@ -465,14 +528,13 @@
       "fontFamily": 5,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "spec",
-      "strokeColor": "#868e96"
+      "containerId": "spec"
     },
     {
       "type": "rectangle",
       "id": "rules",
       "x": 1000,
-      "y": 520,
+      "y": 560,
       "width": 230,
       "height": 120,
       "backgroundColor": "#e6fcf5",
@@ -496,7 +558,7 @@
       "type": "text",
       "id": "rules_label",
       "x": 1010,
-      "y": 530,
+      "y": 570,
       "width": 210,
       "height": 100,
       "text": "rules/\nview-rules.json\nRULES.md, literals.md\nreview.md",
@@ -507,28 +569,100 @@
       "containerId": "rules"
     },
     {
+      "type": "rectangle",
+      "id": "biz",
+      "x": 1020,
+      "y": 292,
+      "width": 210,
+      "height": 48,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "a12",
+          "type": "arrow"
+        },
+        {
+          "id": "biz_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "biz_label",
+      "x": 1030,
+      "y": 302,
+      "width": 190,
+      "height": 28,
+      "text": "business/BUSINESS.md",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "biz"
+    },
+    {
       "type": "arrow",
-      "id": "a1",
-      "x": 187,
-      "y": 330,
-      "width": 153,
-      "height": -152,
+      "id": "a0",
+      "x": 145,
+      "y": 370,
+      "width": 0,
+      "height": 100,
       "points": [
         [
           0,
           0
         ],
         [
-          153,
-          -152
+          0,
+          -100
         ]
       ],
       "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "src",
         "fixedPoint": [
-          0.7,
+          0.5,
           0
+        ]
+      },
+      "endBinding": {
+        "elementId": "ctx",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ax",
+      "x": 250,
+      "y": 225,
+      "width": 90,
+      "height": 7,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          90,
+          -7
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "ctx",
+        "fixedPoint": [
+          1,
+          0.5
         ]
       },
       "endBinding": {
@@ -542,9 +676,86 @@
     },
     {
       "type": "arrow",
+      "id": "ay",
+      "x": 145,
+      "y": 180,
+      "width": 670,
+      "height": 40,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -40
+        ],
+        [
+          670,
+          -40
+        ],
+        [
+          670,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "ctx",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "endBinding": {
+        "elementId": "rt",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "a1",
+      "x": 250,
+      "y": 415,
+      "width": 200,
+      "height": 159,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          200,
+          -159
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "src",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "oas",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
       "id": "a2",
       "x": 250,
-      "y": 375,
+      "y": 415,
       "width": 90,
       "height": 0,
       "points": [
@@ -577,9 +788,9 @@
     {
       "type": "arrow",
       "id": "a3",
-      "x": 187,
-      "y": 420,
-      "width": 153,
+      "x": 145,
+      "y": 460,
+      "width": 195,
       "height": 165,
       "points": [
         [
@@ -587,7 +798,11 @@
           0
         ],
         [
-          153,
+          0,
+          165
+        ],
+        [
+          195,
           165
         ]
       ],
@@ -595,7 +810,7 @@
       "startBinding": {
         "elementId": "src",
         "fixedPoint": [
-          0.7,
+          0.5,
           1
         ]
       },
@@ -612,9 +827,9 @@
       "type": "arrow",
       "id": "a4",
       "x": 450,
-      "y": 530,
+      "y": 570,
       "width": 0,
-      "height": -117,
+      "height": 117,
       "points": [
         [
           0,
@@ -646,7 +861,7 @@
       "type": "arrow",
       "id": "a5",
       "x": 560,
-      "y": 375,
+      "y": 415,
       "width": 140,
       "height": 0,
       "points": [
@@ -680,7 +895,7 @@
       "type": "arrow",
       "id": "a6",
       "x": 815,
-      "y": 216,
+      "y": 256,
       "width": 0,
       "height": 114,
       "points": [
@@ -709,14 +924,13 @@
         ]
       },
       "strokeStyle": "dashed",
-      "strokeColor": "#7048e8",
       "roughness": 2
     },
     {
       "type": "arrow",
       "id": "a7",
       "x": 930,
-      "y": 375,
+      "y": 415,
       "width": 90,
       "height": 0,
       "points": [
@@ -749,9 +963,9 @@
     {
       "type": "arrow",
       "id": "a8",
-      "x": 930,
-      "y": 178,
-      "width": 90,
+      "x": 950,
+      "y": 218,
+      "width": 70,
       "height": 0,
       "points": [
         [
@@ -759,7 +973,7 @@
           0
         ],
         [
-          90,
+          70,
           0
         ]
       ],
@@ -779,32 +993,35 @@
         ]
       },
       "strokeStyle": "dashed",
-      "strokeColor": "#868e96",
       "roughness": 2
     },
     {
       "type": "arrow",
       "id": "a9",
-      "x": 560,
-      "y": 585,
-      "width": 140,
-      "height": 103,
+      "x": 450,
+      "y": 680,
+      "width": 250,
+      "height": 58,
       "points": [
         [
           0,
           0
         ],
         [
-          140,
-          103
+          0,
+          58
+        ],
+        [
+          250,
+          58
         ]
       ],
       "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "inv",
         "fixedPoint": [
-          1,
-          0.5
+          0.5,
+          1
         ]
       },
       "endBinding": {
@@ -815,24 +1032,31 @@
         ]
       },
       "strokeStyle": "dashed",
-      "strokeColor": "#868e96",
       "roughness": 2
     },
     {
       "type": "arrow",
       "id": "a10",
       "x": 560,
-      "y": 546,
-      "width": 197,
-      "height": -126,
+      "y": 625,
+      "width": 140,
+      "height": 183,
       "points": [
         [
           0,
           0
         ],
         [
-          197,
-          -126
+          80,
+          0
+        ],
+        [
+          80,
+          -183
+        ],
+        [
+          140,
+          -183
         ]
       ],
       "endArrowhead": "arrow",
@@ -840,14 +1064,14 @@
         "elementId": "inv",
         "fixedPoint": [
           1,
-          0.15
+          0.5
         ]
       },
       "endBinding": {
         "elementId": "syn",
         "fixedPoint": [
-          0.25,
-          1
+          0,
+          0.8
         ]
       },
       "roughness": 2
@@ -855,81 +1079,50 @@
     {
       "type": "arrow",
       "id": "a11",
-      "x": 895.5,
-      "y": 420,
-      "width": 219.5,
-      "height": 100,
+      "x": 930,
+      "y": 446.5,
+      "width": 70,
+      "height": 173.5,
       "points": [
         [
           0,
           0
         ],
         [
-          219.5,
-          100
+          35,
+          0
+        ],
+        [
+          35,
+          173.5
+        ],
+        [
+          70,
+          173.5
         ]
       ],
-      "startArrowhead": "arrow",
       "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "syn",
         "fixedPoint": [
-          0.85,
-          1
+          1,
+          0.85
         ]
       },
       "endBinding": {
         "elementId": "rules",
         "fixedPoint": [
-          0.5,
-          0
+          0,
+          0.5
         ]
       },
       "roughness": 2
     },
     {
-      "type": "rectangle",
-      "id": "biz",
-      "x": 1020,
-      "y": 252,
-      "width": 210,
-      "height": 48,
-      "backgroundColor": "#e6fcf5",
-      "fillStyle": "solid",
-      "boundElements": [
-        {
-          "id": "a12",
-          "type": "arrow"
-        },
-        {
-          "id": "biz_label",
-          "type": "text"
-        }
-      ],
-      "roundness": {
-        "type": 3
-      },
-      "roughness": 2
-    },
-    {
-      "type": "text",
-      "id": "biz_label",
-      "x": 1030,
-      "y": 262,
-      "width": 190,
-      "height": 28,
-      "text": "business/BUSINESS.md",
-      "fontSize": 16,
-      "fontFamily": 5,
-      "textAlign": "center",
-      "verticalAlign": "middle",
-      "containerId": "biz"
-    },
-    {
       "type": "arrow",
       "id": "a12",
       "x": 1125,
-      "y": 300,
+      "y": 340,
       "width": 0,
       "height": 30,
       "points": [
@@ -963,7 +1156,7 @@
       "type": "arrow",
       "id": "a13",
       "x": 815,
-      "y": 420,
+      "y": 460,
       "width": 0,
       "height": 120,
       "points": [
@@ -992,108 +1185,127 @@
         ]
       },
       "strokeStyle": "dashed",
-      "strokeColor": "#868e96",
       "roughness": 2
     },
     {
       "type": "text",
-      "id": "a4_lbl",
+      "id": "lx",
+      "x": 262,
+      "y": 196,
+      "text": "exclude",
+      "fontSize": 14,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "text",
+      "id": "ly",
+      "x": 330,
+      "y": 118,
+      "text": "live_config rules (AI step, from the candidates)",
+      "fontSize": 14,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "text",
+      "id": "l0",
+      "x": 155,
+      "y": 310,
+      "text": "context phase",
+      "fontSize": 14,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "text",
+      "id": "l4",
       "x": 462,
-      "y": 452,
+      "y": 492,
       "text": "surfaces + behavior\n+ views",
       "fontSize": 14,
-      "fontFamily": 5,
-      "strokeColor": "#495057"
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
     },
     {
       "type": "text",
-      "id": "a5_lbl",
-      "x": 591.5,
-      "y": 351,
+      "id": "l5",
+      "x": 572,
+      "y": 392,
       "text": "project-map",
       "fontSize": 14,
-      "fontFamily": 5,
-      "strokeColor": "#495057"
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
     },
     {
       "type": "text",
-      "id": "a6_lbl",
+      "id": "l6",
       "x": 827,
-      "y": 264,
+      "y": 304,
       "text": "live / dead / unobserved",
       "fontSize": 14,
-      "fontFamily": 5,
-      "strokeColor": "#495057"
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
     },
     {
       "type": "text",
-      "id": "a7_lbl",
-      "x": 950.5,
-      "y": 351,
+      "id": "l7",
+      "x": 950,
+      "y": 392,
       "text": "promote",
       "fontSize": 14,
-      "fontFamily": 5,
-      "strokeColor": "#495057"
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
     },
     {
       "type": "text",
-      "id": "a8_lbl",
-      "x": 940,
-      "y": 154,
+      "id": "l8",
+      "x": 958,
+      "y": 158,
       "text": "page paths",
       "fontSize": 14,
-      "fontFamily": 5,
-      "strokeColor": "#495057"
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
     },
     {
       "type": "text",
-      "id": "a9_lbl",
-      "x": 640,
-      "y": 614,
+      "id": "l9",
+      "x": 520,
+      "y": 714,
       "text": "XP8 report",
       "fontSize": 14,
-      "fontFamily": 5,
-      "strokeColor": "#495057"
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
     },
     {
       "type": "text",
-      "id": "a10_lbl",
+      "id": "l10",
       "x": 652,
-      "y": 502,
+      "y": 530,
       "text": "templates.json",
       "fontSize": 14,
-      "fontFamily": 5,
-      "strokeColor": "#495057"
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
     },
     {
       "type": "text",
-      "id": "a11_lbl",
-      "x": 850,
-      "y": 482,
+      "id": "l11",
+      "x": 975,
+      "y": 478,
       "text": "writes rules; spec.kit,\ncheck read them",
       "fontSize": 14,
-      "fontFamily": 5,
-      "strokeColor": "#495057"
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
     },
     {
       "type": "text",
-      "id": "a12_lbl",
-      "x": 1133,
-      "y": 306.25,
-      "text": "promote",
+      "id": "l13",
+      "x": 825,
+      "y": 505,
+      "text": "AI review",
       "fontSize": 14,
-      "fontFamily": 5,
-      "strokeColor": "#495057"
-    },
-    {
-      "type": "text",
-      "id": "a13_lbl",
-      "x": 722,
-      "y": 470,
-      "text": "agent review",
-      "fontSize": 14,
-      "fontFamily": 5,
-      "strokeColor": "#495057"
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
     }
   ],
   "appState": {

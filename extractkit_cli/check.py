@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from . import guide, schema
+from . import context, guide, schema
 from .common import load_json, load_yaml
 from .errors import ExtractkitError
 
@@ -470,6 +470,7 @@ def check_tree(out: Path) -> list[str]:
     problems.extend(_spec_fr_gaps(out))
     problems.extend(_business_gaps(out))
     problems.extend(_spec_review_gaps(out))
+    problems.extend(context.grounding_gaps(out))
 
     return problems
 
@@ -533,6 +534,7 @@ def _spec_fr_gaps(out: Path) -> list[str]:
 
 
 NAMED_CHECKS = {
+    "context_grounded": context.grounding_gaps,
     "business": _business_gaps,
     "spec_fr": _spec_fr_gaps,
     "spec_review": _spec_review_gaps,

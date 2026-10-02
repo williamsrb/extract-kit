@@ -1,536 +1,1251 @@
 [
-  {
-    "type": "cameraUpdate",
-    "width": 1400,
-    "height": 1050,
-    "x": 0,
-    "y": 0
-  },
-  {
-    "type": "text",
-    "id": "t",
-    "x": 40,
-    "y": 20,
-    "text": "Phases",
-    "fontSize": 28,
-    "strokeColor": "#1e1e1e",
-    "fontFamily": 5
-  },
-  {
-    "type": "text",
-    "id": "s",
-    "x": 40,
-    "y": 54,
-    "text": "--from / --until / step take a phase id. 1, 6, 7 and 8 are commands. Grey = optional or added slot.",
-    "fontSize": 16,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
-  },
-  {
-    "type": "rectangle",
-    "id": "p1",
-    "x": 30,
-    "y": 140,
-    "width": 145,
-    "height": 80,
-    "backgroundColor": "#fff3bf",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "1 preflight",
-      "fontSize": 15,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a1",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "p2",
-    "x": 197,
-    "y": 140,
-    "width": 145,
-    "height": 80,
-    "backgroundColor": "#d3f9d8",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "2 static",
-      "fontSize": 15,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a1",
-        "type": "arrow"
-      },
-      {
-        "id": "a2",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "p3",
-    "x": 364,
-    "y": 140,
-    "width": 145,
-    "height": 80,
-    "backgroundColor": "#e5dbff",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "3 cms",
-      "fontSize": 15,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a2",
-        "type": "arrow"
-      },
-      {
-        "id": "a3",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "p4",
-    "x": 531,
-    "y": 140,
-    "width": 145,
-    "height": 80,
-    "backgroundColor": "#d3f9d8",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "4 merge",
-      "fontSize": 15,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a3",
-        "type": "arrow"
-      },
-      {
-        "id": "a4",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "p5",
-    "x": 698,
-    "y": 140,
-    "width": 145,
-    "height": 80,
-    "backgroundColor": "#d3f9d8",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "5 synthesis",
-      "fontSize": 15,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a4",
-        "type": "arrow"
-      },
-      {
-        "id": "a5",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "p6",
-    "x": 865,
-    "y": 140,
-    "width": 145,
-    "height": 80,
-    "backgroundColor": "#fff3bf",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "6 agent",
-      "fontSize": 15,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a5",
-        "type": "arrow"
-      },
-      {
-        "id": "a6",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "p7",
-    "x": 1032,
-    "y": 140,
-    "width": 145,
-    "height": 80,
-    "backgroundColor": "#fff3bf",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "7 check",
-      "fontSize": 15,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a6",
-        "type": "arrow"
-      },
-      {
-        "id": "a7",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "p8",
-    "x": 1199,
-    "y": 140,
-    "width": 145,
-    "height": 80,
-    "backgroundColor": "#d3f9d8",
-    "fillStyle": "solid",
-    "roundness": {
-      "type": 3
-    },
-    "label": {
-      "text": "8 promote",
-      "fontSize": 15,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a7",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "arrow",
+ {
+  "type": "cameraUpdate",
+  "width": 1400,
+  "height": 1100,
+  "x": 0,
+  "y": 0
+ },
+ {
+  "type": "text",
+  "id": "t",
+  "x": 40,
+  "y": 20,
+  "text": "Phases: inputs and outputs",
+  "fontSize": 28,
+  "strokeColor": "#1e1e1e",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "s",
+  "x": 40,
+  "y": 54,
+  "text": "--from / --until / step take a phase id or number. 1, 2, 7, 8 and 9 are commands. Each phase reads the output of the phases above it.",
+  "fontSize": 16,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "h_phase",
+  "x": 44,
+  "y": 100,
+  "text": "Phase",
+  "fontSize": 18,
+  "strokeColor": "#1e1e1e",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "h_required",
+  "x": 274,
+  "y": 100,
+  "text": "Required input",
+  "fontSize": 18,
+  "strokeColor": "#1e1e1e",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "h_optional",
+  "x": 634,
+  "y": 100,
+  "text": "Optional input",
+  "fontSize": 18,
+  "strokeColor": "#1e1e1e",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "h_output",
+  "x": 994,
+  "y": 100,
+  "text": "Output",
+  "fontSize": 18,
+  "strokeColor": "#1971c2",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "p1",
+  "x": 40,
+  "y": 135,
+  "width": 200,
+  "height": 78,
+  "backgroundColor": "#fff3bf",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
     "id": "a1",
-    "x": 175,
-    "y": 180.0,
-    "width": 22,
-    "height": 0.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        22,
-        0.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "p1",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "p2",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
   },
-  {
-    "type": "arrow",
-    "id": "a2",
-    "x": 342,
-    "y": 180.0,
-    "width": 22,
-    "height": 0.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        22,
-        0.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "p2",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "p3",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a3",
-    "x": 509,
-    "y": 180.0,
-    "width": 22,
-    "height": 0.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        22,
-        0.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "p3",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "p4",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a4",
-    "x": 676,
-    "y": 180.0,
-    "width": 22,
-    "height": 0.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        22,
-        0.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "p4",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "p5",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a5",
-    "x": 843,
-    "y": 180.0,
-    "width": 22,
-    "height": 0.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        22,
-        0.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "p5",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "p6",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a6",
-    "x": 1010,
-    "y": 180.0,
-    "width": 22,
-    "height": 0.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        22,
-        0.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "p6",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "p7",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a7",
-    "x": 1177,
-    "y": 180.0,
-    "width": 22,
-    "height": 0.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        22,
-        0.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "p7",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "p8",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
-  },
-  {
-    "type": "text",
-    "id": "n1",
-    "x": 30,
-    "y": 232,
-    "text": "+ doctor --source:\nSerena, Graphify\n(must pass)\ngraft (warning)",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
-  },
-  {
-    "type": "text",
-    "id": "n2",
-    "x": 197,
-    "y": 232,
-    "text": "+ controllers\n+ templates",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
-  },
-  {
-    "type": "text",
-    "id": "n3",
-    "x": 364,
-    "y": 232,
-    "text": "+ baseline (optional)",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
-  },
-  {
-    "type": "text",
-    "id": "n4",
-    "x": 531,
-    "y": 232,
-    "text": "+ rules.view",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
-  },
-  {
-    "type": "text",
-    "id": "n5",
-    "x": 698,
-    "y": 232,
-    "text": "+ compat (optional)",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
-  },
-  {
-    "type": "text",
-    "id": "n6",
-    "x": 865,
-    "y": 232,
-    "text": "+ rules.name, business\n(optional: spec.enrich,\nspec.review)",
-    "fontSize": 15,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
+  "label": {
+   "text": "1 preflight",
+   "fontSize": 16,
+   "fontFamily": 5
   }
+ },
+ {
+  "type": "rectangle",
+  "id": "r1",
+  "x": 270,
+  "y": 135,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#ffffff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "Python 3.12, PyYAML, jsonschema\n--source: Serena onboarding\nand a Graphify index",
+   "fontSize": 14,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "o1",
+  "x": 630,
+  "y": 135,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#f8f9fa",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "graft index (warning only)\n--profile (deps to probe)",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed",
+  "strokeColor": "#868e96"
+ },
+ {
+  "type": "rectangle",
+  "id": "x1",
+  "x": 990,
+  "y": 135,
+  "width": 370,
+  "height": 78,
+  "backgroundColor": "#d0ebff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "No sidecar. Install links,\nstack and build-scope report",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeColor": "#1971c2",
+  "strokeWidth": 3
+ },
+ {
+  "type": "rectangle",
+  "id": "p2",
+  "x": 40,
+  "y": 227,
+  "width": 200,
+  "height": 78,
+  "backgroundColor": "#fff3bf",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a1",
+    "type": "arrow"
+   },
+   {
+    "id": "a2",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "2 context",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "r2",
+  "x": 270,
+  "y": 227,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#ffffff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "--source with one stack marker\n(application.xml or site.xml,\nor a root composer.json)",
+   "fontSize": 14,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "o2",
+  "x": 630,
+  "y": 227,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#f8f9fa",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "--profile (skips detection)\n--exclude\n<checkout>/.extractkit/profile.yaml",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed",
+  "strokeColor": "#868e96"
+ },
+ {
+  "type": "rectangle",
+  "id": "x2",
+  "x": 990,
+  "y": 227,
+  "width": 370,
+  "height": 78,
+  "backgroundColor": "#d0ebff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "context/build-scope.json\ncontext/profile.yaml (overlay)",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeColor": "#1971c2",
+  "strokeWidth": 3
+ },
+ {
+  "type": "rectangle",
+  "id": "p3",
+  "x": 40,
+  "y": 319,
+  "width": 200,
+  "height": 78,
+  "backgroundColor": "#d3f9d8",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a2",
+    "type": "arrow"
+   },
+   {
+    "id": "a3",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "3 static",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "r3",
+  "x": 270,
+  "y": 319,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#ffffff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "--source\nthe context overlay\n(run writes it when missing)",
+   "fontSize": 14,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "o3",
+  "x": 630,
+  "y": 319,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#f8f9fa",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "graft/, graphify-out/\n--exclude\nthe context.exclude decision",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed",
+  "strokeColor": "#868e96"
+ },
+ {
+  "type": "rectangle",
+  "id": "x3",
+  "x": 990,
+  "y": 319,
+  "width": 370,
+  "height": 78,
+  "backgroundColor": "#d0ebff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "inventory/static.json, controllers,\ntemplates; map/*.json\nintegrations/openapi.yaml",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeColor": "#1971c2",
+  "strokeWidth": 3
+ },
+ {
+  "type": "rectangle",
+  "id": "p4",
+  "x": 40,
+  "y": 411,
+  "width": 200,
+  "height": 78,
+  "backgroundColor": "#e5dbff",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a3",
+    "type": "arrow"
+   },
+   {
+    "id": "a4",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "4 cms\n(optional phase)",
+   "fontSize": 16,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed"
+ },
+ {
+  "type": "rectangle",
+  "id": "r4",
+  "x": 270,
+  "y": 411,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#ffffff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "a local or review XP\n--branch draft|master\n--storage-state (a login)",
+   "fontSize": 14,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "o4",
+  "x": 630,
+  "y": 411,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#f8f9fa",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "--guillotine, --xp-host, --project\n--cms-key (default /en), --configenv\nbaseline: playwright-cli",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed",
+  "strokeColor": "#868e96"
+ },
+ {
+  "type": "rectangle",
+  "id": "x4",
+  "x": 990,
+  "y": 411,
+  "width": 370,
+  "height": 78,
+  "backgroundColor": "#d0ebff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "inventory/runtime.json\nlive-config-candidates.json\ncontent-volume; baseline/ (opt.)",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeColor": "#1971c2",
+  "strokeWidth": 3
+ },
+ {
+  "type": "rectangle",
+  "id": "p5",
+  "x": 40,
+  "y": 503,
+  "width": 200,
+  "height": 78,
+  "backgroundColor": "#d3f9d8",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a4",
+    "type": "arrow"
+   },
+   {
+    "id": "a5",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "5 merge",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "r5",
+  "x": 270,
+  "y": 503,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#ffffff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "static output",
+   "fontSize": 14,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "o5",
+  "x": 630,
+  "y": 503,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#f8f9fa",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "runtime.json (without it, live\nsurfaces stay unverified-live)",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed",
+  "strokeColor": "#868e96"
+ },
+ {
+  "type": "rectangle",
+  "id": "x5",
+  "x": 990,
+  "y": 503,
+  "width": 370,
+  "height": 78,
+  "backgroundColor": "#d0ebff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "map/bounded-contexts.json\nrules/, merge-report.md\ndocs/harvest/",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeColor": "#1971c2",
+  "strokeWidth": 3
+ },
+ {
+  "type": "rectangle",
+  "id": "p6",
+  "x": 40,
+  "y": 595,
+  "width": 200,
+  "height": 78,
+  "backgroundColor": "#d3f9d8",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a5",
+    "type": "arrow"
+   },
+   {
+    "id": "a6",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "6 synthesis",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "r6",
+  "x": 270,
+  "y": 595,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#ffffff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "merge output",
+   "fontSize": 14,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "o6",
+  "x": 630,
+  "y": 595,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#f8f9fa",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "--tasks (Spec Kit tasks.md)",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed",
+  "strokeColor": "#868e96"
+ },
+ {
+  "type": "rectangle",
+  "id": "x6",
+  "x": 990,
+  "y": 595,
+  "width": 370,
+  "height": 78,
+  "backgroundColor": "#d0ebff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "spec-kit/, PRODUCT.md, DESIGN.md\nuse-cases/, docs/technical, guide\nxp8-compat.md (optional slot)",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeColor": "#1971c2",
+  "strokeWidth": 3
+ },
+ {
+  "type": "rectangle",
+  "id": "p7",
+  "x": 40,
+  "y": 687,
+  "width": 200,
+  "height": 78,
+  "backgroundColor": "#fff3bf",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a6",
+    "type": "arrow"
+   },
+   {
+    "id": "a7",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "7 agent",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "r7",
+  "x": 270,
+  "y": 687,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#ffffff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "an AI assistant runs the prompts\neach task's reads (agent list)",
+   "fontSize": 14,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "o7",
+  "x": 630,
+  "y": 687,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#f8f9fa",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "spec.enrich, spec.review",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed",
+  "strokeColor": "#868e96"
+ },
+ {
+  "type": "rectangle",
+  "id": "x7",
+  "x": 990,
+  "y": 687,
+  "width": 370,
+  "height": 78,
+  "backgroundColor": "#d0ebff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "overlay exclude + live_config\nrule names in rules/review.md\nbusiness/BUSINESS.md",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeColor": "#1971c2",
+  "strokeWidth": 3
+ },
+ {
+  "type": "rectangle",
+  "id": "p8",
+  "x": 40,
+  "y": 779,
+  "width": 200,
+  "height": 78,
+  "backgroundColor": "#fff3bf",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a7",
+    "type": "arrow"
+   },
+   {
+    "id": "a8",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "8 check",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "r8",
+  "x": 270,
+  "y": 779,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#ffffff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "--out with phase 3 done",
+   "fontSize": 14,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "o8",
+  "x": 630,
+  "y": 779,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#f8f9fa",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "later files are checked\nonly when present",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed",
+  "strokeColor": "#868e96"
+ },
+ {
+  "type": "rectangle",
+  "id": "x8",
+  "x": 990,
+  "y": 779,
+  "width": 370,
+  "height": 78,
+  "backgroundColor": "#d0ebff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "No file. Exit 0, or exit 1\nwith every problem listed",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeColor": "#1971c2",
+  "strokeWidth": 3
+ },
+ {
+  "type": "rectangle",
+  "id": "p9",
+  "x": 40,
+  "y": 871,
+  "width": 200,
+  "height": 78,
+  "backgroundColor": "#fff3bf",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a8",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "9 promote",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "r9",
+  "x": 270,
+  "y": 871,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#ffffff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "--source as a git work tree\ndestinations git can restore",
+   "fontSize": 14,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "o9",
+  "x": 630,
+  "y": 871,
+  "width": 330,
+  "height": 78,
+  "backgroundColor": "#f8f9fa",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "--out (default: latest)\n--force",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed",
+  "strokeColor": "#868e96"
+ },
+ {
+  "type": "rectangle",
+  "id": "x9",
+  "x": 990,
+  "y": 871,
+  "width": 370,
+  "height": 78,
+  "backgroundColor": "#d0ebff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "<checkout>: constitution, specs/,\nPRODUCT, DESIGN, BUSINESS.md",
+   "fontSize": 14,
+   "fontFamily": 5
+  },
+  "strokeColor": "#1971c2",
+  "strokeWidth": 3
+ },
+ {
+  "type": "rectangle",
+  "id": "l0",
+  "x": 40,
+  "y": 973,
+  "width": 28,
+  "height": 22,
+  "backgroundColor": "#fff3bf",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  }
+ },
+ {
+  "type": "text",
+  "id": "lt0",
+  "x": 78,
+  "y": 974,
+  "text": "command or AI step",
+  "fontSize": 15,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "l1",
+  "x": 262,
+  "y": 973,
+  "width": 28,
+  "height": 22,
+  "backgroundColor": "#d3f9d8",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  }
+ },
+ {
+  "type": "text",
+  "id": "lt1",
+  "x": 300,
+  "y": 974,
+  "text": "pipeline slots",
+  "fontSize": 15,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "l2",
+  "x": 448,
+  "y": 973,
+  "width": 28,
+  "height": 22,
+  "backgroundColor": "#e5dbff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "strokeStyle": "dashed"
+ },
+ {
+  "type": "text",
+  "id": "lt2",
+  "x": 486,
+  "y": 974,
+  "text": "needs a live test site",
+  "fontSize": 15,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "l3",
+  "x": 706,
+  "y": 973,
+  "width": 28,
+  "height": 22,
+  "backgroundColor": "#f8f9fa",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "strokeStyle": "dashed",
+  "strokeColor": "#868e96"
+ },
+ {
+  "type": "text",
+  "id": "lt3",
+  "x": 744,
+  "y": 974,
+  "text": "optional input",
+  "fontSize": 15,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "l4",
+  "x": 892,
+  "y": 973,
+  "width": 28,
+  "height": 22,
+  "backgroundColor": "#d0ebff",
+  "fillStyle": "solid",
+  "boundElements": [],
+  "roundness": {
+   "type": 3
+  },
+  "strokeColor": "#1971c2"
+ },
+ {
+  "type": "text",
+  "id": "lt4",
+  "x": 930,
+  "y": 974,
+  "text": "expected output",
+  "fontSize": 15,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "arrow",
+  "id": "a1",
+  "x": 140.0,
+  "y": 213,
+  "width": 0,
+  "height": 14,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    14
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "p1",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "p2",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a2",
+  "x": 140.0,
+  "y": 305,
+  "width": 0,
+  "height": 14,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    14
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "p2",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "p3",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a3",
+  "x": 140.0,
+  "y": 397,
+  "width": 0,
+  "height": 14,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    14
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "p3",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "p4",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a4",
+  "x": 140.0,
+  "y": 489,
+  "width": 0,
+  "height": 14,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    14
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "p4",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "p5",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a5",
+  "x": 140.0,
+  "y": 581,
+  "width": 0,
+  "height": 14,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    14
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "p5",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "p6",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a6",
+  "x": 140.0,
+  "y": 673,
+  "width": 0,
+  "height": 14,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    14
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "p6",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "p7",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a7",
+  "x": 140.0,
+  "y": 765,
+  "width": 0,
+  "height": 14,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    14
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "p7",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "p8",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a8",
+  "x": 140.0,
+  "y": 857,
+  "width": 0,
+  "height": 14,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    14
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "p8",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "p9",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  }
+ }
 ]

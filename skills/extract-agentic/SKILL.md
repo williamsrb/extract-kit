@@ -3,7 +3,8 @@ name: extract-agentic
 description: >
   Run the agent tasks of a 99x-extract-kit sidecar after synthesis: name the
   view-layer business rules, write BUSINESS.md (the general business flow),
-  optionally enrich specs. Use when `extractkit status` shows the agent
+  optionally enrich specs. Also decides the project context
+  (`context.exclude`, `context.live_config`). Use when `extractkit status` shows the agent
   phase as current, or when asked to run agent steps, write BUSINESS.md,
   name rules, or enrich a spec. Not for the deterministic pipeline (use
   extract-legacy) and not for XP8/React4XP ports.
@@ -33,12 +34,26 @@ run directory (`.extract/<run-id>` under the checkout).
    task's context: one subagent per task when your assistant has subagents,
    otherwise a new session. Pass the rendered prompt and nothing else.
 4. When the task declares `rerun`, run `extractkit <rerun>` with
-   `--profile`, `--source` and `--out` added (`agent list --json` shows it).
-   `rules.name` needs this: `rules/view-rules.json` only changes on re-run,
-   and that is what marks the task done.
+   `--source` and `--out` added, plus `--profile` when detection needs it
+   (`agent list --json` shows the tokens). `rules.name` needs this:
+   `rules/view-rules.json` only changes on re-run, and that is what marks the
+   task done. The two `context.*` tasks must also repeat the CMS flags of
+   the earlier run (`--branch`, `--storage-state`, `--guillotine` or
+   `--xp-host`, `--cms-key`), because the `Re-run:` line prints only the
+   `rerun` tokens.
 5. `extractkit check --out <sidecar>`. Fix each listed problem in the file
    you wrote, then check again. Never report done while it lists problems.
 6. Go back to step 1.
+
+The two `context.*` tasks come before the rest in `agent next` and are ready
+earlier than the agent phase: `context.exclude` after the static phase,
+`context.live_config` after the CMS slot. Do them when `next` offers them,
+not at the end. Both write into `<sidecar>/context/profile.yaml`, only
+their own key, and cite their evidence in YAML comments. `check` rejects an
+`exclude` outside `context/build-scope.json` `out_of_scope` and a
+`live_config` fact the source and the harvested config do not support. When
+unsure whether a folder is part of the product, keep it: an exclusion cannot
+be undone in the same sidecar.
 
 `spec.enrich` is optional and `agent next` never returns it. Run it only when
 the operator asks: `extractkit agent show spec.enrich --out <sidecar>`.
@@ -64,7 +79,8 @@ validates the report's format, never its findings.
 
 ## Rules
 
-- The source checkout is read-only. Write only under `<sidecar>`.
+- The source checkout is read-only. Write only under `<sidecar>`. Never
+  create or edit `<source>/.extractkit/profile.yaml`; it is the operator's.
 - Every claim beyond an extracted fact ends with `_(inferred)_` and sits
   under an `Evidence:` line.
 - As-is only. No port plans, XP8 advice, `DECISIONS.md` or `IMPLEMENTATION.md`.

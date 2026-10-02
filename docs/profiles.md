@@ -8,7 +8,6 @@ Extractor types are YAML files under `profiles/`.
 | --- | --- |
 | `core` | Pipeline and phases. Stack adapters stay unbound |
 | `enonic` | Extends `core`. Binds XP7 descriptors, integrations, CMS, docs |
-| `as` | Extends `enonic`. Adds the Authentic Scandinavia `live_config` rules |
 | `php` | Extends `core`. Placeholder. `run` refuses; `doctor` is green |
 <!-- markdownlint-enable MD013 -->
 
@@ -26,14 +25,31 @@ Extractor types are YAML files under `profiles/`.
 | `todo` | Unfinished work, printed when `run` refuses. |
 | `optional_slots` | Slots that may stay unbound or empty without blocking `run`, `status` or `resume` (`inventory.baseline`, `report.compat`). |
 | `cms` | Enonic CMS defaults (below). |
-| `live_config` | Client rules for Site Config and Config Env endpoints (below). `{}` in `enonic`. |
+| `live_config` | Rules for Site Config and Config Env endpoints (below). `enonic` sets only `configenv_path`; the rest comes from the project (overlay). |
 | `round2` | Bounded contexts to survey a second time. |
-| `exclude` | Source-relative folders or files every scan leaves out (lists extend the parent's). `--exclude` adds to it; see [CLI](cli.md#other-flags). `as` excludes `prototype` and `prototype-old`, which no default-branch build ships. |
+| `exclude` | Source-relative folders or files every scan leaves out (lists extend the parent's). `--exclude` adds to it; see [CLI](cli.md#other-flags). Not set by a stack profile: the `context.exclude` agent task writes it into the overlay. |
 | `_comment` | Free text; ignored. |
 <!-- markdownlint-enable MD013 -->
 
 `schemas/profile.schema.json` validates the composed profile. Unknown keys
 are allowed.
+
+The kit ships stack profiles only (`core`, `enonic`, `php`). What is specific
+to one project, which folders to leave out and which config keys carry
+endpoints, is not a profile in the kit. It is worked out per run into an
+overlay, with the same keys:
+
+<!-- markdownlint-disable MD013 -->
+| Layer | File | Written by |
+| --- | --- | --- |
+| Stack | `profiles/<stack>.yaml` | The kit (the stack comes from `--profile`, `MANIFEST.yaml`, or detection) |
+| Overlay | `<sidecar>/context/profile.yaml` | `extractkit context` and the agent tasks `context.exclude` and `context.live_config`; `check` grounds it |
+| Override | `<source>/.extractkit/profile.yaml` | The operator. The kit reads it and never writes it; `check` does not ground it |
+<!-- markdownlint-enable MD013 -->
+
+An overlay layer may set only `exclude` and `live_config`; `_comment`,
+`extends` and `name` are ignored and any other key is refused. See
+[CLI](cli.md#context) for composition order and the grounding rule.
 
 ## Composition
 
@@ -94,7 +110,7 @@ built-in default.
 | `guillotine` | `--guillotine` | `{host}/admin/site/preview/{project}/{branch}` |
 | `keys` | `--cms-key` | `[/en]` in `enonic.yaml` |
 | `site_key` | — | used when `keys` is empty |
-| `configenv` | `--configenv` | `{host}` + `live_config.configenv_path`; none in `enonic`, so Config Env is skipped |
+| `configenv` | `--configenv` | `{host}` + `live_config.configenv_path` (`/admin/tool/no.seeds.configenv/module-config` in `enonic`); a 404, 405 or 501 records the skip `enonic.cms.configenv` |
 | `site_url` | `--site-url` | `{host}/admin/site/preview/{project}/{branch}` (baseline only) |
 | `storage_state` | `--storage-state` | none; required |
 | `sample_per_type` | — | `3` |
@@ -110,10 +126,15 @@ explicit `page.template` > implicit `data.supports`. See
 
 ## live_config
 
-Client rules for what Site Config and Config Env imply. The generic
-adapter names no client; `profiles/as.yaml` holds today's values, and a
-run under `--profile as` produces the same `runtime.json` endpoints as
-before the split. A malformed table is refused with a fix.
+Rules for what Site Config and Config Env imply. The generic adapter names
+no client. The `enonic` profile sets `configenv_path`; the rest is written
+by the `context.live_config` agent task from the source and from
+`inventory/live-config-candidates.json` (every public key whose value is a
+URL or a host map, with `covered` saying whether the rules already use it),
+or by the operator in `<source>/.extractkit/profile.yaml`. A malformed table
+is refused with a fix. The regression oracle is
+`tests/fixtures/profiles/as.yaml`, an operator override that reproduces
+`tests/fixtures/live-config-before-o8.json` byte for byte.
 
 <!-- markdownlint-disable MD013 -->
 | Key | Meaning |

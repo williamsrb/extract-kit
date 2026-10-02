@@ -1,914 +1,1112 @@
 [
-  {
-    "type": "cameraUpdate",
-    "width": 1280,
-    "height": 960,
-    "x": 0,
-    "y": 0
+ {
+  "type": "cameraUpdate",
+  "width": 1280,
+  "height": 860,
+  "x": 0,
+  "y": 0
+ },
+ {
+  "type": "text",
+  "id": "t",
+  "x": 40,
+  "y": 20,
+  "text": "Sidecar lineage",
+  "fontSize": 28,
+  "strokeColor": "#1e1e1e",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "s",
+  "x": 40,
+  "y": 54,
+  "text": "Checkout is read-only until promote. Yellow = written by an AI step and checked by the kit.",
+  "fontSize": 16,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "s2",
+  "x": 40,
+  "y": 76,
+  "text": "Purple = CMS only. Grey dashed = optional, never promoted.",
+  "fontSize": 16,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "ctx",
+  "x": 40,
+  "y": 180,
+  "width": 210,
+  "height": 90,
+  "backgroundColor": "#fff3bf",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a0",
+    "type": "arrow"
+   },
+   {
+    "id": "ax",
+    "type": "arrow"
+   },
+   {
+    "id": "ay",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
   },
-  {
-    "type": "text",
-    "id": "t",
-    "x": 40,
-    "y": 20,
-    "text": "Sidecar lineage",
-    "fontSize": 28,
-    "strokeColor": "#1e1e1e",
-    "fontFamily": 5
-  },
-  {
-    "type": "text",
-    "id": "s",
-    "x": 40,
-    "y": 54,
-    "text": "Checkout is read-only until promote. Purple = CMS only. Grey dashed = optional, never promoted.",
-    "fontSize": 16,
-    "strokeColor": "#5f6368",
-    "fontFamily": 5
-  },
-  {
-    "type": "ellipse",
-    "id": "src",
-    "x": 40,
-    "y": 330,
-    "width": 210,
-    "height": 90,
-    "backgroundColor": "#d0ebff",
-    "fillStyle": "solid",
-    "label": {
-      "text": "legacy checkout",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a1",
-        "type": "arrow"
-      },
-      {
-        "id": "a2",
-        "type": "arrow"
-      },
-      {
-        "id": "a3",
-        "type": "arrow"
-      }
-    ]
-  },
-  {
-    "type": "rectangle",
-    "id": "oas",
-    "x": 340,
-    "y": 140,
-    "width": 220,
-    "height": 76,
-    "backgroundColor": "#e6fcf5",
-    "fillStyle": "solid",
-    "label": {
-      "text": "openapi.yaml",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a1",
-        "type": "arrow"
-      }
-    ],
-    "roundness": {
-      "type": 3
-    }
-  },
-  {
-    "type": "rectangle",
-    "id": "maps",
-    "x": 340,
-    "y": 337,
-    "width": 220,
-    "height": 76,
-    "backgroundColor": "#e6fcf5",
-    "fillStyle": "solid",
-    "label": {
-      "text": "map/*.json",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a2",
-        "type": "arrow"
-      },
-      {
-        "id": "a4",
-        "type": "arrow"
-      },
-      {
-        "id": "a5",
-        "type": "arrow"
-      }
-    ],
-    "roundness": {
-      "type": 3
-    }
-  },
-  {
-    "type": "rectangle",
-    "id": "inv",
-    "x": 340,
-    "y": 530,
-    "width": 220,
-    "height": 110,
-    "backgroundColor": "#e6fcf5",
-    "fillStyle": "solid",
-    "label": {
-      "text": "static.json\ncontrollers.json\ntemplates.json",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a3",
-        "type": "arrow"
-      },
-      {
-        "id": "a4",
-        "type": "arrow"
-      },
-      {
-        "id": "a9",
-        "type": "arrow"
-      },
-      {
-        "id": "a10",
-        "type": "arrow"
-      }
-    ],
-    "roundness": {
-      "type": 3
-    }
-  },
-  {
-    "type": "rectangle",
-    "id": "rt",
-    "x": 700,
-    "y": 140,
-    "width": 230,
-    "height": 76,
-    "backgroundColor": "#e5dbff",
-    "fillStyle": "solid",
-    "label": {
-      "text": "runtime.json",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a6",
-        "type": "arrow"
-      },
-      {
-        "id": "a8",
-        "type": "arrow"
-      }
-    ],
-    "roundness": {
-      "type": 3
-    }
-  },
-  {
-    "type": "rectangle",
-    "id": "base",
-    "x": 1020,
-    "y": 140,
-    "width": 210,
-    "height": 76,
-    "backgroundColor": "#e9ecef",
-    "fillStyle": "solid",
-    "label": {
-      "text": "baseline/",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a8",
-        "type": "arrow"
-      }
-    ],
-    "roundness": {
-      "type": 3
-    },
-    "strokeStyle": "dashed",
-    "strokeColor": "#868e96"
-  },
-  {
-    "type": "rectangle",
-    "id": "syn",
-    "x": 700,
-    "y": 330,
-    "width": 230,
-    "height": 90,
-    "backgroundColor": "#d3f9d8",
-    "fillStyle": "solid",
-    "label": {
-      "text": "merge + spec-kit",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a5",
-        "type": "arrow"
-      },
-      {
-        "id": "a6",
-        "type": "arrow"
-      },
-      {
-        "id": "a7",
-        "type": "arrow"
-      },
-      {
-        "id": "a10",
-        "type": "arrow"
-      },
-      {
-        "id": "a11",
-        "type": "arrow"
-      },
-      {
-        "id": "a13",
-        "type": "arrow"
-      }
-    ],
-    "roundness": {
-      "type": 3
-    }
-  },
-  {
-    "type": "rectangle",
-    "id": "dest",
-    "x": 1020,
-    "y": 330,
-    "width": 210,
-    "height": 90,
-    "backgroundColor": "#d3f9d8",
-    "fillStyle": "solid",
-    "label": {
-      "text": "promoted files",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a7",
-        "type": "arrow"
-      },
-      {
-        "id": "a12",
-        "type": "arrow"
-      }
-    ],
-    "roundness": {
-      "type": 3
-    }
-  },
-  {
-    "type": "rectangle",
-    "id": "comp",
-    "x": 700,
-    "y": 660,
-    "width": 230,
-    "height": 76,
-    "backgroundColor": "#e9ecef",
-    "fillStyle": "solid",
-    "label": {
-      "text": "reports/xp8-compat.md",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a9",
-        "type": "arrow"
-      }
-    ],
-    "roundness": {
-      "type": 3
-    },
-    "strokeStyle": "dashed",
-    "strokeColor": "#868e96"
-  },
-  {
-    "type": "rectangle",
-    "id": "spec",
-    "x": 700,
-    "y": 540,
-    "width": 230,
-    "height": 64,
-    "backgroundColor": "#e9ecef",
-    "fillStyle": "solid",
-    "label": {
-      "text": "reports/spec-review.md",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a13",
-        "type": "arrow"
-      }
-    ],
-    "roundness": {
-      "type": 3
-    },
-    "strokeStyle": "dashed",
-    "strokeColor": "#868e96"
-  },
-  {
-    "type": "rectangle",
-    "id": "rules",
-    "x": 1000,
-    "y": 520,
-    "width": 230,
-    "height": 120,
-    "backgroundColor": "#e6fcf5",
-    "fillStyle": "solid",
-    "label": {
-      "text": "rules/\nview-rules.json\nRULES.md, literals.md\nreview.md",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a11",
-        "type": "arrow"
-      }
-    ],
-    "roundness": {
-      "type": 3
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a1",
-    "x": 187.0,
-    "y": 330,
-    "width": 153.0,
-    "height": -152.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        153.0,
-        -152.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "src",
-      "fixedPoint": [
-        0.7,
-        0
-      ]
-    },
-    "endBinding": {
-      "elementId": "oas",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a2",
-    "x": 250,
-    "y": 375.0,
-    "width": 90,
-    "height": 0.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        90,
-        0.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "src",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "maps",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a3",
-    "x": 187.0,
-    "y": 420,
-    "width": 153.0,
-    "height": 165.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        153.0,
-        165.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "src",
-      "fixedPoint": [
-        0.7,
-        1
-      ]
-    },
-    "endBinding": {
-      "elementId": "inv",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a4",
-    "x": 450.0,
-    "y": 530,
-    "width": 0.0,
-    "height": -117,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        0.0,
-        -117
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "inv",
-      "fixedPoint": [
-        0.5,
-        0
-      ]
-    },
-    "endBinding": {
-      "elementId": "maps",
-      "fixedPoint": [
-        0.5,
-        1
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a5",
-    "x": 560,
-    "y": 375.0,
-    "width": 140,
-    "height": 0.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        140,
-        0.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "maps",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "syn",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a6",
-    "x": 815.0,
-    "y": 216,
-    "width": 0.0,
-    "height": 114,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        0.0,
-        114
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "rt",
-      "fixedPoint": [
-        0.5,
-        1
-      ]
-    },
-    "endBinding": {
-      "elementId": "syn",
-      "fixedPoint": [
-        0.5,
-        0
-      ]
-    },
-    "strokeStyle": "dashed",
-    "strokeColor": "#7048e8"
-  },
-  {
-    "type": "arrow",
-    "id": "a7",
-    "x": 930,
-    "y": 375.0,
-    "width": 90,
-    "height": 0.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        90,
-        0.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "syn",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "dest",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a8",
-    "x": 930,
-    "y": 178.0,
-    "width": 90,
-    "height": 0.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        90,
-        0.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "rt",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "base",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    },
-    "strokeStyle": "dashed",
-    "strokeColor": "#868e96"
-  },
-  {
-    "type": "arrow",
-    "id": "a9",
-    "x": 560,
-    "y": 585.0,
-    "width": 140,
-    "height": 103.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        140,
-        103.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "inv",
-      "fixedPoint": [
-        1,
-        0.5
-      ]
-    },
-    "endBinding": {
-      "elementId": "comp",
-      "fixedPoint": [
-        0,
-        0.5
-      ]
-    },
-    "strokeStyle": "dashed",
-    "strokeColor": "#868e96"
-  },
-  {
-    "type": "arrow",
-    "id": "a10",
-    "x": 560.0,
-    "y": 546.0,
-    "width": 197.0,
-    "height": -126.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        197.0,
-        -126.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "inv",
-      "fixedPoint": [
-        1,
-        0.15
-      ]
-    },
-    "endBinding": {
-      "elementId": "syn",
-      "fixedPoint": [
-        0.25,
-        1
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a11",
-    "x": 895.5,
-    "y": 420,
-    "width": 219.5,
-    "height": 100,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        219.5,
-        100
-      ]
-    ],
-    "startArrowhead": "arrow",
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "syn",
-      "fixedPoint": [
-        0.85,
-        1
-      ]
-    },
-    "endBinding": {
-      "elementId": "rules",
-      "fixedPoint": [
-        0.5,
-        0
-      ]
-    }
-  },
-  {
-    "type": "rectangle",
-    "id": "biz",
-    "x": 1020,
-    "y": 252,
-    "width": 210,
-    "height": 48,
-    "backgroundColor": "#e6fcf5",
-    "fillStyle": "solid",
-    "label": {
-      "text": "business/BUSINESS.md",
-      "fontSize": 16,
-      "fontFamily": 5
-    },
-    "boundElements": [
-      {
-        "id": "a12",
-        "type": "arrow"
-      }
-    ],
-    "roundness": {
-      "type": 3
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a12",
-    "x": 1125.0,
-    "y": 300,
-    "width": 0,
-    "height": 30.0,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        0,
-        30.0
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "biz",
-      "fixedPoint": [
-        0.5,
-        1
-      ]
-    },
-    "endBinding": {
-      "elementId": "dest",
-      "fixedPoint": [
-        0.5,
-        0
-      ]
-    }
-  },
-  {
-    "type": "arrow",
-    "id": "a13",
-    "x": 815.0,
-    "y": 420,
-    "width": 0.0,
-    "height": 120,
-    "points": [
-      [
-        0,
-        0
-      ],
-      [
-        0.0,
-        120
-      ]
-    ],
-    "endArrowhead": "arrow",
-    "startBinding": {
-      "elementId": "syn",
-      "fixedPoint": [
-        0.5,
-        1
-      ]
-    },
-    "endBinding": {
-      "elementId": "spec",
-      "fixedPoint": [
-        0.5,
-        0
-      ]
-    },
-    "strokeStyle": "dashed",
-    "strokeColor": "#868e96"
-  },
-  {
-    "type": "text",
-    "id": "a4_lbl",
-    "x": 462.0,
-    "y": 452.0,
-    "text": "surfaces + behavior\n+ views",
-    "fontSize": 14,
-    "fontFamily": 5,
-    "strokeColor": "#495057"
-  },
-  {
-    "type": "text",
-    "id": "a5_lbl",
-    "x": 591.5,
-    "y": 351.0,
-    "text": "project-map",
-    "fontSize": 14,
-    "fontFamily": 5,
-    "strokeColor": "#495057"
-  },
-  {
-    "type": "text",
-    "id": "a6_lbl",
-    "x": 827.0,
-    "y": 264.0,
-    "text": "live / dead / unobserved",
-    "fontSize": 14,
-    "fontFamily": 5,
-    "strokeColor": "#495057"
-  },
-  {
-    "type": "text",
-    "id": "a7_lbl",
-    "x": 950.5,
-    "y": 351.0,
-    "text": "promote",
-    "fontSize": 14,
-    "fontFamily": 5,
-    "strokeColor": "#495057"
-  },
-  {
-    "type": "text",
-    "id": "a8_lbl",
-    "x": 940.0,
-    "y": 154.0,
-    "text": "page paths",
-    "fontSize": 14,
-    "fontFamily": 5,
-    "strokeColor": "#495057"
-  },
-  {
-    "type": "text",
-    "id": "a9_lbl",
-    "x": 640,
-    "y": 614,
-    "text": "XP8 report",
-    "fontSize": 14,
-    "fontFamily": 5,
-    "strokeColor": "#495057"
-  },
-  {
-    "type": "text",
-    "id": "a10_lbl",
-    "x": 652,
-    "y": 502,
-    "text": "templates.json",
-    "fontSize": 14,
-    "fontFamily": 5,
-    "strokeColor": "#495057"
-  },
-  {
-    "type": "text",
-    "id": "a11_lbl",
-    "x": 850,
-    "y": 482,
-    "text": "writes rules; spec.kit,\ncheck read them",
-    "fontSize": 14,
-    "fontFamily": 5,
-    "strokeColor": "#495057"
-  },
-  {
-    "type": "text",
-    "id": "a12_lbl",
-    "x": 1133.0,
-    "y": 306.25,
-    "text": "promote",
-    "fontSize": 14,
-    "fontFamily": 5,
-    "strokeColor": "#495057"
-  },
-  {
-    "type": "text",
-    "id": "a13_lbl",
-    "x": 722,
-    "y": 470,
-    "text": "agent review",
-    "fontSize": 14,
-    "fontFamily": 5,
-    "strokeColor": "#495057"
+  "label": {
+   "text": "context/profile.yaml\n+ build-scope.json",
+   "fontSize": 16,
+   "fontFamily": 5
   }
+ },
+ {
+  "type": "ellipse",
+  "id": "src",
+  "x": 40,
+  "y": 370,
+  "width": 210,
+  "height": 90,
+  "backgroundColor": "#d0ebff",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a0",
+    "type": "arrow"
+   },
+   {
+    "id": "a1",
+    "type": "arrow"
+   },
+   {
+    "id": "a2",
+    "type": "arrow"
+   },
+   {
+    "id": "a3",
+    "type": "arrow"
+   }
+  ],
+  "label": {
+   "text": "legacy checkout",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "oas",
+  "x": 340,
+  "y": 180,
+  "width": 220,
+  "height": 76,
+  "backgroundColor": "#e6fcf5",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "ax",
+    "type": "arrow"
+   },
+   {
+    "id": "a1",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "openapi.yaml",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "maps",
+  "x": 340,
+  "y": 377,
+  "width": 220,
+  "height": 76,
+  "backgroundColor": "#e6fcf5",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a2",
+    "type": "arrow"
+   },
+   {
+    "id": "a4",
+    "type": "arrow"
+   },
+   {
+    "id": "a5",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "map/*.json",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "inv",
+  "x": 340,
+  "y": 570,
+  "width": 220,
+  "height": 110,
+  "backgroundColor": "#e6fcf5",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a3",
+    "type": "arrow"
+   },
+   {
+    "id": "a4",
+    "type": "arrow"
+   },
+   {
+    "id": "a9",
+    "type": "arrow"
+   },
+   {
+    "id": "a10",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "static.json\ncontrollers.json\ntemplates.json",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "rt",
+  "x": 680,
+  "y": 180,
+  "width": 270,
+  "height": 76,
+  "backgroundColor": "#e5dbff",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "ay",
+    "type": "arrow"
+   },
+   {
+    "id": "a6",
+    "type": "arrow"
+   },
+   {
+    "id": "a8",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "runtime.json\n+ live-config-candidates",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "base",
+  "x": 1020,
+  "y": 180,
+  "width": 210,
+  "height": 76,
+  "backgroundColor": "#e9ecef",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a8",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "baseline/",
+   "fontSize": 16,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed"
+ },
+ {
+  "type": "rectangle",
+  "id": "syn",
+  "x": 700,
+  "y": 370,
+  "width": 230,
+  "height": 90,
+  "backgroundColor": "#d3f9d8",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a5",
+    "type": "arrow"
+   },
+   {
+    "id": "a6",
+    "type": "arrow"
+   },
+   {
+    "id": "a7",
+    "type": "arrow"
+   },
+   {
+    "id": "a10",
+    "type": "arrow"
+   },
+   {
+    "id": "a11",
+    "type": "arrow"
+   },
+   {
+    "id": "a13",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "merge + spec-kit",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "dest",
+  "x": 1020,
+  "y": 370,
+  "width": 210,
+  "height": 90,
+  "backgroundColor": "#d3f9d8",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a7",
+    "type": "arrow"
+   },
+   {
+    "id": "a12",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "promoted files",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "comp",
+  "x": 700,
+  "y": 700,
+  "width": 230,
+  "height": 76,
+  "backgroundColor": "#e9ecef",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a9",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "reports/xp8-compat.md",
+   "fontSize": 16,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed"
+ },
+ {
+  "type": "rectangle",
+  "id": "spec",
+  "x": 700,
+  "y": 580,
+  "width": 230,
+  "height": 64,
+  "backgroundColor": "#e9ecef",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a13",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "reports/spec-review.md",
+   "fontSize": 16,
+   "fontFamily": 5
+  },
+  "strokeStyle": "dashed"
+ },
+ {
+  "type": "rectangle",
+  "id": "rules",
+  "x": 1000,
+  "y": 560,
+  "width": 230,
+  "height": 120,
+  "backgroundColor": "#e6fcf5",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a11",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "rules/\nview-rules.json\nRULES.md, literals.md\nreview.md",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "rectangle",
+  "id": "biz",
+  "x": 1020,
+  "y": 292,
+  "width": 210,
+  "height": 48,
+  "backgroundColor": "#fff3bf",
+  "fillStyle": "solid",
+  "boundElements": [
+   {
+    "id": "a12",
+    "type": "arrow"
+   }
+  ],
+  "roundness": {
+   "type": 3
+  },
+  "label": {
+   "text": "business/BUSINESS.md",
+   "fontSize": 16,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a0",
+  "x": 145.0,
+  "y": 370,
+  "width": 0,
+  "height": 100,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    -100
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "src",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  },
+  "endBinding": {
+   "elementId": "ctx",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "ax",
+  "x": 250,
+  "y": 225.0,
+  "width": 90,
+  "height": 7.0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    90,
+    -7.0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "ctx",
+   "fixedPoint": [
+    1,
+    0.5
+   ]
+  },
+  "endBinding": {
+   "elementId": "oas",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "ay",
+  "x": 145.0,
+  "y": 180,
+  "width": 670.0,
+  "height": 40,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    -40
+   ],
+   [
+    670.0,
+    -40
+   ],
+   [
+    670.0,
+    0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "ctx",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  },
+  "endBinding": {
+   "elementId": "rt",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  },
+  "strokeStyle": "dashed"
+ },
+ {
+  "type": "arrow",
+  "id": "a1",
+  "x": 250,
+  "y": 415.0,
+  "width": 200.0,
+  "height": 159.0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    200.0,
+    -159.0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "src",
+   "fixedPoint": [
+    1,
+    0.5
+   ]
+  },
+  "endBinding": {
+   "elementId": "oas",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a2",
+  "x": 250,
+  "y": 415.0,
+  "width": 90,
+  "height": 0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    90,
+    0.0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "src",
+   "fixedPoint": [
+    1,
+    0.5
+   ]
+  },
+  "endBinding": {
+   "elementId": "maps",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a3",
+  "x": 145.0,
+  "y": 460,
+  "width": 195.0,
+  "height": 165,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    165
+   ],
+   [
+    195.0,
+    165.0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "src",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "inv",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a4",
+  "x": 450.0,
+  "y": 570,
+  "width": 0,
+  "height": 117,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    -117
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "inv",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  },
+  "endBinding": {
+   "elementId": "maps",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a5",
+  "x": 560,
+  "y": 415.0,
+  "width": 140,
+  "height": 0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    140,
+    0.0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "maps",
+   "fixedPoint": [
+    1,
+    0.5
+   ]
+  },
+  "endBinding": {
+   "elementId": "syn",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a6",
+  "x": 815.0,
+  "y": 256,
+  "width": 0,
+  "height": 114,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    114
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "rt",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "syn",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  },
+  "strokeStyle": "dashed"
+ },
+ {
+  "type": "arrow",
+  "id": "a7",
+  "x": 930,
+  "y": 415.0,
+  "width": 90,
+  "height": 0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    90,
+    0.0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "syn",
+   "fixedPoint": [
+    1,
+    0.5
+   ]
+  },
+  "endBinding": {
+   "elementId": "dest",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a8",
+  "x": 950,
+  "y": 218.0,
+  "width": 70,
+  "height": 0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    70,
+    0.0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "rt",
+   "fixedPoint": [
+    1,
+    0.5
+   ]
+  },
+  "endBinding": {
+   "elementId": "base",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  },
+  "strokeStyle": "dashed"
+ },
+ {
+  "type": "arrow",
+  "id": "a9",
+  "x": 450.0,
+  "y": 680,
+  "width": 250.0,
+  "height": 58,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    58
+   ],
+   [
+    250.0,
+    58.0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "inv",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "comp",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  },
+  "strokeStyle": "dashed"
+ },
+ {
+  "type": "arrow",
+  "id": "a10",
+  "x": 560,
+  "y": 625.0,
+  "width": 140,
+  "height": 183.0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    80,
+    0.0
+   ],
+   [
+    80,
+    -183.0
+   ],
+   [
+    140,
+    -183.0
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "inv",
+   "fixedPoint": [
+    1,
+    0.5
+   ]
+  },
+  "endBinding": {
+   "elementId": "syn",
+   "fixedPoint": [
+    0,
+    0.8
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a11",
+  "x": 930,
+  "y": 446.5,
+  "width": 70,
+  "height": 173.5,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    35,
+    0.0
+   ],
+   [
+    35,
+    173.5
+   ],
+   [
+    70,
+    173.5
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "syn",
+   "fixedPoint": [
+    1,
+    0.85
+   ]
+  },
+  "endBinding": {
+   "elementId": "rules",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a12",
+  "x": 1125.0,
+  "y": 340,
+  "width": 0,
+  "height": 30,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    30
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "biz",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "dest",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a13",
+  "x": 815.0,
+  "y": 460,
+  "width": 0,
+  "height": 120,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    0.0,
+    120
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "syn",
+   "fixedPoint": [
+    0.5,
+    1
+   ]
+  },
+  "endBinding": {
+   "elementId": "spec",
+   "fixedPoint": [
+    0.5,
+    0
+   ]
+  },
+  "strokeStyle": "dashed"
+ },
+ {
+  "type": "text",
+  "id": "lx",
+  "x": 262,
+  "y": 196,
+  "text": "exclude",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "ly",
+  "x": 330,
+  "y": 118,
+  "text": "live_config rules (AI step, from the candidates)",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "l0",
+  "x": 155,
+  "y": 310,
+  "text": "context phase",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "l4",
+  "x": 462,
+  "y": 492,
+  "text": "surfaces + behavior\n+ views",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "l5",
+  "x": 572,
+  "y": 392,
+  "text": "project-map",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "l6",
+  "x": 827,
+  "y": 304,
+  "text": "live / dead / unobserved",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "l7",
+  "x": 950,
+  "y": 392,
+  "text": "promote",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "l8",
+  "x": 958,
+  "y": 158,
+  "text": "page paths",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "l9",
+  "x": 520,
+  "y": 714,
+  "text": "XP8 report",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "l10",
+  "x": 652,
+  "y": 530,
+  "text": "templates.json",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "l11",
+  "x": 975,
+  "y": 478,
+  "text": "writes rules; spec.kit,\ncheck read them",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "l13",
+  "x": 825,
+  "y": 505,
+  "text": "AI review",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ }
 ]

@@ -19,7 +19,15 @@ from extractkit_cli import cms_target, manifest
 from extractkit_cli.errors import ExtractkitError
 from extractkit_cli.schema import validate
 from steps.enonic.cms import context_for, resolve_cms, template_order
-from tests.support import STATIC_UNTIL, copy_fixture, run, sidecar_run_dir
+from tests.support import (
+    STATIC_UNTIL,
+    copy_fixture,
+    install_override,
+    run,
+    sidecar_run_dir,
+)
+
+CONFIGENV_PATH = "/admin/tool/no.seeds.configenv/module-config"
 
 PAGE_AS_JSON = {
     "descriptor": "com.example.mini:mini-page",
@@ -141,8 +149,12 @@ def graphql_server(
     usage: dict[str, int] | str | None = None,
     volume: bool = False,
     projects: list[dict] | None = None,
+    configenv: bool = True,
 ) -> Iterator[tuple[list, str]]:
-    """`usage`: per-descriptor totalCount, or "error" to fail every usage probe."""
+    """`usage`: per-descriptor totalCount, or "error" to fail every usage probe.
+
+    `configenv=False` answers the Config Env tool with HTTP 404.
+    """
     hits: list[dict] = []
 
     class Handler(BaseHTTPRequestHandler):
@@ -228,7 +240,7 @@ def graphql_server(
                 self.end_headers()
                 self.wfile.write(raw)
                 return
-            if "configenv" in parsed.path or parsed.path.endswith("module-config"):
+            if configenv and ("configenv" in parsed.path or parsed.path.endswith("module-config")):
                 raw = CONFIGENV_HTML.encode("utf-8")
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html")
@@ -355,11 +367,12 @@ class CmsCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             parent = Path(raw)
             source = copy_fixture(parent)
+            install_override(source)
             state = parent / "state.json"
             _storage_state(state)
             with graphql_server(PAGE_AS_JSON) as (hits, url):
                 result = run(
-                    "step", "enonic.cms", "--profile", "as",
+                    "step", "enonic.cms", "--profile", "enonic",
                     "--source", str(source),
                     "--branch", "draft",
                     "--xp-host", url,
@@ -520,19 +533,78 @@ class CmsCliTests(unittest.TestCase):
             self.assertIsNone(doc["media"]["total"])
             self.assertIn("unknown", (sidecar_run_dir(source) / "inventory/content-volume.md").read_text())
 
-    def test_generic_enonic_profile_skips_config_env_and_infers_no_client_endpoints(self) -> None:
+    def test_generic_enonic_profile_reads_config_env_at_the_default_path(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             parent = Path(raw)
             source = copy_fixture(parent)
             with graphql_server(PAGE_AS_JSON) as (_hits, url):
                 payload = self._run_cms(parent, source, url)
-            self.assertEqual(payload["endpoints"], [])
-            self.assertEqual(payload["configenv"], "")
+            self.assertEqual(payload["configenv"], f"{url}{CONFIGENV_PATH}")
+            self.assertEqual(len(payload["configEnv"]), 3)
+            self.assertEqual(
+                [e["provider"] for e in payload["endpoints"]],
+                ["env-travelSpecialistSyncEndpoint"],
+            )
+            manifest_doc = yaml.safe_load((sidecar_run_dir(source) / "MANIFEST.yaml").read_text())
+            self.assertEqual(manifest_doc["skips"], [])
+
+    def test_missing_config_env_tool_is_a_recorded_skip(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            source = copy_fixture(parent)
+            with graphql_server(PAGE_AS_JSON, configenv=False) as (_hits, url):
+                payload = self._run_cms(parent, source, url)
             self.assertEqual(payload["configEnv"], [])
             manifest_doc = yaml.safe_load((sidecar_run_dir(source) / "MANIFEST.yaml").read_text())
             skips = {row["step"]: row for row in manifest_doc["skips"]}
-            self.assertIn("enonic.cms.configenv", skips)
-            self.assertIn("live_config.configenv_path", skips["enonic.cms.configenv"]["fix"])
+            self.assertIn("HTTP 404", skips["enonic.cms.configenv"]["reason"])
+            self.assertIn("--configenv", skips["enonic.cms.configenv"]["fix"])
+
+    def test_a_profile_without_a_config_env_path_has_no_default_url(self) -> None:
+        ctx = SimpleNamespace(
+            profile={"name": "t", "cms": {"host": "http://localhost:8080", "project": "en"}},
+            cms={"branch": "draft", "cms_keys": ["/en"]},
+        )
+        self.assertEqual(resolve_cms(ctx).configenv, "")
+
+    def _candidates(self, source: Path) -> list[dict]:
+        path = sidecar_run_dir(source) / "inventory" / "live-config-candidates.json"
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    def test_live_config_candidates_list_url_and_hostmap_keys(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            source = copy_fixture(parent)
+            with graphql_server(PAGE_AS_JSON) as (_hits, url):
+                self._run_cms(parent, source, url)
+            rows = {(r["origin"], r["key"]): r for r in self._candidates(source)}
+            self.assertEqual(rows[("configEnv", "env-hostMap")]["kind"], "hostmap")
+            self.assertFalse(rows[("configEnv", "env-hostMap")]["covered"])
+            self.assertEqual(rows[("configEnv", "env-travelSpecialistSyncEndpoint")]["kind"], "url")
+            self.assertTrue(rows[("configEnv", "env-travelSpecialistSyncEndpoint")]["covered"])
+            site_url = [r for r in rows.values() if r["key"].endswith("tourplanUrl")]
+            self.assertEqual([r["kind"] for r in site_url], ["url"])
+            self.assertFalse(site_url[0]["covered"])
+            keys = " ".join(r["key"].casefold() for r in rows.values())
+            self.assertNotIn("simplesecret", keys)
+            self.assertNotIn("password", keys)
+            self.assertNotIn("netaxeptenv", keys)
+
+    def test_candidates_are_covered_once_the_rules_name_the_key(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            parent = Path(raw)
+            source = copy_fixture(parent)
+            override = source / ".extractkit"
+            override.mkdir()
+            (override / "profile.yaml").write_text(
+                "live_config:\n  hostmap_keys: [env-hostmap]\n  site_url_keys: [tourplanurl]\n",
+                encoding="utf-8",
+            )
+            with graphql_server(PAGE_AS_JSON) as (_hits, url):
+                self._run_cms(parent, source, url)
+            rows = {r["key"]: r for r in self._candidates(source)}
+            self.assertTrue(rows["env-hostMap"]["covered"])
+            self.assertTrue(next(r for k, r in rows.items() if k.endswith("tourplanUrl"))["covered"])
 
     def test_explicit_configenv_flag_still_harvests_without_a_client_profile(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -591,16 +663,17 @@ class CmsCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             parent = Path(raw)
             source = copy_fixture(parent)
+            install_override(source)
             state = parent / "state.json"
             _storage_state(state)
             static = run(
-                "run", "--profile", "as", "--source", str(source),
+                "run", "--profile", "enonic", "--source", str(source),
                 *STATIC_UNTIL,
             )
             self.assertEqual(static.returncode, 0, static.stderr + static.stdout)
             with graphql_server(PAGE_AS_JSON) as (_hits, url):
                 result = run(
-                    "step", "enonic.cms", "--profile", "as",
+                    "step", "enonic.cms", "--profile", "enonic",
                     "--source", str(source),
                     "--out", str(sidecar_run_dir(source)),
                     "--branch", "draft",

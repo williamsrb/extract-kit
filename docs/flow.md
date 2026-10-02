@@ -10,9 +10,13 @@ Install once with `./extractkit install` in the kit repo, then work from the
 legacy checkout, in an agent session opened there. `deps` and
 `doctor --source` repeat the install and suggest `run --until static`.
 `doctor --source` first checks the target's Serena onboarding and Graphify
-index. After that, `status`
-(alias `next`) is the map: every phase is done, current, or pending. The
-current phase's missing marker decides the command.
+index, and prints the stack it would detect. A run then starts with the
+`context` phase: it detects the stack, records which folders no
+default-branch build names, and writes the overlay `context/profile.yaml`
+that the later phases compose on top of the stack profile (details in
+[CLI](cli.md#context)). No client profile ships in the kit. After that,
+`status` (alias `next`) is the map: every phase is done, current, or
+pending. The current phase's missing marker decides the command.
 
 ![Operator path](diagrams/operator-path.png)
 
@@ -33,10 +37,14 @@ Optional slots (`inventory.baseline`, `report.compat`) do not change
 these states. `status` marks a phase `optional, not captured` and prints
 the `step` command that would add it.
 
-In `complete` and `offline`, a pending required agent task (`rules.name`,
-`business`) makes the agent phase current. The `next` block then offers
-`agent next`, with `check` as the alternative line; `offline` shows its CMS
-alternative again once the required tasks are done.
+In `complete` and `offline`, a pending required agent task (`context.exclude`,
+`context.live_config`, `rules.name`, `business`) makes the agent phase
+current. The `next` block then offers `agent next`, with `check` as the
+alternative line; `offline` shows its CMS alternative again once the required
+tasks are done. Two of those tasks are ready earlier. Once the static phase is
+done and `context.exclude` is undecided, the `next` block in `cms` and
+`other:<slot>` offers `agent show context.exclude` first, with the pipeline
+route as the alternative; `context.live_config` is ready after the CMS slot.
 
 `promote` is explicit. After a clean promote, `next` is `git status` in the
 checkout. The guard is in [CLI](cli.md#promote-guard).
@@ -44,7 +52,7 @@ checkout. The guard is in [CLI](cli.md#promote-guard).
 ## Phases
 
 `profiles/core.yaml` groups the pipeline. `--from`, `--until`, and `step`
-accept a phase id or number, or a slot or plugin id. Phases 1, 6, 7, and 8
+accept a phase id or number, or a slot or plugin id. Phases 1, 2, 7, 8, and 9
 are commands: passing them to `--from` / `--until` / `step` is refused.
 
 ![Phases](diagrams/phases.png)
@@ -53,6 +61,49 @@ Slot contents and done-markers are in [steps](steps.md). Command flags
 are in [CLI](cli.md#phases). The agent phase runs prompts stored as data in
 `agent-tasks/`; the kit lists them and checks what they write, and a skill
 (`extract-agentic`) does the work.
+
+## Inputs and outputs
+
+Every phase, what it cannot run without, what it uses when present, and
+what it leaves behind. Paths in **Output** are relative to the sidecar
+unless they say `<checkout>`. An optional input that is absent never fails
+the phase; it only makes the output thinner.
+
+<!-- markdownlint-disable MD013 -->
+| # | Phase | Required input | Optional input | Output |
+| --- | --- | --- | --- | --- |
+| 1 | `preflight` | Python 3.12+ with PyYAML and jsonschema; with `--source`: the checkout's Serena onboarding (`.serena/`) and Graphify index (`graphify-out/`) | graft index (`graft/`, a warning when absent); `--profile` (which deps to probe) | **No sidecar.** Install links, and a report with the stack it would detect and the build scope |
+| 2 | `context` | `--source`; one stack marker unless `--profile` is given | `--profile` (skips detection); `--exclude`; `<checkout>/.extractkit/profile.yaml` | **`context/build-scope.json`**, **`context/profile.yaml`** (the overlay) |
+| 3 | `static` | `--source`; the overlay from phase 2 (`run` writes it when missing) | `graft/`, `graphify-out/` (`map.code`, `map.semantic`); `--exclude`; the `exclude` decided by `context.exclude` | **`inventory/static.json`**, `inventory/controllers.json`, `inventory/templates.json`, **`map/*.json`**, **`integrations/openapi.yaml`**, `integrations/swagger-ui/`, `MANIFEST.yaml` |
+| 4 | `cms` (optional phase) | A local or review XP; `--branch draft\|master`; `--storage-state` (a Playwright login) | `--guillotine`, `--xp-host`, `--project` (default `http://localhost:8080`, project `en`); `--cms-key` (default `/en`); `--configenv`; `--round2`; the overlay's `live_config`; `playwright-cli` and `--site-url` for `inventory.baseline` | **`inventory/runtime.json`**, `inventory/live-config-candidates.json`, `inventory/content-volume.{json,md}`, `x-production-endpoints` in `openapi.yaml`; `baseline/` (optional slot) |
+| 5 | `merge` | Phase 3 output | `inventory/runtime.json` (without it, surfaces stay `unverified-live`) | **`map/bounded-contexts.json`**, `inventory/merge-report.md`, **`rules/`**, `docs/harvest/` |
+| 6 | `synthesis` | Phase 5 output | `--tasks` (Spec Kit `tasks.md`) | **`spec-kit/`**, `product/PRODUCT.md`, `design/DESIGN.md`, `use-cases/`, `docs/technical/`, `docs/guide/`; `reports/xp8-compat.md` (optional slot) |
+| 7 | `agent` | An AI assistant that runs the task prompts; each task's inputs (below) | `spec.enrich`, `spec.review` | The overlay's **`exclude`** and **`live_config`**, **`rules/review.md`** names, **`business/BUSINESS.md`**; `reports/spec-review.md` (optional) |
+| 8 | `check` | `--out` of a sidecar with phase 3 done (`MANIFEST.yaml`, the four `map/*-map.json` / `content-model.json` files, `inventory/static.json`, `integrations/openapi.yaml`) | Every later file is checked only when it exists | **No file.** Exit 0, or exit 1 with every problem listed |
+| 9 | `promote` | `--source` as a git work tree whose destinations git can restore | `--out` (default: latest sidecar); `--force` | **`<checkout>/.specify/memory/constitution.md`**, **`<checkout>/specs/<ctx>/spec.md`**, `PRODUCT.md`, `DESIGN.md`, `.impeccable/design.json`, `BUSINESS.md` |
+<!-- markdownlint-enable MD013 -->
+
+The agent tasks, in the order `agent next` offers them. A task is offered
+only when every file in **Reads** exists; its **Re-run** carries the result
+into the later phases (add `--source`, `--out` and the CMS flags of the
+earlier run).
+
+<!-- markdownlint-disable MD013 -->
+| Task | Required | Ready after | Reads | Output | Re-run |
+| --- | --- | --- | --- | --- | --- |
+| `context.exclude` | Yes, while the build scope leaves folders undecided | `inventory.integrations` (phase 3) | `context/build-scope.json` | **`exclude`** in `context/profile.yaml` | `run --from static --until synthesis` (`--until inventory.integrations` without CMS flags) |
+| `context.live_config` | Yes, after a live harvest; done without one | `inventory.runtime` (phase 4) | `inventory/runtime.json`, `inventory/live-config-candidates.json`, `integrations/openapi.yaml` (the prompt also reads `site/site.xml` in the checkout; it does not gate the task) | **`live_config`** in `context/profile.yaml` | `step inventory.runtime` |
+| `rules.name` | Yes | `rules.view` (phase 5) | `rules/RULES.md`, `rules/review.md`, `rules/view-rules.json` | **names and intents** in `rules/review.md` | `run --from merge --until synthesis` |
+| `business` | Yes | `spec.kit` (phase 6) | `map/bounded-contexts.json`, `use-cases/`, `rules/RULES.md`, `rules/view-rules.json`, `map/content-model.json`, `map/route-map.json`, `product/PRODUCT.md` | **`business/BUSINESS.md`** | none |
+| `spec.enrich` | No | `spec.kit` | `spec-kit/specs/`, `use-cases/` | prose of `spec-kit/specs/` and `use-cases/` | none |
+| `spec.review` | No | `spec.kit` | `spec-kit/specs/`, `rules/view-rules.json`, `map/bounded-contexts.json`; `business/BUSINESS.md` when present | **`reports/spec-review.md`** (never promoted) | none |
+<!-- markdownlint-enable MD013 -->
+
+The expected end state of a full run: `check` exits 0, `agent next`
+reports no required task pending, and `promote` has copied the Spec Kit
+files, `PRODUCT.md`, `DESIGN.md` and `BUSINESS.md` into the checkout. A
+run without CMS reaches the same end state with every live surface
+`unverified-live`.
 
 ## Sidecar lineage
 
