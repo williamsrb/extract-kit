@@ -1,0 +1,1137 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "excalidraw-cli",
+  "elements": [
+    {
+      "type": "text",
+      "id": "t",
+      "x": 40,
+      "y": 20,
+      "text": "Headless pipeline",
+      "fontSize": 28,
+      "strokeColor": "#1e1e1e",
+      "fontFamily": 5
+    },
+    {
+      "type": "text",
+      "id": "s",
+      "x": 40,
+      "y": 54,
+      "text": "No human. Yellow = agent CLI process, checked by the kit. Purple = needs an XP and a storage state; skipped otherwise.",
+      "fontSize": 16,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "rectangle",
+      "id": "install",
+      "x": 40,
+      "y": 120,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar1",
+          "type": "arrow"
+        },
+        {
+          "id": "install_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "install_label",
+      "x": 50,
+      "y": 130,
+      "width": 260,
+      "height": 64,
+      "text": "install\ncheck or copy the kit",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "install"
+    },
+    {
+      "type": "rectangle",
+      "id": "pre",
+      "x": 390,
+      "y": 120,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar1",
+          "type": "arrow"
+        },
+        {
+          "id": "ar2",
+          "type": "arrow"
+        },
+        {
+          "id": "pre_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "pre_label",
+      "x": 400,
+      "y": 130,
+      "width": 260,
+      "height": 64,
+      "text": "preflight\ngraft, Serena, Graphify",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "pre"
+    },
+    {
+      "type": "rectangle",
+      "id": "doc",
+      "x": 740,
+      "y": 120,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar2",
+          "type": "arrow"
+        },
+        {
+          "id": "ar3",
+          "type": "arrow"
+        },
+        {
+          "id": "doc_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "doc_label",
+      "x": 750,
+      "y": 130,
+      "width": 260,
+      "height": 64,
+      "text": "doctor\nreadiness + resources",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "doc"
+    },
+    {
+      "type": "rectangle",
+      "id": "sta",
+      "x": 1090,
+      "y": 120,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar3",
+          "type": "arrow"
+        },
+        {
+          "id": "ar9",
+          "type": "arrow"
+        },
+        {
+          "id": "sta_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "sta_label",
+      "x": 1100,
+      "y": 130,
+      "width": 260,
+      "height": 64,
+      "text": "static\nrun --until static",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sta"
+    },
+    {
+      "type": "rectangle",
+      "id": "ctx",
+      "x": 40,
+      "y": 300,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar4",
+          "type": "arrow"
+        },
+        {
+          "id": "ar9",
+          "type": "arrow"
+        },
+        {
+          "id": "ctx_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "ctx_label",
+      "x": 50,
+      "y": 310,
+      "width": 260,
+      "height": 64,
+      "text": "agent:context\ncontext.exclude",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "ctx"
+    },
+    {
+      "type": "rectangle",
+      "id": "cms",
+      "x": 390,
+      "y": 300,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#e5dbff",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar4",
+          "type": "arrow"
+        },
+        {
+          "id": "ar5",
+          "type": "arrow"
+        },
+        {
+          "id": "cms_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "cms_label",
+      "x": 400,
+      "y": 310,
+      "width": 260,
+      "height": 64,
+      "text": "cms (optional)\nneeds a storage state",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "cms"
+    },
+    {
+      "type": "rectangle",
+      "id": "lc",
+      "x": 740,
+      "y": 300,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar5",
+          "type": "arrow"
+        },
+        {
+          "id": "ar6",
+          "type": "arrow"
+        },
+        {
+          "id": "lc_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "lc_label",
+      "x": 750,
+      "y": 310,
+      "width": 260,
+      "height": 64,
+      "text": "agent:live_config\ncontext.live_config",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "lc"
+    },
+    {
+      "type": "rectangle",
+      "id": "syn",
+      "x": 1090,
+      "y": 300,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar6",
+          "type": "arrow"
+        },
+        {
+          "id": "ar10",
+          "type": "arrow"
+        },
+        {
+          "id": "syn_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "syn_label",
+      "x": 1100,
+      "y": 310,
+      "width": 260,
+      "height": 64,
+      "text": "synthesis\nmerge + synthesis",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "syn"
+    },
+    {
+      "type": "rectangle",
+      "id": "agt",
+      "x": 40,
+      "y": 480,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar7",
+          "type": "arrow"
+        },
+        {
+          "id": "ar10",
+          "type": "arrow"
+        },
+        {
+          "id": "ar12",
+          "type": "arrow"
+        },
+        {
+          "id": "agt_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "agt_label",
+      "x": 50,
+      "y": 490,
+      "width": 260,
+      "height": 64,
+      "text": "agent\nrules.name, business",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "agt"
+    },
+    {
+      "type": "rectangle",
+      "id": "chk",
+      "x": 390,
+      "y": 480,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar7",
+          "type": "arrow"
+        },
+        {
+          "id": "ar8",
+          "type": "arrow"
+        },
+        {
+          "id": "chk_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "chk_label",
+      "x": 400,
+      "y": 490,
+      "width": 260,
+      "height": 64,
+      "text": "check\nrequirements cite evidence",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "chk"
+    },
+    {
+      "type": "rectangle",
+      "id": "pro",
+      "x": 740,
+      "y": 480,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar8",
+          "type": "arrow"
+        },
+        {
+          "id": "ar11",
+          "type": "arrow"
+        },
+        {
+          "id": "pro_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "pro_label",
+      "x": 750,
+      "y": 490,
+      "width": 260,
+      "height": 64,
+      "text": "promote (optional)\nonly with --promote",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "pro"
+    },
+    {
+      "type": "arrow",
+      "id": "ar1",
+      "x": 320,
+      "y": 162,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "install",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "pre",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ar2",
+      "x": 670,
+      "y": 162,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "pre",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "doc",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ar3",
+      "x": 1020,
+      "y": 162,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "doc",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "sta",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ar4",
+      "x": 320,
+      "y": 342,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "ctx",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "cms",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ar5",
+      "x": 670,
+      "y": 342,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "cms",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "lc",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ar6",
+      "x": 1020,
+      "y": 342,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "lc",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "syn",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ar7",
+      "x": 320,
+      "y": 522,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "agt",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "chk",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ar8",
+      "x": 670,
+      "y": 522,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "chk",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "pro",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ar9",
+      "x": 1230,
+      "y": 204,
+      "width": 1050,
+      "height": 96,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          48
+        ],
+        [
+          -1050,
+          48
+        ],
+        [
+          -1050,
+          96
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "sta",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "endBinding": {
+        "elementId": "ctx",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ar10",
+      "x": 1230,
+      "y": 384,
+      "width": 1050,
+      "height": 96,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          48
+        ],
+        [
+          -1050,
+          48
+        ],
+        [
+          -1050,
+          96
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "syn",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "endBinding": {
+        "elementId": "agt",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "ellipse",
+      "id": "ok",
+      "x": 1090,
+      "y": 480,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#d0ebff",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar11",
+          "type": "arrow"
+        },
+        {
+          "id": "ok_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "ok_label",
+      "x": 1100,
+      "y": 490,
+      "width": 260,
+      "height": 64,
+      "text": "exit 0\nevery stage passed",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "ok"
+    },
+    {
+      "type": "arrow",
+      "id": "ar11",
+      "x": 1020,
+      "y": 522,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "pro",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "ok",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "rectangle",
+      "id": "loop",
+      "x": 40,
+      "y": 680,
+      "width": 630,
+      "height": 150,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar12",
+          "type": "arrow"
+        },
+        {
+          "id": "ar13",
+          "type": "arrow"
+        },
+        {
+          "id": "loop_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "loop_label",
+      "x": 50,
+      "y": 690,
+      "width": 610,
+      "height": 130,
+      "text": "agent loop (every yellow stage)\nagent next --json, one fresh agent process per task\nthen the task rerun, then check\nfix attempts up to --max-fix-attempts, default 2",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "loop"
+    },
+    {
+      "type": "arrow",
+      "id": "ar12",
+      "x": 180,
+      "y": 564,
+      "width": 175,
+      "height": 116,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          76
+        ],
+        [
+          175,
+          76
+        ],
+        [
+          175,
+          116
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "agt",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "endBinding": {
+        "elementId": "loop",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "rectangle",
+      "id": "blk",
+      "x": 740,
+      "y": 680,
+      "width": 280,
+      "height": 150,
+      "backgroundColor": "#ffe8cc",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar13",
+          "type": "arrow"
+        },
+        {
+          "id": "blk_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "blk_label",
+      "x": 750,
+      "y": 690,
+      "width": 260,
+      "height": 130,
+      "text": "exit 3, blocked\nreports/blockers/<task>.md\na person must look",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "blk"
+    },
+    {
+      "type": "rectangle",
+      "id": "bad",
+      "x": 1090,
+      "y": 680,
+      "width": 280,
+      "height": 150,
+      "backgroundColor": "#ffe3e3",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "bad_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "bad_label",
+      "x": 1100,
+      "y": 690,
+      "width": 260,
+      "height": 130,
+      "text": "exit 1, any stage failed\nerror.code and fix\nin the JSON result",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "bad"
+    },
+    {
+      "type": "arrow",
+      "id": "ar13",
+      "x": 670,
+      "y": 755,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "loop",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "blk",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "strokeColor": "#c92a2a",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "l1",
+      "x": 679,
+      "y": 722,
+      "text": "blocker",
+      "fontSize": 14,
+      "strokeColor": "#c92a2a",
+      "fontFamily": 5
+    },
+    {
+      "type": "text",
+      "id": "l3",
+      "x": 40,
+      "y": 850,
+      "text": "Re-running on the same source resumes the latest sidecar. Finished stages report \"already done\" and start no agent.",
+      "fontSize": 14,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  },
+  "files": {}
+}

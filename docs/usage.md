@@ -57,6 +57,8 @@ not create. Run from the installed copy, `install` copies nothing and only
 checks. Preflight (`deps` and `doctor --source`) does the same, so the first
 command of a run installs the kit even when nobody ran `install`.
 
+![Install and where to run](diagrams/install-layout.png)
+
 ## Where to run
 
 Install the kit once, then run every command from the checkout you are
@@ -81,6 +83,8 @@ from its install path, and `--source` takes any legacy checkout.
 CI job: it calls an agent CLI for the Serena and Graphify preflight and for
 each agent task. Every command also takes `--json` and reads `EXTRACTKIT_*`
 variables. See [Headless](headless.md), and `docker/Dockerfile` for an image.
+
+![Headless pipeline](diagrams/headless-pipeline.png)
 
 ## Commands
 

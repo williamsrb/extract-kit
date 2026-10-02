@@ -5,11 +5,11 @@
   "elements": [
     {
       "type": "rectangle",
-      "id": "op_bg",
+      "id": "in_bg",
       "x": 80,
       "y": 80,
       "width": 1450,
-      "height": 1028,
+      "height": 798,
       "backgroundColor": "#f8f9fa",
       "strokeColor": "#dee2e6",
       "fillStyle": "solid",
@@ -21,27 +21,27 @@
     },
     {
       "type": "text",
-      "id": "op_title",
+      "id": "in_title",
       "x": 114,
       "y": 106,
-      "text": "Operator path",
+      "text": "Install and where to run",
       "fontSize": 30,
       "strokeColor": "#1e1e1e",
       "fontFamily": 5
     },
     {
       "type": "text",
-      "id": "op_sub",
+      "id": "in_sub",
       "x": 116,
       "y": 150,
-      "text": "doctor / deps through promote. CMS is optional; yellow steps are AI steps the kit checks.",
+      "text": "Install copies the kit out of the checkout. Extract commands run only from the legacy checkout.",
       "fontSize": 17,
       "strokeColor": "#5f6368",
       "fontFamily": 5
     },
     {
       "type": "arrow",
-      "id": "op_div",
+      "id": "in_div",
       "x": 114,
       "y": 192,
       "width": 1382,
@@ -63,9 +63,725 @@
     },
     {
       "type": "ellipse",
+      "id": "in_kit",
+      "x": 140,
+      "y": 278,
+      "width": 250,
+      "height": 90,
+      "backgroundColor": "#d0ebff",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "in_ar1",
+          "type": "arrow"
+        },
+        {
+          "id": "in_ar2",
+          "type": "arrow"
+        },
+        {
+          "id": "in_ar3",
+          "type": "arrow"
+        },
+        {
+          "id": "in_ar5",
+          "type": "arrow"
+        },
+        {
+          "id": "in_kit_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "in_kit_label",
+      "x": 150,
+      "y": 288,
+      "width": 230,
+      "height": 70,
+      "text": "kit checkout\n./extractkit install",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "in_kit"
+    },
+    {
+      "type": "rectangle",
+      "id": "in_c1",
+      "x": 540,
+      "y": 238,
+      "width": 400,
+      "height": 76,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "in_ar1",
+          "type": "arrow"
+        },
+        {
+          "id": "in_c1_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "in_c1_label",
+      "x": 550,
+      "y": 248,
+      "width": 380,
+      "height": 56,
+      "text": "~/.local/share/extractkit\nruntime, docs, skills, marker",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "in_c1"
+    },
+    {
+      "type": "rectangle",
+      "id": "in_c2",
+      "x": 540,
+      "y": 348,
+      "width": 400,
+      "height": 76,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "in_ar2",
+          "type": "arrow"
+        },
+        {
+          "id": "in_c2_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "in_c2_label",
+      "x": 550,
+      "y": 358,
+      "width": 380,
+      "height": 56,
+      "text": "~/.local/bin/extractkit\nlauncher that runs the copy",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "in_c2"
+    },
+    {
+      "type": "rectangle",
+      "id": "in_c3",
+      "x": 540,
+      "y": 458,
+      "width": 400,
+      "height": 76,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "in_ar3",
+          "type": "arrow"
+        },
+        {
+          "id": "in_ar4",
+          "type": "arrow"
+        },
+        {
+          "id": "in_c3_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "in_c3_label",
+      "x": 550,
+      "y": 468,
+      "width": 380,
+      "height": 56,
+      "text": "~/.agents/skills/extract-*\ncopied folders, with a marker",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "in_c3"
+    },
+    {
+      "type": "rectangle",
+      "id": "in_c4",
+      "x": 540,
+      "y": 568,
+      "width": 400,
+      "height": 76,
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "in_ar4",
+          "type": "arrow"
+        },
+        {
+          "id": "in_c4_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "in_c4_label",
+      "x": 550,
+      "y": 578,
+      "width": 380,
+      "height": 56,
+      "text": "~/.claude/skills/extract-*\nlink to the copy above",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "in_c4"
+    },
+    {
+      "type": "arrow",
+      "id": "in_ar1",
+      "x": 390,
+      "y": 323,
+      "width": 150,
+      "height": 47,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          50,
+          0
+        ],
+        [
+          50,
+          -47
+        ],
+        [
+          150,
+          -47
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "in_kit",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "in_c1",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "in_ar2",
+      "x": 390,
+      "y": 323,
+      "width": 150,
+      "height": 63,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          50,
+          0
+        ],
+        [
+          50,
+          63
+        ],
+        [
+          150,
+          63
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "in_kit",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "in_c2",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "in_ar3",
+      "x": 390,
+      "y": 323,
+      "width": 150,
+      "height": 173,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          50,
+          0
+        ],
+        [
+          50,
+          173
+        ],
+        [
+          150,
+          173
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "in_kit",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "in_c3",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "in_ar4",
+      "x": 740,
+      "y": 534,
+      "width": 0,
+      "height": 34,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          34
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "in_c3",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "endBinding": {
+        "elementId": "in_c4",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "in_l1",
+      "x": 445,
+      "y": 228,
+      "text": "copies",
+      "fontSize": 14,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "rectangle",
+      "id": "in_gone",
+      "x": 140,
+      "y": 458,
+      "width": 250,
+      "height": 90,
+      "backgroundColor": "#ffe3e3",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "in_ar5",
+          "type": "arrow"
+        },
+        {
+          "id": "in_gone_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "in_gone_label",
+      "x": 150,
+      "y": 468,
+      "width": 230,
+      "height": 70,
+      "text": "delete the checkout\nCLI and skills still work",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "in_gone"
+    },
+    {
+      "type": "arrow",
+      "id": "in_ar5",
+      "x": 265,
+      "y": 368,
+      "width": 0,
+      "height": 90,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          90
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "in_kit",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "endBinding": {
+        "elementId": "in_gone",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "strokeColor": "#c92a2a",
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "in_l2",
+      "x": 275,
+      "y": 400,
+      "text": "later",
+      "fontSize": 14,
+      "strokeColor": "#c92a2a",
+      "fontFamily": 5
+    },
+    {
+      "type": "ellipse",
+      "id": "in_leg",
+      "x": 140,
+      "y": 728,
+      "width": 250,
+      "height": 90,
+      "backgroundColor": "#d0ebff",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "in_ar6",
+          "type": "arrow"
+        },
+        {
+          "id": "in_leg_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "in_leg_label",
+      "x": 150,
+      "y": 738,
+      "width": 230,
+      "height": 70,
+      "text": "legacy checkout\ncd here, open the agent",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "in_leg"
+    },
+    {
+      "type": "rectangle",
+      "id": "in_run",
+      "x": 500,
+      "y": 728,
+      "width": 330,
+      "height": 90,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "in_ar6",
+          "type": "arrow"
+        },
+        {
+          "id": "in_ar7",
+          "type": "arrow"
+        },
+        {
+          "id": "in_run_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "in_run_label",
+      "x": 510,
+      "y": 738,
+      "width": 310,
+      "height": 70,
+      "text": "extractkit run / headless\nwrites <source>/.extract/",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "in_run"
+    },
+    {
+      "type": "rectangle",
+      "id": "in_guard",
+      "x": 980,
+      "y": 728,
+      "width": 440,
+      "height": 90,
+      "backgroundColor": "#ffe3e3",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "in_ar7",
+          "type": "arrow"
+        },
+        {
+          "id": "in_guard_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "in_guard_label",
+      "x": 990,
+      "y": 738,
+      "width": 420,
+      "height": 70,
+      "text": "kit_workspace, exit 1\ncwd, --source or --out in the kit",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "in_guard"
+    },
+    {
+      "type": "arrow",
+      "id": "in_ar6",
+      "x": 390,
+      "y": 773,
+      "width": 110,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          110,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "in_leg",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "in_run",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "in_ar7",
+      "x": 830,
+      "y": 773,
+      "width": 150,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          150,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "in_run",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "in_guard",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "strokeColor": "#c92a2a",
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "in_l3",
+      "x": 845,
+      "y": 696,
+      "text": "run from the kit repo?",
+      "fontSize": 14,
+      "strokeColor": "#c92a2a",
+      "fontFamily": 5
+    },
+    {
+      "type": "rectangle",
+      "id": "op_bg",
+      "x": 80,
+      "y": 998,
+      "width": 1450,
+      "height": 1028,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#dee2e6",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "type": "text",
+      "id": "op_title",
+      "x": 114,
+      "y": 1024,
+      "text": "Operator path",
+      "fontSize": 30,
+      "strokeColor": "#1e1e1e",
+      "fontFamily": 5
+    },
+    {
+      "type": "text",
+      "id": "op_sub",
+      "x": 116,
+      "y": 1068,
+      "text": "install, then doctor / deps through promote. CMS is optional; yellow steps are AI steps the kit checks.",
+      "fontSize": 17,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "arrow",
+      "id": "op_div",
+      "x": 114,
+      "y": 1110,
+      "width": 1382,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          1382,
+          0
+        ]
+      ],
+      "endArrowhead": null,
+      "strokeColor": "#ced4da",
+      "strokeWidth": 2,
+      "roughness": 1
+    },
+    {
+      "type": "ellipse",
       "id": "op_pre",
       "x": 140,
-      "y": 238,
+      "y": 1156,
       "width": 200,
       "height": 76,
       "backgroundColor": "#d0ebff",
@@ -89,10 +805,10 @@
       "type": "text",
       "id": "op_pre_label",
       "x": 150,
-      "y": 248,
+      "y": 1166,
       "width": 180,
       "height": 56,
-      "text": "doctor / deps",
+      "text": "install once,\nthen doctor / deps",
       "fontSize": 16,
       "fontFamily": 5,
       "textAlign": "center",
@@ -103,7 +819,7 @@
       "type": "rectangle",
       "id": "op_run",
       "x": 400,
-      "y": 238,
+      "y": 1156,
       "width": 250,
       "height": 76,
       "backgroundColor": "#d3f9d8",
@@ -131,7 +847,7 @@
       "type": "text",
       "id": "op_run_label",
       "x": 410,
-      "y": 248,
+      "y": 1166,
       "width": 230,
       "height": 56,
       "text": "run --until static\n(context + static)",
@@ -145,7 +861,7 @@
       "type": "rectangle",
       "id": "op_st",
       "x": 710,
-      "y": 238,
+      "y": 1156,
       "width": 160,
       "height": 76,
       "backgroundColor": "#ffffff",
@@ -177,7 +893,7 @@
       "type": "text",
       "id": "op_st_label",
       "x": 720,
-      "y": 248,
+      "y": 1166,
       "width": 140,
       "height": 56,
       "text": "status",
@@ -191,7 +907,7 @@
       "type": "rectangle",
       "id": "op_cx",
       "x": 980,
-      "y": 238,
+      "y": 1156,
       "width": 260,
       "height": 76,
       "backgroundColor": "#fff3bf",
@@ -219,7 +935,7 @@
       "type": "text",
       "id": "op_cx_label",
       "x": 990,
-      "y": 248,
+      "y": 1166,
       "width": 240,
       "height": 56,
       "text": "agent show\ncontext.exclude",
@@ -233,7 +949,7 @@
       "type": "diamond",
       "id": "op_q",
       "x": 690,
-      "y": 378,
+      "y": 1296,
       "width": 200,
       "height": 120,
       "backgroundColor": "#ffffff",
@@ -269,7 +985,7 @@
       "type": "text",
       "id": "op_q_label",
       "x": 700,
-      "y": 388,
+      "y": 1306,
       "width": 180,
       "height": 100,
       "text": "CMS next?",
@@ -283,7 +999,7 @@
       "type": "rectangle",
       "id": "op_cms",
       "x": 300,
-      "y": 548,
+      "y": 1466,
       "width": 260,
       "height": 76,
       "backgroundColor": "#e5dbff",
@@ -311,7 +1027,7 @@
       "type": "text",
       "id": "op_cms_label",
       "x": 310,
-      "y": 558,
+      "y": 1476,
       "width": 240,
       "height": 56,
       "text": "resume CMS\n--branch --storage-state",
@@ -325,7 +1041,7 @@
       "type": "rectangle",
       "id": "op_lc",
       "x": 300,
-      "y": 673,
+      "y": 1591,
       "width": 260,
       "height": 76,
       "backgroundColor": "#fff3bf",
@@ -353,7 +1069,7 @@
       "type": "text",
       "id": "op_lc_label",
       "x": 310,
-      "y": 683,
+      "y": 1601,
       "width": 240,
       "height": 56,
       "text": "agent show\ncontext.live_config",
@@ -367,7 +1083,7 @@
       "type": "rectangle",
       "id": "op_skip",
       "x": 820,
-      "y": 548,
+      "y": 1466,
       "width": 240,
       "height": 76,
       "backgroundColor": "#d3f9d8",
@@ -395,7 +1111,7 @@
       "type": "text",
       "id": "op_skip_label",
       "x": 830,
-      "y": 558,
+      "y": 1476,
       "width": 220,
       "height": 56,
       "text": "run --from merge",
@@ -409,7 +1125,7 @@
       "type": "rectangle",
       "id": "op_syn",
       "x": 460,
-      "y": 818,
+      "y": 1736,
       "width": 260,
       "height": 76,
       "backgroundColor": "#d3f9d8",
@@ -441,7 +1157,7 @@
       "type": "text",
       "id": "op_syn_label",
       "x": 470,
-      "y": 828,
+      "y": 1746,
       "width": 240,
       "height": 56,
       "text": "resume --until synthesis",
@@ -455,7 +1171,7 @@
       "type": "rectangle",
       "id": "op_agent",
       "x": 770,
-      "y": 818,
+      "y": 1736,
       "width": 170,
       "height": 76,
       "backgroundColor": "#fff3bf",
@@ -483,7 +1199,7 @@
       "type": "text",
       "id": "op_agent_label",
       "x": 780,
-      "y": 828,
+      "y": 1746,
       "width": 150,
       "height": 56,
       "text": "agent next\nrules.name, business",
@@ -497,7 +1213,7 @@
       "type": "rectangle",
       "id": "op_chk",
       "x": 990,
-      "y": 818,
+      "y": 1736,
       "width": 180,
       "height": 76,
       "backgroundColor": "#ffffff",
@@ -525,7 +1241,7 @@
       "type": "text",
       "id": "op_chk_label",
       "x": 1000,
-      "y": 828,
+      "y": 1746,
       "width": 160,
       "height": 56,
       "text": "check --out",
@@ -539,7 +1255,7 @@
       "type": "rectangle",
       "id": "op_pro",
       "x": 1250,
-      "y": 818,
+      "y": 1736,
       "width": 160,
       "height": 76,
       "backgroundColor": "#d3f9d8",
@@ -567,7 +1283,7 @@
       "type": "text",
       "id": "op_pro_label",
       "x": 1260,
-      "y": 828,
+      "y": 1746,
       "width": 140,
       "height": 56,
       "text": "promote",
@@ -581,7 +1297,7 @@
       "type": "rectangle",
       "id": "op_ref",
       "x": 1230,
-      "y": 978,
+      "y": 1896,
       "width": 200,
       "height": 70,
       "backgroundColor": "#ffe3e3",
@@ -605,7 +1321,7 @@
       "type": "text",
       "id": "op_ref_label",
       "x": 1240,
-      "y": 988,
+      "y": 1906,
       "width": 180,
       "height": 50,
       "text": "refuse all",
@@ -619,7 +1335,7 @@
       "type": "arrow",
       "id": "op_a1",
       "x": 340,
-      "y": 276,
+      "y": 1194,
       "width": 60,
       "height": 0,
       "points": [
@@ -653,7 +1369,7 @@
       "type": "arrow",
       "id": "op_a2",
       "x": 650,
-      "y": 276,
+      "y": 1194,
       "width": 60,
       "height": 0,
       "points": [
@@ -687,7 +1403,7 @@
       "type": "arrow",
       "id": "op_a3",
       "x": 870,
-      "y": 276,
+      "y": 1194,
       "width": 110,
       "height": 0,
       "points": [
@@ -721,7 +1437,7 @@
       "type": "arrow",
       "id": "op_a4",
       "x": 790,
-      "y": 314,
+      "y": 1232,
       "width": 0,
       "height": 64,
       "points": [
@@ -755,7 +1471,7 @@
       "type": "arrow",
       "id": "op_a5",
       "x": 1110,
-      "y": 314,
+      "y": 1232,
       "width": 320,
       "height": 64,
       "points": [
@@ -797,7 +1513,7 @@
       "type": "arrow",
       "id": "op_a6",
       "x": 690,
-      "y": 438,
+      "y": 1356,
       "width": 260,
       "height": 110,
       "points": [
@@ -835,7 +1551,7 @@
       "type": "arrow",
       "id": "op_a7",
       "x": 890,
-      "y": 438,
+      "y": 1356,
       "width": 50,
       "height": 110,
       "points": [
@@ -873,7 +1589,7 @@
       "type": "arrow",
       "id": "op_a8",
       "x": 430,
-      "y": 624,
+      "y": 1542,
       "width": 0,
       "height": 49,
       "points": [
@@ -907,7 +1623,7 @@
       "type": "arrow",
       "id": "op_a9",
       "x": 430,
-      "y": 749,
+      "y": 1667,
       "width": 30,
       "height": 107,
       "points": [
@@ -945,7 +1661,7 @@
       "type": "arrow",
       "id": "op_a10",
       "x": 940,
-      "y": 624,
+      "y": 1542,
       "width": 350,
       "height": 194,
       "points": [
@@ -987,7 +1703,7 @@
       "type": "arrow",
       "id": "op_a11",
       "x": 720,
-      "y": 856,
+      "y": 1774,
       "width": 50,
       "height": 0,
       "points": [
@@ -1021,7 +1737,7 @@
       "type": "arrow",
       "id": "op_a12",
       "x": 940,
-      "y": 856,
+      "y": 1774,
       "width": 50,
       "height": 0,
       "points": [
@@ -1055,7 +1771,7 @@
       "type": "arrow",
       "id": "op_a13",
       "x": 1170,
-      "y": 856,
+      "y": 1774,
       "width": 80,
       "height": 0,
       "points": [
@@ -1089,7 +1805,7 @@
       "type": "arrow",
       "id": "op_a14",
       "x": 1330,
-      "y": 894,
+      "y": 1812,
       "width": 0,
       "height": 84,
       "points": [
@@ -1124,7 +1840,7 @@
       "type": "text",
       "id": "op_l3",
       "x": 885,
-      "y": 220,
+      "y": 1138,
       "text": "folders undecided",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -1134,7 +1850,7 @@
       "type": "text",
       "id": "op_l4",
       "x": 715,
-      "y": 324,
+      "y": 1242,
       "text": "decided",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -1144,7 +1860,7 @@
       "type": "text",
       "id": "op_l5",
       "x": 1120,
-      "y": 324,
+      "y": 1242,
       "text": "re-run, then",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -1154,7 +1870,7 @@
       "type": "text",
       "id": "op_l6",
       "x": 550,
-      "y": 416,
+      "y": 1334,
       "text": "yes",
       "fontSize": 15,
       "strokeColor": "#5f6368",
@@ -1164,7 +1880,7 @@
       "type": "text",
       "id": "op_l7",
       "x": 900,
-      "y": 414,
+      "y": 1332,
       "text": "no",
       "fontSize": 15,
       "strokeColor": "#5f6368",
@@ -1174,7 +1890,7 @@
       "type": "text",
       "id": "op_l8",
       "x": 575,
-      "y": 696,
+      "y": 1614,
       "text": "candidates found;\nre-runs the CMS step",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -1184,7 +1900,7 @@
       "type": "text",
       "id": "op_l13",
       "x": 1182,
-      "y": 796,
+      "y": 1714,
       "text": "clean",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -1194,19 +1910,1192 @@
       "type": "text",
       "id": "op_l14",
       "x": 1345,
-      "y": 928,
+      "y": 1846,
       "text": "dirty dest",
       "fontSize": 14,
       "strokeColor": "#c92a2a",
       "fontFamily": 5
     },
     {
+      "type": "text",
+      "id": "op_hl",
+      "x": 140,
+      "y": 1246,
+      "text": "no human? extractkit headless\nruns all of this (Headless)",
+      "fontSize": 14,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_bg",
+      "x": 80,
+      "y": 2146,
+      "width": 1450,
+      "height": 988,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#dee2e6",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 1,
+      "roundness": {
+        "type": 3
+      }
+    },
+    {
+      "type": "text",
+      "id": "hl_title",
+      "x": 114,
+      "y": 2172,
+      "text": "Headless pipeline",
+      "fontSize": 30,
+      "strokeColor": "#1e1e1e",
+      "fontFamily": 5
+    },
+    {
+      "type": "text",
+      "id": "hl_sub",
+      "x": 116,
+      "y": 2216,
+      "text": "The whole extract with no human: eleven stages, an agent CLI for yellow ones, exit 0, 1 or 3.",
+      "fontSize": 17,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "arrow",
+      "id": "hl_div",
+      "x": 114,
+      "y": 2258,
+      "width": 1382,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          1382,
+          0
+        ]
+      ],
+      "endArrowhead": null,
+      "strokeColor": "#ced4da",
+      "strokeWidth": 2,
+      "roughness": 1
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_install",
+      "x": 140,
+      "y": 2314,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar1",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_install_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_install_label",
+      "x": 150,
+      "y": 2324,
+      "width": 260,
+      "height": 64,
+      "text": "install\ncheck or copy the kit",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_install"
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_pre",
+      "x": 490,
+      "y": 2314,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar1",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar2",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_pre_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_pre_label",
+      "x": 500,
+      "y": 2324,
+      "width": 260,
+      "height": 64,
+      "text": "preflight\ngraft, Serena, Graphify",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_pre"
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_doc",
+      "x": 840,
+      "y": 2314,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar2",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar3",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_doc_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_doc_label",
+      "x": 850,
+      "y": 2324,
+      "width": 260,
+      "height": 64,
+      "text": "doctor\nreadiness + resources",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_doc"
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_sta",
+      "x": 1190,
+      "y": 2314,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar3",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar9",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_sta_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_sta_label",
+      "x": 1200,
+      "y": 2324,
+      "width": 260,
+      "height": 64,
+      "text": "static\nrun --until static",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_sta"
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_ctx",
+      "x": 140,
+      "y": 2494,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar4",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar9",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ctx_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_ctx_label",
+      "x": 150,
+      "y": 2504,
+      "width": 260,
+      "height": 64,
+      "text": "agent:context\ncontext.exclude",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_ctx"
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_cms",
+      "x": 490,
+      "y": 2494,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#e5dbff",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar4",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar5",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_cms_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_cms_label",
+      "x": 500,
+      "y": 2504,
+      "width": 260,
+      "height": 64,
+      "text": "cms (optional)\nneeds a storage state",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_cms"
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_lc",
+      "x": 840,
+      "y": 2494,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar5",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar6",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_lc_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_lc_label",
+      "x": 850,
+      "y": 2504,
+      "width": 260,
+      "height": 64,
+      "text": "agent:live_config\ncontext.live_config",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_lc"
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_syn",
+      "x": 1190,
+      "y": 2494,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar6",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar10",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_syn_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_syn_label",
+      "x": 1200,
+      "y": 2504,
+      "width": 260,
+      "height": 64,
+      "text": "synthesis\nmerge + synthesis",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_syn"
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_agt",
+      "x": 140,
+      "y": 2674,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar7",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar10",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar12",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_agt_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_agt_label",
+      "x": 150,
+      "y": 2684,
+      "width": 260,
+      "height": 64,
+      "text": "agent\nrules.name, business",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_agt"
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_chk",
+      "x": 490,
+      "y": 2674,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#ffffff",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar7",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar8",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_chk_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_chk_label",
+      "x": 500,
+      "y": 2684,
+      "width": 260,
+      "height": 64,
+      "text": "check\nrequirements cite evidence",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_chk"
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_pro",
+      "x": 840,
+      "y": 2674,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar8",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar11",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_pro_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_pro_label",
+      "x": 850,
+      "y": 2684,
+      "width": 260,
+      "height": 64,
+      "text": "promote (optional)\nonly with --promote",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_pro"
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar1",
+      "x": 420,
+      "y": 2356,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_install",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_pre",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar2",
+      "x": 770,
+      "y": 2356,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_pre",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_doc",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar3",
+      "x": 1120,
+      "y": 2356,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_doc",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_sta",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar4",
+      "x": 420,
+      "y": 2536,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_ctx",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_cms",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar5",
+      "x": 770,
+      "y": 2536,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_cms",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_lc",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar6",
+      "x": 1120,
+      "y": 2536,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_lc",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_syn",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar7",
+      "x": 420,
+      "y": 2716,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_agt",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_chk",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar8",
+      "x": 770,
+      "y": 2716,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_chk",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_pro",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar9",
+      "x": 1330,
+      "y": 2398,
+      "width": 1050,
+      "height": 96,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          48
+        ],
+        [
+          -1050,
+          48
+        ],
+        [
+          -1050,
+          96
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_sta",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_ctx",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar10",
+      "x": 1330,
+      "y": 2578,
+      "width": 1050,
+      "height": 96,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          48
+        ],
+        [
+          -1050,
+          48
+        ],
+        [
+          -1050,
+          96
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_syn",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_agt",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "ellipse",
+      "id": "hl_ok",
+      "x": 1190,
+      "y": 2674,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#d0ebff",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar11",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ok_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_ok_label",
+      "x": 1200,
+      "y": 2684,
+      "width": 260,
+      "height": 64,
+      "text": "exit 0\nevery stage passed",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_ok"
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar11",
+      "x": 1120,
+      "y": 2716,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_pro",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_ok",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_loop",
+      "x": 140,
+      "y": 2874,
+      "width": 630,
+      "height": 150,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar12",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar13",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_loop_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_loop_label",
+      "x": 150,
+      "y": 2884,
+      "width": 610,
+      "height": 130,
+      "text": "agent loop (every yellow stage)\nagent next --json, one fresh agent process per task\nthen the task rerun, then check\nfix attempts up to --max-fix-attempts, default 2",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_loop"
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar12",
+      "x": 280,
+      "y": 2758,
+      "width": 175,
+      "height": 116,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          76
+        ],
+        [
+          175,
+          76
+        ],
+        [
+          175,
+          116
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_agt",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_loop",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_blk",
+      "x": 840,
+      "y": 2874,
+      "width": 280,
+      "height": 150,
+      "backgroundColor": "#ffe8cc",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar13",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_blk_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_blk_label",
+      "x": 850,
+      "y": 2884,
+      "width": 260,
+      "height": 130,
+      "text": "exit 3, blocked\nreports/blockers/<task>.md\na person must look",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_blk"
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_bad",
+      "x": 1190,
+      "y": 2874,
+      "width": 280,
+      "height": 150,
+      "backgroundColor": "#ffe3e3",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_bad_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_bad_label",
+      "x": 1200,
+      "y": 2884,
+      "width": 260,
+      "height": 130,
+      "text": "exit 1, any stage failed\nerror.code and fix\nin the JSON result",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_bad"
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar13",
+      "x": 770,
+      "y": 2949,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "hl_loop",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_blk",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "strokeColor": "#c92a2a",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_l1",
+      "x": 779,
+      "y": 2916,
+      "text": "blocker",
+      "fontSize": 14,
+      "strokeColor": "#c92a2a",
+      "fontFamily": 5
+    },
+    {
+      "type": "text",
+      "id": "hl_l3",
+      "x": 140,
+      "y": 3044,
+      "text": "Re-running on the same source resumes the latest sidecar. Finished stages report \"already done\" and start no agent.",
+      "fontSize": 14,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
       "type": "rectangle",
       "id": "ph_bg",
       "x": 80,
-      "y": 1228,
+      "y": 3254,
       "width": 1450,
-      "height": 1095,
+      "height": 1112,
       "backgroundColor": "#f8f9fa",
       "strokeColor": "#dee2e6",
       "fillStyle": "solid",
@@ -1220,7 +3109,7 @@
       "type": "text",
       "id": "ph_title",
       "x": 114,
-      "y": 1254,
+      "y": 3280,
       "text": "Phases: inputs and outputs",
       "fontSize": 30,
       "strokeColor": "#1e1e1e",
@@ -1230,7 +3119,7 @@
       "type": "text",
       "id": "ph_sub",
       "x": 116,
-      "y": 1298,
+      "y": 3324,
       "text": "Required input, optional input and the expected output of each phase. 1, 2, 7, 8 and 9 are commands.",
       "fontSize": 17,
       "strokeColor": "#5f6368",
@@ -1240,7 +3129,7 @@
       "type": "arrow",
       "id": "ph_div",
       "x": 114,
-      "y": 1340,
+      "y": 3366,
       "width": 1382,
       "height": 0,
       "points": [
@@ -1262,7 +3151,7 @@
       "type": "text",
       "id": "ph_h_phase",
       "x": 144,
-      "y": 1368,
+      "y": 3402,
       "text": "Phase",
       "fontSize": 18,
       "strokeColor": "#1e1e1e",
@@ -1272,7 +3161,7 @@
       "type": "text",
       "id": "ph_h_required",
       "x": 374,
-      "y": 1368,
+      "y": 3402,
       "text": "Required input",
       "fontSize": 18,
       "strokeColor": "#1e1e1e",
@@ -1282,7 +3171,7 @@
       "type": "text",
       "id": "ph_h_optional",
       "x": 734,
-      "y": 1368,
+      "y": 3402,
       "text": "Optional input",
       "fontSize": 18,
       "strokeColor": "#1e1e1e",
@@ -1292,7 +3181,7 @@
       "type": "text",
       "id": "ph_h_output",
       "x": 1094,
-      "y": 1368,
+      "y": 3402,
       "text": "Output",
       "fontSize": 18,
       "strokeColor": "#1971c2",
@@ -1302,7 +3191,7 @@
       "type": "rectangle",
       "id": "ph_p1",
       "x": 140,
-      "y": 1403,
+      "y": 3437,
       "width": 200,
       "height": 78,
       "backgroundColor": "#fff3bf",
@@ -1326,7 +3215,7 @@
       "type": "text",
       "id": "ph_p1_label",
       "x": 150,
-      "y": 1413,
+      "y": 3447,
       "width": 180,
       "height": 58,
       "text": "1 preflight",
@@ -1340,7 +3229,7 @@
       "type": "rectangle",
       "id": "ph_r1",
       "x": 370,
-      "y": 1403,
+      "y": 3437,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -1360,7 +3249,7 @@
       "type": "text",
       "id": "ph_r1_label",
       "x": 380,
-      "y": 1413,
+      "y": 3447,
       "width": 310,
       "height": 58,
       "text": "Python 3.12, PyYAML, jsonschema\n--source: Serena onboarding\nand a Graphify index",
@@ -1374,7 +3263,7 @@
       "type": "rectangle",
       "id": "ph_o1",
       "x": 730,
-      "y": 1403,
+      "y": 3437,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -1396,7 +3285,7 @@
       "type": "text",
       "id": "ph_o1_label",
       "x": 740,
-      "y": 1413,
+      "y": 3447,
       "width": 310,
       "height": 58,
       "text": "graft index (warning only)\n--profile (deps to probe)",
@@ -1411,7 +3300,7 @@
       "type": "rectangle",
       "id": "ph_x1",
       "x": 1090,
-      "y": 1403,
+      "y": 3437,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -1433,7 +3322,7 @@
       "type": "text",
       "id": "ph_x1_label",
       "x": 1100,
-      "y": 1413,
+      "y": 3447,
       "width": 350,
       "height": 58,
       "text": "No sidecar. Install links,\nstack and build-scope report",
@@ -1448,7 +3337,7 @@
       "type": "rectangle",
       "id": "ph_p2",
       "x": 140,
-      "y": 1495,
+      "y": 3529,
       "width": 200,
       "height": 78,
       "backgroundColor": "#fff3bf",
@@ -1476,7 +3365,7 @@
       "type": "text",
       "id": "ph_p2_label",
       "x": 150,
-      "y": 1505,
+      "y": 3539,
       "width": 180,
       "height": 58,
       "text": "2 context",
@@ -1490,7 +3379,7 @@
       "type": "rectangle",
       "id": "ph_r2",
       "x": 370,
-      "y": 1495,
+      "y": 3529,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -1510,7 +3399,7 @@
       "type": "text",
       "id": "ph_r2_label",
       "x": 380,
-      "y": 1505,
+      "y": 3539,
       "width": 310,
       "height": 58,
       "text": "--source with one stack marker\n(application.xml or site.xml,\nor a root composer.json)",
@@ -1524,7 +3413,7 @@
       "type": "rectangle",
       "id": "ph_o2",
       "x": 730,
-      "y": 1495,
+      "y": 3529,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -1546,7 +3435,7 @@
       "type": "text",
       "id": "ph_o2_label",
       "x": 740,
-      "y": 1505,
+      "y": 3539,
       "width": 310,
       "height": 58,
       "text": "--profile (skips detection)\n--exclude\n<checkout>/.extractkit/profile.yaml",
@@ -1561,7 +3450,7 @@
       "type": "rectangle",
       "id": "ph_x2",
       "x": 1090,
-      "y": 1495,
+      "y": 3529,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -1583,7 +3472,7 @@
       "type": "text",
       "id": "ph_x2_label",
       "x": 1100,
-      "y": 1505,
+      "y": 3539,
       "width": 350,
       "height": 58,
       "text": "context/build-scope.json\ncontext/profile.yaml (overlay)",
@@ -1598,7 +3487,7 @@
       "type": "rectangle",
       "id": "ph_p3",
       "x": 140,
-      "y": 1587,
+      "y": 3621,
       "width": 200,
       "height": 78,
       "backgroundColor": "#d3f9d8",
@@ -1626,7 +3515,7 @@
       "type": "text",
       "id": "ph_p3_label",
       "x": 150,
-      "y": 1597,
+      "y": 3631,
       "width": 180,
       "height": 58,
       "text": "3 static",
@@ -1640,7 +3529,7 @@
       "type": "rectangle",
       "id": "ph_r3",
       "x": 370,
-      "y": 1587,
+      "y": 3621,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -1660,7 +3549,7 @@
       "type": "text",
       "id": "ph_r3_label",
       "x": 380,
-      "y": 1597,
+      "y": 3631,
       "width": 310,
       "height": 58,
       "text": "--source\nthe context overlay\n(run writes it when missing)",
@@ -1674,7 +3563,7 @@
       "type": "rectangle",
       "id": "ph_o3",
       "x": 730,
-      "y": 1587,
+      "y": 3621,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -1696,7 +3585,7 @@
       "type": "text",
       "id": "ph_o3_label",
       "x": 740,
-      "y": 1597,
+      "y": 3631,
       "width": 310,
       "height": 58,
       "text": "graft/, graphify-out/\n--exclude\nthe context.exclude decision",
@@ -1711,7 +3600,7 @@
       "type": "rectangle",
       "id": "ph_x3",
       "x": 1090,
-      "y": 1587,
+      "y": 3621,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -1733,7 +3622,7 @@
       "type": "text",
       "id": "ph_x3_label",
       "x": 1100,
-      "y": 1597,
+      "y": 3631,
       "width": 350,
       "height": 58,
       "text": "inventory/static.json, controllers,\ntemplates; map/*.json\nintegrations/openapi.yaml",
@@ -1748,7 +3637,7 @@
       "type": "rectangle",
       "id": "ph_p4",
       "x": 140,
-      "y": 1679,
+      "y": 3713,
       "width": 200,
       "height": 78,
       "backgroundColor": "#e5dbff",
@@ -1777,7 +3666,7 @@
       "type": "text",
       "id": "ph_p4_label",
       "x": 150,
-      "y": 1689,
+      "y": 3723,
       "width": 180,
       "height": 58,
       "text": "4 cms\n(optional phase)",
@@ -1791,7 +3680,7 @@
       "type": "rectangle",
       "id": "ph_r4",
       "x": 370,
-      "y": 1679,
+      "y": 3713,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -1811,7 +3700,7 @@
       "type": "text",
       "id": "ph_r4_label",
       "x": 380,
-      "y": 1689,
+      "y": 3723,
       "width": 310,
       "height": 58,
       "text": "a local or review XP\n--branch draft|master\n--storage-state (a login)",
@@ -1825,7 +3714,7 @@
       "type": "rectangle",
       "id": "ph_o4",
       "x": 730,
-      "y": 1679,
+      "y": 3713,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -1847,7 +3736,7 @@
       "type": "text",
       "id": "ph_o4_label",
       "x": 740,
-      "y": 1689,
+      "y": 3723,
       "width": 310,
       "height": 58,
       "text": "--guillotine, --xp-host, --project\n--cms-key (default /en), --configenv\nbaseline: playwright-cli",
@@ -1862,7 +3751,7 @@
       "type": "rectangle",
       "id": "ph_x4",
       "x": 1090,
-      "y": 1679,
+      "y": 3713,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -1884,7 +3773,7 @@
       "type": "text",
       "id": "ph_x4_label",
       "x": 1100,
-      "y": 1689,
+      "y": 3723,
       "width": 350,
       "height": 58,
       "text": "inventory/runtime.json\nlive-config-candidates.json\ncontent-volume; baseline/ (opt.)",
@@ -1899,7 +3788,7 @@
       "type": "rectangle",
       "id": "ph_p5",
       "x": 140,
-      "y": 1771,
+      "y": 3805,
       "width": 200,
       "height": 78,
       "backgroundColor": "#d3f9d8",
@@ -1927,7 +3816,7 @@
       "type": "text",
       "id": "ph_p5_label",
       "x": 150,
-      "y": 1781,
+      "y": 3815,
       "width": 180,
       "height": 58,
       "text": "5 merge",
@@ -1941,7 +3830,7 @@
       "type": "rectangle",
       "id": "ph_r5",
       "x": 370,
-      "y": 1771,
+      "y": 3805,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -1961,7 +3850,7 @@
       "type": "text",
       "id": "ph_r5_label",
       "x": 380,
-      "y": 1781,
+      "y": 3815,
       "width": 310,
       "height": 58,
       "text": "static output",
@@ -1975,7 +3864,7 @@
       "type": "rectangle",
       "id": "ph_o5",
       "x": 730,
-      "y": 1771,
+      "y": 3805,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -1997,7 +3886,7 @@
       "type": "text",
       "id": "ph_o5_label",
       "x": 740,
-      "y": 1781,
+      "y": 3815,
       "width": 310,
       "height": 58,
       "text": "runtime.json (without it, live\nsurfaces stay unverified-live)",
@@ -2012,7 +3901,7 @@
       "type": "rectangle",
       "id": "ph_x5",
       "x": 1090,
-      "y": 1771,
+      "y": 3805,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -2034,7 +3923,7 @@
       "type": "text",
       "id": "ph_x5_label",
       "x": 1100,
-      "y": 1781,
+      "y": 3815,
       "width": 350,
       "height": 58,
       "text": "map/bounded-contexts.json\nrules/, merge-report.md\ndocs/harvest/",
@@ -2049,7 +3938,7 @@
       "type": "rectangle",
       "id": "ph_p6",
       "x": 140,
-      "y": 1863,
+      "y": 3897,
       "width": 200,
       "height": 78,
       "backgroundColor": "#d3f9d8",
@@ -2077,7 +3966,7 @@
       "type": "text",
       "id": "ph_p6_label",
       "x": 150,
-      "y": 1873,
+      "y": 3907,
       "width": 180,
       "height": 58,
       "text": "6 synthesis",
@@ -2091,7 +3980,7 @@
       "type": "rectangle",
       "id": "ph_r6",
       "x": 370,
-      "y": 1863,
+      "y": 3897,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -2111,7 +4000,7 @@
       "type": "text",
       "id": "ph_r6_label",
       "x": 380,
-      "y": 1873,
+      "y": 3907,
       "width": 310,
       "height": 58,
       "text": "merge output",
@@ -2125,7 +4014,7 @@
       "type": "rectangle",
       "id": "ph_o6",
       "x": 730,
-      "y": 1863,
+      "y": 3897,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -2147,7 +4036,7 @@
       "type": "text",
       "id": "ph_o6_label",
       "x": 740,
-      "y": 1873,
+      "y": 3907,
       "width": 310,
       "height": 58,
       "text": "--tasks (Spec Kit tasks.md)",
@@ -2162,7 +4051,7 @@
       "type": "rectangle",
       "id": "ph_x6",
       "x": 1090,
-      "y": 1863,
+      "y": 3897,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -2184,7 +4073,7 @@
       "type": "text",
       "id": "ph_x6_label",
       "x": 1100,
-      "y": 1873,
+      "y": 3907,
       "width": 350,
       "height": 58,
       "text": "spec-kit/, PRODUCT.md, DESIGN.md\nuse-cases/, docs/technical, guide\nxp8-compat.md (optional slot)",
@@ -2199,7 +4088,7 @@
       "type": "rectangle",
       "id": "ph_p7",
       "x": 140,
-      "y": 1955,
+      "y": 3989,
       "width": 200,
       "height": 78,
       "backgroundColor": "#fff3bf",
@@ -2227,7 +4116,7 @@
       "type": "text",
       "id": "ph_p7_label",
       "x": 150,
-      "y": 1965,
+      "y": 3999,
       "width": 180,
       "height": 58,
       "text": "7 agent",
@@ -2241,7 +4130,7 @@
       "type": "rectangle",
       "id": "ph_r7",
       "x": 370,
-      "y": 1955,
+      "y": 3989,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -2261,7 +4150,7 @@
       "type": "text",
       "id": "ph_r7_label",
       "x": 380,
-      "y": 1965,
+      "y": 3999,
       "width": 310,
       "height": 58,
       "text": "an AI assistant runs the prompts\neach task's reads (agent list)",
@@ -2275,7 +4164,7 @@
       "type": "rectangle",
       "id": "ph_o7",
       "x": 730,
-      "y": 1955,
+      "y": 3989,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -2297,7 +4186,7 @@
       "type": "text",
       "id": "ph_o7_label",
       "x": 740,
-      "y": 1965,
+      "y": 3999,
       "width": 310,
       "height": 58,
       "text": "spec.enrich, spec.review",
@@ -2312,7 +4201,7 @@
       "type": "rectangle",
       "id": "ph_x7",
       "x": 1090,
-      "y": 1955,
+      "y": 3989,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -2334,7 +4223,7 @@
       "type": "text",
       "id": "ph_x7_label",
       "x": 1100,
-      "y": 1965,
+      "y": 3999,
       "width": 350,
       "height": 58,
       "text": "overlay exclude + live_config\nrule names in rules/review.md\nbusiness/BUSINESS.md",
@@ -2349,7 +4238,7 @@
       "type": "rectangle",
       "id": "ph_p8",
       "x": 140,
-      "y": 2047,
+      "y": 4081,
       "width": 200,
       "height": 78,
       "backgroundColor": "#fff3bf",
@@ -2377,7 +4266,7 @@
       "type": "text",
       "id": "ph_p8_label",
       "x": 150,
-      "y": 2057,
+      "y": 4091,
       "width": 180,
       "height": 58,
       "text": "8 check",
@@ -2391,7 +4280,7 @@
       "type": "rectangle",
       "id": "ph_r8",
       "x": 370,
-      "y": 2047,
+      "y": 4081,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -2411,7 +4300,7 @@
       "type": "text",
       "id": "ph_r8_label",
       "x": 380,
-      "y": 2057,
+      "y": 4091,
       "width": 310,
       "height": 58,
       "text": "--out with phase 3 done",
@@ -2425,7 +4314,7 @@
       "type": "rectangle",
       "id": "ph_o8",
       "x": 730,
-      "y": 2047,
+      "y": 4081,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -2447,7 +4336,7 @@
       "type": "text",
       "id": "ph_o8_label",
       "x": 740,
-      "y": 2057,
+      "y": 4091,
       "width": 310,
       "height": 58,
       "text": "later files are checked\nonly when present",
@@ -2462,7 +4351,7 @@
       "type": "rectangle",
       "id": "ph_x8",
       "x": 1090,
-      "y": 2047,
+      "y": 4081,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -2484,7 +4373,7 @@
       "type": "text",
       "id": "ph_x8_label",
       "x": 1100,
-      "y": 2057,
+      "y": 4091,
       "width": 350,
       "height": 58,
       "text": "No file. Exit 0, or exit 1\nwith every problem listed",
@@ -2499,7 +4388,7 @@
       "type": "rectangle",
       "id": "ph_p9",
       "x": 140,
-      "y": 2139,
+      "y": 4173,
       "width": 200,
       "height": 78,
       "backgroundColor": "#fff3bf",
@@ -2523,7 +4412,7 @@
       "type": "text",
       "id": "ph_p9_label",
       "x": 150,
-      "y": 2149,
+      "y": 4183,
       "width": 180,
       "height": 58,
       "text": "9 promote",
@@ -2537,7 +4426,7 @@
       "type": "rectangle",
       "id": "ph_r9",
       "x": 370,
-      "y": 2139,
+      "y": 4173,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -2557,7 +4446,7 @@
       "type": "text",
       "id": "ph_r9_label",
       "x": 380,
-      "y": 2149,
+      "y": 4183,
       "width": 310,
       "height": 58,
       "text": "--source as a git work tree\ndestinations git can restore",
@@ -2571,7 +4460,7 @@
       "type": "rectangle",
       "id": "ph_o9",
       "x": 730,
-      "y": 2139,
+      "y": 4173,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -2593,7 +4482,7 @@
       "type": "text",
       "id": "ph_o9_label",
       "x": 740,
-      "y": 2149,
+      "y": 4183,
       "width": 310,
       "height": 58,
       "text": "--out (default: latest)\n--force",
@@ -2608,7 +4497,7 @@
       "type": "rectangle",
       "id": "ph_x9",
       "x": 1090,
-      "y": 2139,
+      "y": 4173,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -2630,7 +4519,7 @@
       "type": "text",
       "id": "ph_x9_label",
       "x": 1100,
-      "y": 2149,
+      "y": 4183,
       "width": 350,
       "height": 58,
       "text": "<checkout>: constitution, specs/,\nPRODUCT, DESIGN, BUSINESS.md",
@@ -2645,7 +4534,7 @@
       "type": "rectangle",
       "id": "ph_l0",
       "x": 140,
-      "y": 2241,
+      "y": 4275,
       "width": 28,
       "height": 22,
       "backgroundColor": "#fff3bf",
@@ -2660,7 +4549,7 @@
       "type": "text",
       "id": "ph_lt0",
       "x": 178,
-      "y": 2242,
+      "y": 4276,
       "text": "command or AI step",
       "fontSize": 15,
       "strokeColor": "#5f6368",
@@ -2670,7 +4559,7 @@
       "type": "rectangle",
       "id": "ph_l1",
       "x": 362,
-      "y": 2241,
+      "y": 4275,
       "width": 28,
       "height": 22,
       "backgroundColor": "#d3f9d8",
@@ -2685,7 +4574,7 @@
       "type": "text",
       "id": "ph_lt1",
       "x": 400,
-      "y": 2242,
+      "y": 4276,
       "text": "pipeline slots",
       "fontSize": 15,
       "strokeColor": "#5f6368",
@@ -2695,7 +4584,7 @@
       "type": "rectangle",
       "id": "ph_l2",
       "x": 548,
-      "y": 2241,
+      "y": 4275,
       "width": 28,
       "height": 22,
       "backgroundColor": "#e5dbff",
@@ -2711,7 +4600,7 @@
       "type": "text",
       "id": "ph_lt2",
       "x": 586,
-      "y": 2242,
+      "y": 4276,
       "text": "needs a live test site",
       "fontSize": 15,
       "strokeColor": "#5f6368",
@@ -2721,7 +4610,7 @@
       "type": "rectangle",
       "id": "ph_l3",
       "x": 806,
-      "y": 2241,
+      "y": 4275,
       "width": 28,
       "height": 22,
       "backgroundColor": "#f8f9fa",
@@ -2738,7 +4627,7 @@
       "type": "text",
       "id": "ph_lt3",
       "x": 844,
-      "y": 2242,
+      "y": 4276,
       "text": "optional input",
       "fontSize": 15,
       "strokeColor": "#5f6368",
@@ -2748,7 +4637,7 @@
       "type": "rectangle",
       "id": "ph_l4",
       "x": 992,
-      "y": 2241,
+      "y": 4275,
       "width": 28,
       "height": 22,
       "backgroundColor": "#d0ebff",
@@ -2764,7 +4653,7 @@
       "type": "text",
       "id": "ph_lt4",
       "x": 1030,
-      "y": 2242,
+      "y": 4276,
       "text": "expected output",
       "fontSize": 15,
       "strokeColor": "#5f6368",
@@ -2774,7 +4663,7 @@
       "type": "arrow",
       "id": "ph_a1",
       "x": 240,
-      "y": 1481,
+      "y": 3515,
       "width": 0,
       "height": 14,
       "points": [
@@ -2808,7 +4697,7 @@
       "type": "arrow",
       "id": "ph_a2",
       "x": 240,
-      "y": 1573,
+      "y": 3607,
       "width": 0,
       "height": 14,
       "points": [
@@ -2842,7 +4731,7 @@
       "type": "arrow",
       "id": "ph_a3",
       "x": 240,
-      "y": 1665,
+      "y": 3699,
       "width": 0,
       "height": 14,
       "points": [
@@ -2876,7 +4765,7 @@
       "type": "arrow",
       "id": "ph_a4",
       "x": 240,
-      "y": 1757,
+      "y": 3791,
       "width": 0,
       "height": 14,
       "points": [
@@ -2910,7 +4799,7 @@
       "type": "arrow",
       "id": "ph_a5",
       "x": 240,
-      "y": 1849,
+      "y": 3883,
       "width": 0,
       "height": 14,
       "points": [
@@ -2944,7 +4833,7 @@
       "type": "arrow",
       "id": "ph_a6",
       "x": 240,
-      "y": 1941,
+      "y": 3975,
       "width": 0,
       "height": 14,
       "points": [
@@ -2978,7 +4867,7 @@
       "type": "arrow",
       "id": "ph_a7",
       "x": 240,
-      "y": 2033,
+      "y": 4067,
       "width": 0,
       "height": 14,
       "points": [
@@ -3012,7 +4901,7 @@
       "type": "arrow",
       "id": "ph_a8",
       "x": 240,
-      "y": 2125,
+      "y": 4159,
       "width": 0,
       "height": 14,
       "points": [
@@ -3046,9 +4935,9 @@
       "type": "rectangle",
       "id": "ln_bg",
       "x": 80,
-      "y": 2443,
+      "y": 4486,
       "width": 1450,
-      "height": 890,
+      "height": 916,
       "backgroundColor": "#f8f9fa",
       "strokeColor": "#dee2e6",
       "fillStyle": "solid",
@@ -3062,7 +4951,7 @@
       "type": "text",
       "id": "ln_title",
       "x": 114,
-      "y": 2469,
+      "y": 4512,
       "text": "Sidecar lineage",
       "fontSize": 30,
       "strokeColor": "#1e1e1e",
@@ -3072,7 +4961,7 @@
       "type": "text",
       "id": "ln_sub",
       "x": 116,
-      "y": 2513,
+      "y": 4556,
       "text": "Checkout is read-only until promote. Yellow = AI step. Purple = CMS only. Grey dashed = optional, never promoted.",
       "fontSize": 17,
       "strokeColor": "#5f6368",
@@ -3082,7 +4971,7 @@
       "type": "arrow",
       "id": "ln_div",
       "x": 114,
-      "y": 2555,
+      "y": 4598,
       "width": 1382,
       "height": 0,
       "points": [
@@ -3101,10 +4990,20 @@
       "roughness": 1
     },
     {
+      "type": "text",
+      "id": "ln_s2",
+      "x": 140,
+      "y": 4610,
+      "text": "Purple = CMS only. Grey dashed = optional, never promoted.",
+      "fontSize": 16,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
       "type": "rectangle",
       "id": "ln_ctx",
       "x": 140,
-      "y": 2645,
+      "y": 4714,
       "width": 210,
       "height": 90,
       "backgroundColor": "#fff3bf",
@@ -3136,7 +5035,7 @@
       "type": "text",
       "id": "ln_ctx_label",
       "x": 150,
-      "y": 2655,
+      "y": 4724,
       "width": 190,
       "height": 70,
       "text": "context/profile.yaml\n+ build-scope.json",
@@ -3150,7 +5049,7 @@
       "type": "ellipse",
       "id": "ln_src",
       "x": 140,
-      "y": 2835,
+      "y": 4904,
       "width": 210,
       "height": 90,
       "backgroundColor": "#d0ebff",
@@ -3186,7 +5085,7 @@
       "type": "text",
       "id": "ln_src_label",
       "x": 150,
-      "y": 2845,
+      "y": 4914,
       "width": 190,
       "height": 70,
       "text": "legacy checkout",
@@ -3200,7 +5099,7 @@
       "type": "rectangle",
       "id": "ln_oas",
       "x": 440,
-      "y": 2645,
+      "y": 4714,
       "width": 220,
       "height": 76,
       "backgroundColor": "#e6fcf5",
@@ -3228,7 +5127,7 @@
       "type": "text",
       "id": "ln_oas_label",
       "x": 450,
-      "y": 2655,
+      "y": 4724,
       "width": 200,
       "height": 56,
       "text": "openapi.yaml",
@@ -3242,7 +5141,7 @@
       "type": "rectangle",
       "id": "ln_maps",
       "x": 440,
-      "y": 2842,
+      "y": 4911,
       "width": 220,
       "height": 76,
       "backgroundColor": "#e6fcf5",
@@ -3274,7 +5173,7 @@
       "type": "text",
       "id": "ln_maps_label",
       "x": 450,
-      "y": 2852,
+      "y": 4921,
       "width": 200,
       "height": 56,
       "text": "map/*.json",
@@ -3288,7 +5187,7 @@
       "type": "rectangle",
       "id": "ln_inv",
       "x": 440,
-      "y": 3035,
+      "y": 5104,
       "width": 220,
       "height": 110,
       "backgroundColor": "#e6fcf5",
@@ -3324,7 +5223,7 @@
       "type": "text",
       "id": "ln_inv_label",
       "x": 450,
-      "y": 3045,
+      "y": 5114,
       "width": 200,
       "height": 90,
       "text": "static.json\ncontrollers.json\ntemplates.json",
@@ -3338,7 +5237,7 @@
       "type": "rectangle",
       "id": "ln_rt",
       "x": 780,
-      "y": 2645,
+      "y": 4714,
       "width": 270,
       "height": 76,
       "backgroundColor": "#e5dbff",
@@ -3370,7 +5269,7 @@
       "type": "text",
       "id": "ln_rt_label",
       "x": 790,
-      "y": 2655,
+      "y": 4724,
       "width": 250,
       "height": 56,
       "text": "runtime.json\n+ live-config-candidates",
@@ -3384,7 +5283,7 @@
       "type": "rectangle",
       "id": "ln_base",
       "x": 1120,
-      "y": 2645,
+      "y": 4714,
       "width": 210,
       "height": 76,
       "backgroundColor": "#e9ecef",
@@ -3409,7 +5308,7 @@
       "type": "text",
       "id": "ln_base_label",
       "x": 1130,
-      "y": 2655,
+      "y": 4724,
       "width": 190,
       "height": 56,
       "text": "baseline/",
@@ -3423,7 +5322,7 @@
       "type": "rectangle",
       "id": "ln_syn",
       "x": 800,
-      "y": 2835,
+      "y": 4904,
       "width": 230,
       "height": 90,
       "backgroundColor": "#d3f9d8",
@@ -3467,7 +5366,7 @@
       "type": "text",
       "id": "ln_syn_label",
       "x": 810,
-      "y": 2845,
+      "y": 4914,
       "width": 210,
       "height": 70,
       "text": "merge + spec-kit",
@@ -3481,7 +5380,7 @@
       "type": "rectangle",
       "id": "ln_dest",
       "x": 1120,
-      "y": 2835,
+      "y": 4904,
       "width": 210,
       "height": 90,
       "backgroundColor": "#d3f9d8",
@@ -3509,7 +5408,7 @@
       "type": "text",
       "id": "ln_dest_label",
       "x": 1130,
-      "y": 2845,
+      "y": 4914,
       "width": 190,
       "height": 70,
       "text": "promoted files",
@@ -3523,7 +5422,7 @@
       "type": "rectangle",
       "id": "ln_comp",
       "x": 800,
-      "y": 3165,
+      "y": 5234,
       "width": 230,
       "height": 76,
       "backgroundColor": "#e9ecef",
@@ -3548,7 +5447,7 @@
       "type": "text",
       "id": "ln_comp_label",
       "x": 810,
-      "y": 3175,
+      "y": 5244,
       "width": 210,
       "height": 56,
       "text": "reports/xp8-compat.md",
@@ -3562,7 +5461,7 @@
       "type": "rectangle",
       "id": "ln_spec",
       "x": 800,
-      "y": 3045,
+      "y": 5114,
       "width": 230,
       "height": 64,
       "backgroundColor": "#e9ecef",
@@ -3587,7 +5486,7 @@
       "type": "text",
       "id": "ln_spec_label",
       "x": 810,
-      "y": 3055,
+      "y": 5124,
       "width": 210,
       "height": 44,
       "text": "reports/spec-review.md",
@@ -3601,7 +5500,7 @@
       "type": "rectangle",
       "id": "ln_rules",
       "x": 1100,
-      "y": 3025,
+      "y": 5094,
       "width": 230,
       "height": 120,
       "backgroundColor": "#e6fcf5",
@@ -3625,7 +5524,7 @@
       "type": "text",
       "id": "ln_rules_label",
       "x": 1110,
-      "y": 3035,
+      "y": 5104,
       "width": 210,
       "height": 100,
       "text": "rules/\nview-rules.json\nRULES.md, literals.md\nreview.md",
@@ -3639,7 +5538,7 @@
       "type": "rectangle",
       "id": "ln_biz",
       "x": 1120,
-      "y": 2757,
+      "y": 4826,
       "width": 210,
       "height": 48,
       "backgroundColor": "#fff3bf",
@@ -3663,7 +5562,7 @@
       "type": "text",
       "id": "ln_biz_label",
       "x": 1130,
-      "y": 2767,
+      "y": 4836,
       "width": 190,
       "height": 28,
       "text": "business/BUSINESS.md",
@@ -3677,7 +5576,7 @@
       "type": "arrow",
       "id": "ln_a0",
       "x": 245,
-      "y": 2835,
+      "y": 4904,
       "width": 0,
       "height": 100,
       "points": [
@@ -3711,7 +5610,7 @@
       "type": "arrow",
       "id": "ln_ax",
       "x": 350,
-      "y": 2690,
+      "y": 4759,
       "width": 90,
       "height": 7,
       "points": [
@@ -3745,7 +5644,7 @@
       "type": "arrow",
       "id": "ln_ay",
       "x": 245,
-      "y": 2645,
+      "y": 4714,
       "width": 670,
       "height": 40,
       "points": [
@@ -3788,7 +5687,7 @@
       "type": "arrow",
       "id": "ln_a1",
       "x": 350,
-      "y": 2880,
+      "y": 4949,
       "width": 200,
       "height": 159,
       "points": [
@@ -3822,7 +5721,7 @@
       "type": "arrow",
       "id": "ln_a2",
       "x": 350,
-      "y": 2880,
+      "y": 4949,
       "width": 90,
       "height": 0,
       "points": [
@@ -3856,7 +5755,7 @@
       "type": "arrow",
       "id": "ln_a3",
       "x": 245,
-      "y": 2925,
+      "y": 4994,
       "width": 195,
       "height": 165,
       "points": [
@@ -3894,7 +5793,7 @@
       "type": "arrow",
       "id": "ln_a4",
       "x": 550,
-      "y": 3035,
+      "y": 5104,
       "width": 0,
       "height": 117,
       "points": [
@@ -3928,7 +5827,7 @@
       "type": "arrow",
       "id": "ln_a5",
       "x": 660,
-      "y": 2880,
+      "y": 4949,
       "width": 140,
       "height": 0,
       "points": [
@@ -3962,7 +5861,7 @@
       "type": "arrow",
       "id": "ln_a6",
       "x": 915,
-      "y": 2721,
+      "y": 4790,
       "width": 0,
       "height": 114,
       "points": [
@@ -3997,7 +5896,7 @@
       "type": "arrow",
       "id": "ln_a7",
       "x": 1030,
-      "y": 2880,
+      "y": 4949,
       "width": 90,
       "height": 0,
       "points": [
@@ -4031,7 +5930,7 @@
       "type": "arrow",
       "id": "ln_a8",
       "x": 1050,
-      "y": 2683,
+      "y": 4752,
       "width": 70,
       "height": 0,
       "points": [
@@ -4066,7 +5965,7 @@
       "type": "arrow",
       "id": "ln_a9",
       "x": 550,
-      "y": 3145,
+      "y": 5214,
       "width": 250,
       "height": 58,
       "points": [
@@ -4105,7 +6004,7 @@
       "type": "arrow",
       "id": "ln_a10",
       "x": 660,
-      "y": 3090,
+      "y": 5159,
       "width": 140,
       "height": 183,
       "points": [
@@ -4147,7 +6046,7 @@
       "type": "arrow",
       "id": "ln_a11",
       "x": 1030,
-      "y": 2911.5,
+      "y": 4980.5,
       "width": 70,
       "height": 173.5,
       "points": [
@@ -4189,7 +6088,7 @@
       "type": "arrow",
       "id": "ln_a12",
       "x": 1225,
-      "y": 2805,
+      "y": 4874,
       "width": 0,
       "height": 30,
       "points": [
@@ -4223,7 +6122,7 @@
       "type": "arrow",
       "id": "ln_a13",
       "x": 915,
-      "y": 2925,
+      "y": 4994,
       "width": 0,
       "height": 120,
       "points": [
@@ -4258,7 +6157,7 @@
       "type": "text",
       "id": "ln_lx",
       "x": 362,
-      "y": 2661,
+      "y": 4730,
       "text": "exclude",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -4268,7 +6167,7 @@
       "type": "text",
       "id": "ln_ly",
       "x": 430,
-      "y": 2583,
+      "y": 4652,
       "text": "live_config rules (AI step, from the candidates)",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -4278,7 +6177,7 @@
       "type": "text",
       "id": "ln_l0",
       "x": 255,
-      "y": 2775,
+      "y": 4844,
       "text": "context phase",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -4288,7 +6187,7 @@
       "type": "text",
       "id": "ln_l4",
       "x": 562,
-      "y": 2957,
+      "y": 5026,
       "text": "surfaces + behavior\n+ views",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -4298,7 +6197,7 @@
       "type": "text",
       "id": "ln_l5",
       "x": 672,
-      "y": 2857,
+      "y": 4926,
       "text": "project-map",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -4308,7 +6207,7 @@
       "type": "text",
       "id": "ln_l6",
       "x": 927,
-      "y": 2769,
+      "y": 4838,
       "text": "live / dead / unobserved",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -4318,7 +6217,7 @@
       "type": "text",
       "id": "ln_l7",
       "x": 1050,
-      "y": 2857,
+      "y": 4926,
       "text": "promote",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -4328,7 +6227,7 @@
       "type": "text",
       "id": "ln_l8",
       "x": 1058,
-      "y": 2623,
+      "y": 4692,
       "text": "page paths",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -4338,7 +6237,7 @@
       "type": "text",
       "id": "ln_l9",
       "x": 620,
-      "y": 3179,
+      "y": 5248,
       "text": "XP8 report",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -4348,7 +6247,7 @@
       "type": "text",
       "id": "ln_l10",
       "x": 752,
-      "y": 2995,
+      "y": 5064,
       "text": "templates.json",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -4358,7 +6257,7 @@
       "type": "text",
       "id": "ln_l11",
       "x": 1075,
-      "y": 2943,
+      "y": 5012,
       "text": "writes rules; spec.kit,\ncheck read them",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -4368,7 +6267,7 @@
       "type": "text",
       "id": "ln_l13",
       "x": 925,
-      "y": 2970,
+      "y": 5039,
       "text": "AI review",
       "fontSize": 14,
       "strokeColor": "#5f6368",

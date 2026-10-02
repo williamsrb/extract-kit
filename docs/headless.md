@@ -128,6 +128,8 @@ variable. It passes every setting as a flag, so a variable meant for headless
 same ids are the values of `--until`, the `stage` field of the JSONL log and
 the entries of `stages[]` in the result.
 
+![Headless pipeline](diagrams/headless-pipeline.png)
+
 <!-- markdownlint-disable MD013 -->
 | Stage | Does |
 | --- | --- |

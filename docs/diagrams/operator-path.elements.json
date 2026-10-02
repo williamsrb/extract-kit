@@ -21,7 +21,7 @@
   "id": "s",
   "x": 40,
   "y": 54,
-  "text": "status decides each step. Yellow = AI step, checked by the kit. Purple = needs a local or review XP. promote refuses a dirty destination.",
+  "text": "install once, then status decides each step. Yellow = AI step, checked by the kit. Purple = needs a local or review XP. promote refuses a dirty destination.",
   "fontSize": 16,
   "strokeColor": "#5f6368",
   "fontFamily": 5
@@ -42,7 +42,7 @@
    }
   ],
   "label": {
-   "text": "doctor / deps",
+   "text": "install once,\nthen doctor / deps",
    "fontSize": 16,
    "fontFamily": 5
   }
@@ -961,6 +961,16 @@
   "text": "dirty dest",
   "fontSize": 14,
   "strokeColor": "#c92a2a",
+  "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "hl",
+  "x": 40,
+  "y": 200,
+  "text": "no human? extractkit headless\nruns all of this (Headless)",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
   "fontFamily": 5
  }
 ]

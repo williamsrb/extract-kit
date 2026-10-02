@@ -18,7 +18,7 @@
       "id": "st",
       "x": 40,
       "y": 66,
-      "text": "The original project is only read. Production systems are refused.",
+      "text": "The original project is only read. Production systems are refused. Run it by hand, or headless in a pipeline.",
       "fontSize": 17,
       "strokeColor": "#5f6368",
       "fontFamily": 5
