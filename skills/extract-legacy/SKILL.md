@@ -8,8 +8,12 @@ description: >
 
 # Extract a legacy spec
 
-Kit: this repo (`./extractkit`). Plan and PRD live under `~/.agents/`, not
-in the kit tree.
+Run from the legacy checkout, in a session opened there, with `extractkit`
+on PATH. If `extractkit` is not found, ask the operator to run
+`./extractkit install` once in the kit repo. A session opened in the kit
+repo cannot prepare Serena or Graphify for the target: tell the operator to
+open the checkout instead. Plan and PRD live under `~/.agents/`, not in the
+kit tree.
 
 Read `docs/llm.md` first. It holds the invariants, the command sequence per
 phase, what to do for each exit code and `next` block, the failure table and

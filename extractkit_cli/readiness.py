@@ -10,8 +10,8 @@ from pathlib import Path
 
 from .common import Row
 
-SERENA_FIX = "open {source} in an agent with Serena and run onboarding"
-GRAPHIFY_FIX = "build a Graphify index in {source} (the graphify skill, for example `/graphify .`)"
+SERENA_FIX = "open an agent session in {source} (not in the kit) and run Serena onboarding"
+GRAPHIFY_FIX = "in an agent session opened in {source}, build a Graphify index (the graphify skill, for example `/graphify .`)"
 GRAFT_FIX = "run `graft build` in {source}"
 
 

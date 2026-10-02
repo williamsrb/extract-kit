@@ -120,8 +120,10 @@ def render_row(row: Row) -> list[str]:
 
 
 def cmd_deps(args: Namespace) -> int:
+    from . import install
+
     profile = manifest.load(args.profile)
-    rows = check_deps(profile)
+    rows = [*install.install(), *check_deps(profile)]
     print(f"deps: profile {profile['name']}")
     for row in rows:
         for line in render_row(row):

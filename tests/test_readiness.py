@@ -40,7 +40,7 @@ class CheckSourceTests(unittest.TestCase):
         self.assertFalse(rows["graft index"].failed)
         self.assertEqual(
             rows["serena onboarding"].fix,
-            f"open {raw} in an agent with Serena and run onboarding",
+            readiness.SERENA_FIX.format(source=raw),
         )
         self.assertEqual(rows["graphify index"].fix, readiness.GRAPHIFY_FIX.format(source=raw))
         self.assertEqual(rows["graft index"].fix, f"run `graft build` in {raw}")
@@ -72,12 +72,12 @@ class DoctorSourceTests(unittest.TestCase):
             source = copy_fixture(Path(raw))
             result = run("doctor", "--profile", "enonic", "--source", str(source))
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn(f"fix: open {source} in an agent with Serena", result.stdout)
+        self.assertIn(f"fix: {readiness.SERENA_FIX.format(source=source)}", result.stdout)
         self.assertIn(f"fix: {readiness.GRAPHIFY_FIX.format(source=source)}", result.stdout)
         self.assertIn(f"fix: run `graft build` in {source}", result.stdout)
         self.assertIn("doctor: 2 problem(s).", result.stdout)
-        self.assertIn("and run onboarding, then re-run:", result.stdout)
-        self.assertIn("$ ./extractkit doctor --profile enonic --source", result.stdout)
+        self.assertIn("and run Serena onboarding, then re-run:", result.stdout)
+        self.assertIn("$ extractkit doctor --profile enonic --source", result.stdout)
 
     def test_graft_missing_alone_is_a_warning(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

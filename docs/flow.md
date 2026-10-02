@@ -6,8 +6,11 @@ them.
 
 ## Operator path
 
-`doctor` and `deps` suggest `run --until static`. `doctor --source` first
-checks the target's Serena onboarding and Graphify index. After that, `status`
+Install once with `./extractkit install` in the kit repo, then work from the
+legacy checkout, in an agent session opened there. `deps` and
+`doctor --source` repeat the install and suggest `run --until static`.
+`doctor --source` first checks the target's Serena onboarding and Graphify
+index. After that, `status`
 (alias `next`) is the map: every phase is done, current, or pending. The
 current phase's missing marker decides the command.
 

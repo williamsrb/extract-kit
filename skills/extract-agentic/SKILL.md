@@ -17,8 +17,10 @@ you wrote. You do the task. Read `docs/llm.md` for the invariants first.
 
 ## Loop
 
-Run from the kit repo. `<sidecar>` is the extract run directory
-(`<legacy>/.extract/<run-id>`).
+Run from the legacy checkout, in a session opened there, so Serena and
+file reads resolve against the code being described. `extractkit` must be
+on PATH (`./extractkit install` in the kit repo). `<sidecar>` is the extract
+run directory (`.extract/<run-id>` under the checkout).
 
 1. `extractkit agent next --out <sidecar> --json`. Read `next`. When it is
    `null` and `blocked` is empty, stop: no required task is pending. When

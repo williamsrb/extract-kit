@@ -133,7 +133,11 @@ confirms its own work.
 
 ## For operators
 
-Install, commands, and options are in the [usage guide](docs/usage.md). In
+Install once with `./extractkit install` in this repo; it puts `extractkit`
+on PATH and the two skills where your assistant finds them. Then open the
+project you want to extract in your assistant and run `extractkit` from
+there, not from this repo. Install, commands, and options are in the
+[usage guide](docs/usage.md). In
 the commands and detailed docs, the output folder is called the *sidecar*
 and the local copy of the project the *checkout*.
 

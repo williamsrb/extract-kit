@@ -25,29 +25,61 @@ the kit and for the rule-naming step.
 ## Install
 
 Python 3.12+ with PyYAML and jsonschema (already on the reference box).
+From the kit repo, once:
 
 ```bash
-chmod +x ./extractkit
-./extractkit --help
+./extractkit install
 ```
 
-No bootstrap, no desktop forks, no writes into `~/.agents-profiles`.
+`install` creates three kinds of symlink back into the kit repo:
+
+- `~/.local/bin/extractkit`, the CLI. `~/.local/bin` must be on PATH; the
+  command fails and prints the `export` line when it is not.
+- `~/.agents/skills/extract-legacy` and `extract-agentic`, for Codex, Cursor
+  and other assistants.
+- `~/.claude/skills/<skill>`, pointing at the `~/.agents/skills/` link, for
+  Claude Code.
+
+A `git pull` in the kit updates the installed copy. `install` is
+idempotent. It replaces a symlink that points elsewhere only with `--force`,
+and never touches a real file or directory. Preflight (`deps` and
+`doctor --source`) runs the same install, so the first command of a run
+installs the kit even when nobody ran `install`.
+
+## Where to run
+
+Install the kit once, then run every command from the checkout you are
+extracting, in an agent session opened there:
+
+```bash
+cd /path/to/legacy
+extractkit doctor --profile enonic --source .
+```
+
+Do not drive an extract from the kit repo. Serena, Graphify and graft act on
+the folder the agent session was opened in. A session opened in the kit
+onboards and indexes the kit, so `doctor --source` keeps failing, and the
+agent tasks would read the kit instead of the legacy code. The CLI itself
+does not care where it runs: it finds its own files from its install path,
+and `--source` takes any path.
 
 ## Commands
 
+Run from the legacy checkout (see [Where to run](#where-to-run)):
+
 ```bash
-./extractkit profile list
-./extractkit profile show enonic
-./extractkit profile show php
-./extractkit doctor --profile php          # empty PHP is allowed
-./extractkit doctor --profile enonic --source /path/to/legacy  # + readiness
-./extractkit deps --profile enonic         # runs each probe
-./extractkit run --profile enonic --source /path/to/legacy --until static
-./extractkit status --source /path/to/legacy
-./extractkit resume --profile enonic --source /path/to/legacy
-./extractkit agent next --out /path/to/legacy/.extract/<run-id>
-./extractkit check --out /path/to/legacy/.extract/<run-id>
-./extractkit promote --source /path/to/legacy
+extractkit profile list
+extractkit profile show enonic
+extractkit profile show php
+extractkit doctor --profile php          # empty PHP is allowed
+extractkit doctor --profile enonic --source .  # + install and readiness
+extractkit deps --profile enonic         # + install; runs each probe
+extractkit run --profile enonic --source . --until static
+extractkit status --source .
+extractkit resume --profile enonic --source .
+extractkit agent next --out .extract/<run-id>
+extractkit check --out .extract/<run-id>
+extractkit promote --source .
 ```
 
 ## Next
@@ -74,7 +106,7 @@ an `--out` outside the checkout a run writes nothing into the source.
 
 ## PHP
 
-`./extractkit run --profile php --source …` exits non-zero with the
+`extractkit run --profile php --source …` exits non-zero with the
 unfinished work list. It does not parse PHP.
 
 ## Static extract
@@ -83,14 +115,14 @@ Descriptors, maps, and OpenAPI only. A full Enonic run also surveys live
 CMS and needs `--branch` and `--storage-state`.
 
 ```bash
-./extractkit run --profile enonic --source /path/to/legacy --until static
+extractkit run --profile enonic --source . --until static
 ```
 
 Then merge, docs, and Spec Kit without CMS:
 
 ```bash
-./extractkit run --profile enonic --source /path/to/legacy \
-  --out /path/to/legacy/.extract/<run-id> \
+extractkit run --profile enonic --source . \
+  --out .extract/<run-id> \
   --from merge --until synthesis
 ```
 
@@ -106,8 +138,8 @@ Required: `--branch draft|master`, `--storage-state`, and a Guillotine URL
 (`--guillotine`). Pin keys with `--cms-key`. Do not walk the tree.
 
 ```bash
-./extractkit step enonic.cms --profile enonic --source /path/to/legacy \
-  --out /path/to/legacy/.extract/<run-id> \
+extractkit step enonic.cms --profile enonic --source . \
+  --out .extract/<run-id> \
   --branch draft \
   --storage-state ~/.agents/.auth/xp7-localhost.json \
   --guillotine http://localhost:8080/admin/site/preview/en/draft \
@@ -126,13 +158,13 @@ fails a run. A skip prints the command to run.
 
 ```bash
 # desktop 1440 and mobile 390 screenshots, rendered HTML, network list
-./extractkit step inventory.baseline --profile enonic --source /path/to/legacy \
-  --out /path/to/legacy/.extract/<run-id> --branch draft \
+extractkit step inventory.baseline --profile enonic --source . \
+  --out .extract/<run-id> --branch draft \
   --storage-state ~/.agents/.auth/xp7-localhost.json
 
 # factual XP7 to XP8 list, outside spec-kit/
-./extractkit step report.compat --profile enonic --source /path/to/legacy \
-  --out /path/to/legacy/.extract/<run-id>
+extractkit step report.compat --profile enonic --source . \
+  --out .extract/<run-id>
 ```
 
 `inventory.baseline` needs `playwright-cli` and the runtime pages. It

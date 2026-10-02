@@ -124,10 +124,9 @@ def prog_display(argv0: str | None = None) -> str:
     path = Path(raw)
     if not raw or not path.is_file():
         return "extractkit"
-    if path.is_absolute():
-        found = shutil.which("extractkit")
-        if found and Path(found).resolve() == path.resolve():
-            return "extractkit"
+    found = shutil.which("extractkit")
+    if found and Path(found).resolve() == path.resolve():
+        return "extractkit"
     absolute = path.absolute()
     try:
         return "./" + absolute.relative_to(Path.cwd()).as_posix()

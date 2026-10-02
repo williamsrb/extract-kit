@@ -7,6 +7,12 @@ them.
 
 ## Invariants
 
+- Run from the legacy checkout, in an agent session opened there, with
+  `extractkit` on PATH (`./extractkit install` in the kit repo puts it
+  there; preflight repeats the install). Do not drive an extract from a
+  session opened in the kit repo: Serena, Graphify and graft act on the
+  session's folder, so they would onboard and index the kit. If you are in
+  the kit repo, tell the operator to open the checkout and stop.
 - The source checkout is read-only. Every run writes only
   `<source>/.extract/<run-id>/`. Only `promote` writes into the checkout, and
   only when the operator asked for it.
@@ -31,12 +37,16 @@ instead of rebuilding the command.
 
 ```bash
 extractkit deps --profile enonic
-extractkit doctor --profile enonic --source <legacy>
+extractkit doctor --profile enonic --source .
 ```
 
-`deps` runs every probe. `doctor --source` adds the target's readiness:
-Serena onboarding, a Graphify index (both must pass) and a graft index (a
-warning).
+Both first install the kit: the CLI link in `~/.local/bin` and the skill
+links in `~/.agents/skills` and `~/.claude/skills`. An install row that
+fails names its fix (`--force` for a foreign symlink, an `export PATH` line
+when `~/.local/bin` is not on PATH). `deps` then runs every probe.
+`doctor --source` adds the target's readiness: Serena onboarding, a
+Graphify index (both must pass) and a graft index (a warning). The operator
+produces those in a session opened in the checkout.
 
 ### 2 Static
 
@@ -132,8 +142,11 @@ when the operator asks.
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | `BROKEN` in `deps` | The tool is on PATH but its probe failed (for example `graphify` with a missing package) | Report the printed `fix:`; reinstall is the operator's call |
-| `serena onboarding` MISSING | No `.serena/project.yml` or no memory file | Ask the operator to onboard the project in an agent with Serena |
-| `graphify index` MISSING | No `graphify-out/graph.json` | Ask the operator to build a Graphify index in the source (the graphify skill, for example `/graphify .`) |
+| `./extractkit: No such file or directory` or `extractkit: command not found` | The kit is not on PATH; `./extractkit` only works inside the kit repo | Ask the operator to run `./extractkit install` once in the kit repo, then use `extractkit` |
+| `extractkit on PATH` MISSING | `~/.local/bin` is not on PATH | Report the printed `export PATH=` line; editing shell profiles is the operator's call |
+| `link …` or `skill …` BROKEN | A symlink there points elsewhere, or a real file is in the way | Report the fix. `install --force` only on the operator's word; a real file is the operator's to move |
+| `serena onboarding` MISSING | No `.serena/project.yml` or no memory file | Ask the operator to onboard the project in an agent session opened in the checkout, not in the kit |
+| `graphify index` MISSING | No `graphify-out/graph.json` | Ask the operator to build a Graphify index from a session opened in the checkout (the graphify skill, for example `/graphify .`) |
 | `graft index` warning | No `graft/` | Optional. `map.code` skips until the operator runs `graft build` |
 | `profile 'core' has unbound required adapters` | `core` has no stack adapters | Use `enonic` (or `as`) |
 | `enonic.cms requires --branch` | The slice includes CMS | Add `--branch draft`, or stop at `--until static` |

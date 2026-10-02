@@ -109,8 +109,11 @@ class DepsProbeTests(unittest.TestCase):
 class DepsCommandTests(unittest.TestCase):
     def _run(self, profile: dict, path: str) -> tuple[int, str]:
         out = io.StringIO()
+        home = tempfile.TemporaryDirectory()
+        self.addCleanup(home.cleanup)
+        bin_dir = Path(home.name) / ".local" / "bin"
         with (
-            mock.patch.dict(os.environ, {"PATH": path}),
+            mock.patch.dict(os.environ, {"PATH": f"{path}{os.pathsep}{bin_dir}", "HOME": home.name}),
             mock.patch.object(manifest, "load", return_value=profile),
             contextlib.redirect_stdout(out),
         ):

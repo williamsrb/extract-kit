@@ -181,10 +181,17 @@ class RewriteTests(unittest.TestCase):
         cwd = os.getcwd()
         try:
             os.chdir(REPO)
-            self.assertEqual(guide.prog_display(str(REPO / "extractkit")), "./extractkit")
+            with mock.patch.object(guide.shutil, "which", return_value=None):
+                self.assertEqual(guide.prog_display(str(REPO / "extractkit")), "./extractkit")
             self.assertEqual(guide.prog_display("-c"), "extractkit")
         finally:
             os.chdir(cwd)
+
+    def test_prog_display_is_bare_once_installed_on_path(self) -> None:
+        link = str(REPO / "extractkit")
+        with mock.patch.object(guide.shutil, "which", return_value=link):
+            self.assertEqual(guide.prog_display(link), "extractkit")
+            self.assertEqual(guide.prog_display("extractkit"), "extractkit")
 
 
 class RendererTests(unittest.TestCase):
@@ -433,7 +440,7 @@ class CliOutputTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("error: enonic.cms requires --branch", result.stderr)
         self.assertIn(
-            f"fix:   $ ./extractkit run --profile enonic --source {source} --branch draft",
+            f"fix:   $ extractkit run --profile enonic --source {source} --branch draft",
             result.stderr,
         )
         self.assertIn("hint:  pass --branch draft", result.stderr)

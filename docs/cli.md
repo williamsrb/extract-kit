@@ -180,6 +180,31 @@ against `python: ">=3.12"` and each `python_modules` entry with
 exits 1. A `BROKEN` optional tool, such as a `graphify` shim whose package
 is gone, prints a `note:` and does not change the exit code.
 
+## Install
+
+`extractkit install` links the kit into the user's home. Every link points
+back into the kit repo:
+
+<!-- markdownlint-disable MD013 -->
+| Row | Link | Target |
+| --- | --- | --- |
+| `link extractkit` | `~/.local/bin/extractkit` | `<kit>/extractkit` |
+| `skill <name>` | `~/.agents/skills/<name>` | `<kit>/skills/<name>` |
+| `claude <name>` | `~/.claude/skills/<name>` | `~/.agents/skills/<name>` |
+| `extractkit on PATH` | (check only) | `~/.local/bin` is a PATH entry |
+<!-- markdownlint-enable MD013 -->
+
+A link that reaches the same endpoint by another path, such as a skill
+sync script linking straight to the kit, is `ok` and left alone. A
+symlink that points elsewhere is `BROKEN` until `--force` replaces it. A
+real file or directory is `BROKEN` and is never touched. A failing row
+exits 1. `deps` and `doctor --source` run the same install first, with the
+same rows.
+
+Once the link is on PATH, `next` blocks and `fix:` lines print `extractkit`.
+Run from inside the kit repo without the link, they print `./extractkit`;
+from anywhere else, the absolute path.
+
 ## Preflight
 
 `doctor --source DIR` adds the target checkout to the profile check:
@@ -187,8 +212,8 @@ is gone, prints a `note:` and does not change the exit code.
 <!-- markdownlint-disable MD013 -->
 | Row | Ready when | Missing |
 | --- | --- | --- |
-| `serena onboarding` | `.serena/project.yml` exists and `.serena/memories/` holds a `*.md` | exit 1; fix: open the source in an agent with Serena and run onboarding |
-| `graphify index` | `graphify-out/graph.json` exists | exit 1; fix: run `/graphify .` in the source |
+| `serena onboarding` | `.serena/project.yml` exists and `.serena/memories/` holds a `*.md` | exit 1; fix: open an agent session in the source and run Serena onboarding |
+| `graphify index` | `graphify-out/graph.json` exists | exit 1; fix: run `/graphify .` from a session opened in the source |
 | `graft index` | `graft/` exists | warning only; fix: run `graft build` in the source |
 <!-- markdownlint-enable MD013 -->
 
@@ -262,8 +287,8 @@ A full `run` without `--until` includes CMS and needs `--branch` and
 `--storage-state`.
 
 ```bash
-./extractkit run --profile enonic --source ./legacy --until static
-./extractkit run --profile enonic --source ./legacy --out <sidecar> \
+extractkit run --profile enonic --source . --until static
+extractkit run --profile enonic --source . --out <sidecar> \
   --from merge --until synthesis
 ```
 

@@ -11,7 +11,17 @@ import argparse
 import sys
 from collections.abc import Callable
 
-from . import agent_tasks, check, deps, guide, profiles, progress, promote, runner
+from . import (
+    agent_tasks,
+    check,
+    deps,
+    guide,
+    install,
+    profiles,
+    progress,
+    promote,
+    runner,
+)
 from .errors import ExtractkitError
 
 DESCRIPTION = """\
@@ -29,20 +39,24 @@ phase id or number. Every run ends with the next command to paste.
 Runtime CMS (enonic.cms) is local or review XP only. Pass --branch,
 --storage-state and a Guillotine URL; production hosts are refused.
 
+Install once from the kit repo (preflight repeats it), then run every
+command from the legacy checkout, in an agent session opened there:
+  ./extractkit install
+
 Common examples:
   extractkit profile list
   extractkit profile show enonic
   extractkit doctor --profile php
   extractkit deps --profile enonic
-  extractkit run --profile enonic --source ./legacy --until static
-  extractkit status --source ./legacy
-  extractkit resume --profile enonic --source ./legacy \\
+  extractkit run --profile enonic --source . --until static
+  extractkit status --source .
+  extractkit resume --profile enonic --source . \\
       --branch draft --storage-state ~/.agents/.auth/xp7-localhost.json \\
       --guillotine http://localhost:8080/admin/site/preview/en/draft
-  extractkit run --profile enonic --source ./legacy \\
-      --out ./legacy/.extract/<run-id> --from merge --until synthesis
-  extractkit check --out ./legacy/.extract/<run-id>
-  extractkit promote --source ./legacy --out ./legacy/.extract/<run-id>
+  extractkit run --profile enonic --source . \\
+      --out .extract/<run-id> --from merge --until synthesis
+  extractkit check --out .extract/<run-id>
+  extractkit promote --source . --out .extract/<run-id>
 
 Run 'extractkit GROUP --help' or 'extractkit GROUP COMMAND --help' for details.
 """
@@ -168,6 +182,11 @@ def build_parser() -> argparse.ArgumentParser:
     a_next = agent.add_parser("next", help="Print the first pending required task whose inputs exist.")
     agent_flags(a_next)
     a_next.set_defaults(func=agent_tasks.cmd_next)
+
+    ins = flat("install", "Link the CLI into ~/.local/bin and the kit skills into ~/.agents/skills and ~/.claude/skills.")
+    ins.add_argument("--force", action="store_true",
+                     help="Replace a symlink that points somewhere else. Never touches a real file.")
+    ins.set_defaults(func=install.cmd_install)
 
     doc = flat("doctor", "Validate kit identity and profile YAML (empty PHP is allowed).")
     doc.add_argument("--profile", metavar="NAME", help="Check only this profile.")

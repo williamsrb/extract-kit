@@ -7,6 +7,12 @@ Run: `{run_id}`
 
 ## Invariants
 
+- Run from the legacy checkout, in an agent session opened there, with
+  `extractkit` on PATH (`./extractkit install` in the kit repo puts it
+  there; preflight repeats the install). Do not drive an extract from a
+  session opened in the kit repo: Serena, Graphify and graft act on the
+  session's folder, so they would onboard and index the kit. If you are in
+  the kit repo, tell the operator to open the checkout and stop.
 - The source checkout is read-only. Every run writes only
   `<source>/.extract/<run-id>/`. Only `promote` writes into the checkout, and
   only when the operator asked for it.

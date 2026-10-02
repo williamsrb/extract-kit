@@ -2,14 +2,26 @@
 
 from __future__ import annotations
 
+import atexit
+import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 FIXTURE = REPO / "tests" / "fixtures" / "enonic-mini"
 CLI = [sys.executable, str(REPO / "extractkit")]
+
+# Preflight (`deps`, `doctor --source`) installs the kit into $HOME. Every CLI
+# subprocess gets a throwaway HOME so the suite never links into the real one.
+TEST_HOME = Path(tempfile.mkdtemp(prefix="extractkit-home-"))
+atexit.register(shutil.rmtree, TEST_HOME, ignore_errors=True)
+
+from extractkit_cli import install as _install
+
+_install.install(home=TEST_HOME)
 
 
 def run(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
@@ -19,6 +31,11 @@ def run(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]
         capture_output=True,
         text=True,
         check=False,
+        env={
+            **os.environ,
+            "HOME": str(TEST_HOME),
+            "PATH": f"{TEST_HOME / '.local' / 'bin'}{os.pathsep}{os.environ.get('PATH', '')}",
+        },
     )
 
 
