@@ -16,11 +16,16 @@ from . import (
     check,
     context,
     deps,
+    envflags,
     guide,
+    headless,
     install,
+    kitguard,
     profiles,
     progress,
     promote,
+    resources,
+    result,
     runner,
 )
 from .errors import ExtractkitError
@@ -65,7 +70,7 @@ Run 'extractkit GROUP --help' or 'extractkit GROUP COMMAND --help' for details.
 """
 
 
-def _add_cms_flags(parser: argparse.ArgumentParser) -> None:
+def _add_cms_flags(parser: argparse.ArgumentParser, *, headless: bool = False) -> None:
     parser.add_argument(
         "--branch", choices=("draft", "master"),
         help="XP branch. Required when inventory.runtime / enonic.cms runs.",
@@ -107,6 +112,8 @@ def _add_cms_flags(parser: argparse.ArgumentParser) -> None:
         help="Base URL for baseline page captures. Default: "
              "{host}/admin/site/preview/{project}/{branch}. Local or review hosts only.",
     )
+    if headless:
+        return  # headless never passes --allow-production, and writes no tasks.md
     parser.add_argument(
         "--allow-production", dest="allow_production", action="store_true",
         help="Override production deny-by-default. Not used in the DoD.",
@@ -138,6 +145,19 @@ def _add_output_flags(parser: argparse.ArgumentParser) -> None:
                         help="List every recorded action with its path.")
     parser.add_argument("-q", "--quiet", action="store_true",
                         help="Suppress tips.")
+
+
+def _add_resources_flag(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--resources", metavar="FILE",
+        help="Resources YAML (xp, auth, agent): fills options not set by a flag or EXTRACTKIT_* "
+             "variable. See docs/headless.md.",
+    )
+
+
+def _add_json_flag(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--json", action="store_true",
+                        help="Print one JSON result document instead of text.")
 
 
 def _help_action(parser: argparse.ArgumentParser) -> Callable[[argparse.Namespace], int]:
@@ -205,9 +225,10 @@ def build_parser() -> argparse.ArgumentParser:
     agent_flags(a_next)
     a_next.set_defaults(func=agent_tasks.cmd_next)
 
-    ins = flat("install", "Link the CLI into ~/.local/bin and the kit skills into ~/.agents/skills and ~/.claude/skills.")
+    ins = flat("install", "Copy the kit into ~/.local/share/extractkit, add the launcher to ~/.local/bin and the skills to ~/.agents/skills and ~/.claude/skills.")
     ins.add_argument("--force", action="store_true",
-                     help="Replace a symlink that points somewhere else. Never touches a real file.")
+                     help="Replace a symlink that points somewhere else. Never touches a real file or folder.")
+    _add_json_flag(ins)
     ins.set_defaults(func=install.cmd_install)
 
     doc = flat("doctor", "Validate kit identity and profile YAML (empty PHP is allowed).")
@@ -218,6 +239,10 @@ def build_parser() -> argparse.ArgumentParser:
              "onboarding, a Graphify index and a graft index.",
     )
     _add_output_flags(doc)
+    _add_resources_flag(doc)
+    doc.add_argument("--storage-state", dest="storage_state", metavar="FILE",
+                     help="Playwright storage-state JSON the resource probes use. Overrides auth.storage_state.")
+    _add_json_flag(doc)
     doc.set_defaults(func=profiles.cmd_doctor)
 
     dep = flat("deps", "Check that every binary a profile declares is on PATH.")
@@ -226,6 +251,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Profile type whose deps to check (default: core).",
     )
     _add_output_flags(dep)
+    _add_json_flag(dep)
     dep.set_defaults(func=deps.cmd_deps)
 
     ctx = flat("context", "Detect the stack and record the build scope (phase 2, writes context/).")
@@ -235,6 +261,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_profile_flag(ctx)
     _add_exclude_flag(ctx)
     _add_output_flags(ctx)
+    _add_json_flag(ctx)
     ctx.set_defaults(func=context.cmd_context)
 
     run = flat("run", "Execute a profile pipeline and write the sidecar.")
@@ -250,6 +277,8 @@ def build_parser() -> argparse.ArgumentParser:
     _add_cms_flags(run)
     _add_exclude_flag(run)
     _add_output_flags(run)
+    _add_resources_flag(run)
+    _add_json_flag(run)
     run.set_defaults(func=runner.cmd_run)
 
     step = flat("step", "Execute one phase or pipeline slot and write its artifacts.")
@@ -261,12 +290,15 @@ def build_parser() -> argparse.ArgumentParser:
     _add_cms_flags(step)
     _add_exclude_flag(step)
     _add_output_flags(step)
+    _add_resources_flag(step)
+    _add_json_flag(step)
     step.set_defaults(func=runner.cmd_step)
 
     chk = flat("check", "Fail closed on schema, descriptor coverage, missing x-source, or spec FR cites.")
     chk.add_argument("--out", required=True, metavar="DIR",
                      help="Extract tree to validate.")
     _add_output_flags(chk)
+    _add_json_flag(chk)
     chk.set_defaults(func=check.cmd_check)
 
     nxt = top.add_parser(
@@ -282,6 +314,7 @@ def build_parser() -> argparse.ArgumentParser:
     nxt.add_argument("--out", metavar="DIR",
                      help="Extract tree. Default: latest <source>/.extract/<run-id>/.")
     _add_output_flags(nxt)
+    _add_json_flag(nxt)
     nxt.set_defaults(func=progress.cmd_status)
 
     res = flat("resume", "Continue a sidecar from the first incomplete pipeline slot.")
@@ -294,6 +327,8 @@ def build_parser() -> argparse.ArgumentParser:
     _add_cms_flags(res)
     _add_exclude_flag(res)
     _add_output_flags(res)
+    _add_resources_flag(res)
+    _add_json_flag(res)
     res.set_defaults(func=progress.cmd_resume)
 
     promo = flat("promote", "Copy constitution, PRODUCT/DESIGN, and specs into the source tree. Never edits .gitignore or .git/.")
@@ -304,14 +339,61 @@ def build_parser() -> argparse.ArgumentParser:
     promo.add_argument("--force", action="store_true",
                        help="Overwrite destinations git cannot restore.")
     _add_output_flags(promo)
+    _add_json_flag(promo)
     promo.set_defaults(func=promote.cmd_promote)
 
+    hl = flat(
+        "headless",
+        "Run the whole extract with no human: calls an agent CLI for the preflight and each agent task.",
+    )
+    hl.add_argument("--source", required=True, metavar="DIR", help="Legacy checkout (read-only).")
+    _add_profile_flag(hl)
+    hl.add_argument("--agent", metavar="NAME",
+                    help="Agent CLI from the agents: block of extractkit.yaml (default: claude).")
+    hl.add_argument("--agent-permissions", dest="agent_permissions", choices=("allowlist", "bypass"),
+                    metavar="MODE", help="allowlist (default) or bypass. Bypass is the operator's call.")
+    hl.add_argument("--allowed-tools", dest="allowed_tools", action="append", metavar="TOOL",
+                    help="Tool allowlist for the agent (repeatable). Replaces the agents: default.")
+    _add_resources_flag(hl)
+    _add_cms_flags(hl, headless=True)
+    _add_exclude_flag(hl)
+    hl.add_argument("--until", type=headless.stage_id, metavar="STAGE",
+                    help="Stop after this stage: " + ", ".join(headless.STAGES) + ".")
+    hl.add_argument("--promote", action="store_true",
+                    help="Also run promote at the end (never --force).")
+    hl.add_argument("--max-fix-attempts", dest="max_fix_attempts", type=int, default=2, metavar="N",
+                    help="Fix attempts per agent task after a failed check (default 2).")
+    hl.add_argument("--task-timeout", dest="task_timeout", type=int, default=1800, metavar="SECONDS",
+                    help="Kill an agent process after this long (default 1800).")
+    _add_json_flag(hl)
+    hl.set_defaults(func=headless.cmd_headless)
+
     return parser
+
+
+def _fail(exc: ExtractkitError, args: argparse.Namespace | None, raw: list[str], as_json: bool) -> int:
+    if as_json:
+        return result.fail(exc, args, raw)
+    print(f"error: {exc}", file=sys.stderr)
+    prog = getattr(args, "prog_display", None) or guide.prog_display()
+    if exc.fix_args:
+        command = guide.join([prog, *guide.rewrite(raw, set=exc.fix_args)])
+        print(f"fix:   $ {command}", file=sys.stderr)
+        if exc.fix:
+            print(f"hint:  {exc.fix}", file=sys.stderr)
+    elif exc.fix:
+        print(f"fix:   {exc.fix}", file=sys.stderr)
+    return 1
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     raw = list(argv if argv is not None else sys.argv[1:])
+    result.reset()
+    try:
+        envflags.apply_defaults(parser)
+    except ExtractkitError as exc:
+        return _fail(exc, None, raw, result.json_requested(raw))
     args, unknown = parser.parse_known_args(raw)
 
     if unknown:
@@ -322,18 +404,18 @@ def main(argv: list[str] | None = None) -> int:
 
     args.argv = raw
     args.prog_display = guide.prog_display()
+    as_json = bool(getattr(args, "json", False))
     try:
-        return int(args.func(args))
+        envflags.finish(args, raw)
+        resources.apply(args, raw)
+        kitguard.refuse_kit(args)
+        if not as_json:
+            return int(args.func(args))
+        with result.capture(args, raw) as collector:
+            code = int(args.func(args))
+        return result.finish(collector, code, args)
     except KeyboardInterrupt:
         print("interrupted", file=sys.stderr)
         return 130
     except ExtractkitError as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        if exc.fix_args:
-            command = guide.join([args.prog_display, *guide.rewrite(raw, set=exc.fix_args)])
-            print(f"fix:   $ {command}", file=sys.stderr)
-            if exc.fix:
-                print(f"hint:  {exc.fix}", file=sys.stderr)
-        elif exc.fix:
-            print(f"fix:   {exc.fix}", file=sys.stderr)
-        return 1
+        return _fail(exc, args, raw, as_json)

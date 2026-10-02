@@ -2,3 +2,26 @@
 name: 99x Extract Kit
 fork_id: 99x
 schema_versions: [1]
+
+# Agent CLIs `extractkit headless` can start. Each entry is data:
+#   argv            the command; the prompt always arrives on stdin
+#   allowlist_args  appended unless agent.permissions is `bypass`
+#   bypass_args     appended only when agent.permissions is `bypass`
+#   allowed_tools   default tool allowlist for an agent task
+#   preflight_tools default tool allowlist for the Serena and Graphify preflight
+# Templates accept {allowed_tools} (comma-joined) and {source}. Another CLI is a
+# new entry here, with no code change. Argv verified 2026-10-02 against
+# claude 2.1.280 and codex-cli 0.151.0 (`--help`).
+agents:
+  claude:
+    argv: [claude, -p, --output-format, text]
+    allowlist_args: [--permission-mode, acceptEdits, --allowedTools, "{allowed_tools}"]
+    bypass_args: [--permission-mode, bypassPermissions]
+    allowed_tools: [Read, Write, Edit, Glob, Grep, "Bash(extractkit *)", mcp__serena]
+    preflight_tools: [Read, Write, Edit, Glob, Grep, "Bash(graphify *)", mcp__serena]
+  codex:
+    argv: [codex, exec, --cd, "{source}"]
+    allowlist_args: [--sandbox, workspace-write, "-"]
+    bypass_args: [--dangerously-bypass-approvals-and-sandbox, "-"]
+    allowed_tools: []
+    preflight_tools: []

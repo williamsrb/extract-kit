@@ -1,0 +1,12 @@
+.git
+.extract
+.serena
+.agents
+.claude
+.ruff_cache
+.security-local
+.docs-rewrite-backup
+graft
+graphify-out
+docs/diagrams
+tests

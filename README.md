@@ -139,16 +139,20 @@ confirms its own work.
 
 ## For operators
 
-Install once with `./extractkit install` in this repo; it puts `extractkit`
-on PATH and the two skills where your assistant finds them. Then open the
-project you want to extract in your assistant and run `extractkit` from
+Install once with `./extractkit install` in this repo; it copies the kit to
+`~/.local/share/extractkit`, puts `extractkit` on PATH and the two skills
+where your assistant finds them. The install is detached, so you can delete
+this checkout afterwards; run it again from a fresh checkout to update. Then
+open the project you want to extract in your assistant and run `extractkit` from
 there, not from this repo. Install, commands, and options are in the
-[usage guide](docs/usage.md). In
+[usage guide](docs/usage.md). To run an extract in a CI pipeline with no
+human, see [headless mode](docs/headless.md). In
 the commands and detailed docs, the output folder is called the *sidecar*
 and the local copy of the project the *checkout*.
 
 Docs: [LLM instructions](docs/llm.md), [usage](docs/usage.md),
 [flow](docs/flow.md), [CLI](docs/cli.md), [steps](docs/steps.md),
-[profiles](docs/profiles.md), [output](docs/output.md).
+[profiles](docs/profiles.md), [output](docs/output.md),
+[headless](docs/headless.md).
 
 Agents: read [docs/llm.md](docs/llm.md) first.

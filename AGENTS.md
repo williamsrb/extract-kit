@@ -1,7 +1,8 @@
 # Agent instructions
 
 This repo is 99x Extract Kit. Any coding assistant can drive it; the kit
-never calls a model. Read [docs/llm.md](docs/llm.md) first: it holds the
+never calls a model, except `extractkit headless`, which starts an agent CLI
+for a pipeline run. Read [docs/llm.md](docs/llm.md) first: it holds the
 invariants, the command sequence per phase, and the failure table.
 
 Sessions opened in this repo are for working on the kit. To extract a
@@ -12,9 +13,11 @@ checkout in a new session and run `extractkit` from there.
 
 The canonical skills live in `skills/`. `.agents/skills/` (Codex, Cursor and
 other assistants) and `.claude/skills/` (Claude Code) are symlinks to them;
-edit only `skills/`. `extractkit install` links them into
-`~/.agents/skills/` and `~/.claude/skills/`, so a session opened in the
-legacy checkout loads them too.
+edit only `skills/`. `extractkit install` copies them into
+`~/.agents/skills/` (and links `~/.claude/skills/` to those copies), so a
+session opened in the legacy checkout loads them too. The install is
+detached: it also copies the kit to `~/.local/share/extractkit`, so the
+kit checkout can be deleted afterwards.
 
 <!-- markdownlint-disable MD013 -->
 | Skill | Use it to |

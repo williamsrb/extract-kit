@@ -15,7 +15,7 @@ from argparse import Namespace
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import manifest
+from . import manifest, result
 from .errors import ExtractkitError
 
 MAX_ARTIFACTS = 3
@@ -28,7 +28,7 @@ CMS_SLOT = "inventory.runtime"
 # consumes the next token.
 BOOLEAN_FLAGS = frozenset({
     "-v", "--verbose", "-q", "--quiet", "--force",
-    "--allow-production", "--tasks", "--json", "-h", "--help",
+    "--allow-production", "--tasks", "--json", "--promote", "-h", "--help",
 })
 CARRY_FLAGS = (
     "--branch", "--xp-host", "--guillotine", "--project", "--storage-state",
@@ -119,13 +119,21 @@ def rel_to_cwd(path: Path | str) -> str:
     return rel.as_posix()
 
 
+def _launches(launcher: Path, entry: Path) -> bool:
+    """True when `launcher` is the installed launcher that runs `entry`."""
+    from . import install
+
+    root = install.launcher_root(launcher)
+    return root is not None and root.resolve() == entry.resolve().parent
+
+
 def prog_display(argv0: str | None = None) -> str:
     raw = argv0 if argv0 is not None else sys.argv[0]
     path = Path(raw)
     if not raw or not path.is_file():
         return "extractkit"
     found = shutil.which("extractkit")
-    if found and Path(found).resolve() == path.resolve():
+    if found and (Path(found).resolve() == path.resolve() or _launches(Path(found), path)):
         return "extractkit"
     absolute = path.absolute()
     try:
@@ -459,6 +467,7 @@ def emit(*sections: list[str]) -> None:
 def render_next(suggestion: Suggestion | None, style: Style) -> list[str]:
     if suggestion is None:
         return []
+    result.note_next(suggestion)
     lines = [
         f"{style.paint('next', 'next')}  {suggestion.reason}",
         f"  $ {join(suggestion.argv)}",

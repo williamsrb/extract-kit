@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse
 
-from . import buildscope, guide, manifest, scope
+from . import buildscope, guide, manifest, result, scope
 from .common import dump_yaml, load_json, load_yaml, write_json, write_text
 from .errors import ExtractkitError
 from .outtree import (
@@ -59,12 +59,14 @@ def detect_stack(source: Path, exclude: list[str] | tuple[str, ...] = ()) -> str
             f"{source} has markers for more than one stack: {', '.join(found)}",
             "pass --profile with the stack to extract",
             fix_args={"--profile": "enonic"},
+            code="multiple_stacks",
         )
     raise ExtractkitError(
         f"no stack marker found under {source}",
         "looked for src/main/resources/application.xml or site/site.xml (enonic) and a "
         "root composer.json (php); pass --profile enonic (or php)",
         fix_args={"--profile": "enonic"},
+        code="no_stack_marker",
     )
 
 
@@ -206,6 +208,7 @@ def cmd_context(args: Namespace) -> int:
         f"  {style.glyph('done') if decided else style.glyph('pending')} exclude "
         + (f"{overlay['exclude']}" if decided else "undecided (agent task context.exclude)")
     )
+    result.note_run(sidecar=out, source=source)
     prog = getattr(args, "prog_display", None) or "extractkit"
     suggestion = guide.Suggestion(
         "Continue with the static inventory:",

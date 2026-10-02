@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from . import context, guide, schema
+from . import context, guide, result, schema
 from .common import load_json, load_yaml
 from .errors import ExtractkitError
 
@@ -547,9 +547,13 @@ def cmd_check(args: Namespace) -> int:
     style = guide.style_for()
     if not problems:
         suggestion = guide.next_for("check", "clean", args, out=out)
+        result.note_run(sidecar=out, source=guide.sidecar_source(out))
         guide.emit([f"check: clean ({guide.rel_to_cwd(out)})"], guide.render_next(suggestion, style))
         return 0
     suggestion = guide.next_for("check", "problems", args, out=out)
+    result.note_run(sidecar=out, source=guide.sidecar_source(out))
+    result.note_problems(problems)
+    result.note_error("check_failed", f"{len(problems)} problem(s) in {out}", "fix the listed problems, then re-run check")
     guide.emit(
         [f"  {problem}" for problem in problems],
         [f"check: {len(problems)} problem(s)."],

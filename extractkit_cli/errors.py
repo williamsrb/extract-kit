@@ -12,6 +12,9 @@ class ExtractkitError(Exception):
 
     `fix_args` maps a flag to its value (`None` for a boolean flag). When set,
     the CLI prints the operator's own command with those flags applied.
+
+    `code` is a stable machine id for `--json` consumers (`error.code`); it
+    stays `"error"` where no specific code applies.
     """
 
     def __init__(
@@ -19,7 +22,9 @@ class ExtractkitError(Exception):
         message: str,
         fix: str | None = None,
         fix_args: dict[str, str | None] | None = None,
+        code: str = "error",
     ) -> None:
         super().__init__(message)
         self.fix = fix
         self.fix_args = fix_args
+        self.code = code

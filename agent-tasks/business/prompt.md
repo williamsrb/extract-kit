@@ -8,11 +8,12 @@ Run: `{run_id}`
 ## Invariants
 
 - Run from the legacy checkout, in an agent session opened there, with
-  `extractkit` on PATH (`./extractkit install` in the kit repo puts it
-  there; preflight repeats the install). Do not drive an extract from a
-  session opened in the kit repo: Serena, Graphify and graft act on the
-  session's folder, so they would onboard and index the kit. If you are in
-  the kit repo, tell the operator to open the checkout and stop.
+  `extractkit` on PATH (`./extractkit install` in a kit checkout puts it
+  there as a detached copy; preflight only checks it). The CLI refuses to
+  run when the working folder, `--source` or `--out` is inside the kit:
+  Serena, Graphify and graft act on the session's folder, so a session in
+  the kit would onboard and index the kit. If it refuses, stop and ask the
+  operator to open the legacy checkout.
 - The source checkout is read-only. Every run writes only
   `<source>/.extract/<run-id>/`. Only `promote` writes into the checkout, and
   only when the operator asked for it.
@@ -21,9 +22,11 @@ Run: `{run_id}`
   edits is `<sidecar>/context/profile.yaml`, and only the key the task names.
   `<source>/.extractkit/profile.yaml` is the operator's override: read it,
   never create or edit it.
-- The kit never runs Serena, graphify or graft. It detects them and prints
-  the fix. Do not run them inside the source yourself; tell the operator and
-  wait.
+- Core commands never run Serena, graphify or graft. They detect them and
+  print the fix. Do not run them inside the source yourself; tell the
+  operator and wait. The one exception is `extractkit headless`: its
+  preflight builds the graft index and has the agent CLI run Serena
+  onboarding and the Graphify index.
 - Production CMS hosts are refused. Use a local or review XP only.
 - The kit extracts and scores. It never infers. Anything you add beyond an
   extracted fact is marked `_(inferred)_` and keeps an `Evidence:` line.

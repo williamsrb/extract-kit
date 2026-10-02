@@ -12,16 +12,25 @@ description: >
 
 # Run the agent tasks
 
-The kit never calls a model. It stores each agent step as a prompt
+The kit never calls a model, except `extractkit headless`, which starts an
+agent CLI for a pipeline run. It stores each agent step as a prompt
 (`agent-tasks/<id>/`), lists it, renders it with real paths, and checks what
-you wrote. You do the task. Read `docs/llm.md` for the invariants first.
+you wrote. You do the task. Read `~/.local/share/extractkit/docs/llm.md` for
+the invariants first.
 
 ## Loop
 
 Run from the legacy checkout, in a session opened there, so Serena and
 file reads resolve against the code being described. `extractkit` must be
-on PATH (`./extractkit install` in the kit repo). `<sidecar>` is the extract
-run directory (`.extract/<run-id>` under the checkout).
+on PATH (`./extractkit install` in a kit checkout; the checkout can be
+deleted afterwards). `<sidecar>` is the extract run directory
+(`.extract/<run-id>` under the checkout).
+
+In a headless run there is no operator. The prompt you are given then starts
+with the headless preamble: where a task says to stop and ask the operator,
+write `<sidecar>/reports/blockers/<task id>.md` (`Reason:` and `Evidence:`
+lines) and stop. The analyst gates stay: never tick a review box, never set
+`out-of-scope`.
 
 1. `extractkit agent next --out <sidecar> --json`. Read `next`. When it is
    `null` and `blocked` is empty, stop: no required task is pending. When

@@ -8,11 +8,12 @@ them.
 ## Invariants
 
 - Run from the legacy checkout, in an agent session opened there, with
-  `extractkit` on PATH (`./extractkit install` in the kit repo puts it
-  there; preflight repeats the install). Do not drive an extract from a
-  session opened in the kit repo: Serena, Graphify and graft act on the
-  session's folder, so they would onboard and index the kit. If you are in
-  the kit repo, tell the operator to open the checkout and stop.
+  `extractkit` on PATH (`./extractkit install` in a kit checkout puts it
+  there as a detached copy; preflight only checks it). The CLI refuses to
+  run when the working folder, `--source` or `--out` is inside the kit:
+  Serena, Graphify and graft act on the session's folder, so a session in
+  the kit would onboard and index the kit. If it refuses, stop and ask the
+  operator to open the legacy checkout.
 - The source checkout is read-only. Every run writes only
   `<source>/.extract/<run-id>/`. Only `promote` writes into the checkout, and
   only when the operator asked for it.
@@ -21,9 +22,11 @@ them.
   edits is `<sidecar>/context/profile.yaml`, and only the key the task names.
   `<source>/.extractkit/profile.yaml` is the operator's override: read it,
   never create or edit it.
-- The kit never runs Serena, graphify or graft. It detects them and prints
-  the fix. Do not run them inside the source yourself; tell the operator and
-  wait.
+- Core commands never run Serena, graphify or graft. They detect them and
+  print the fix. Do not run them inside the source yourself; tell the
+  operator and wait. The one exception is `extractkit headless`: its
+  preflight builds the graft index and has the agent CLI run Serena
+  onboarding and the Graphify index.
 - Production CMS hosts are refused. Use a local or review XP only.
 - The kit extracts and scores. It never infers. Anything you add beyond an
   extracted fact is marked `_(inferred)_` and keeps an `Evidence:` line.
@@ -45,10 +48,12 @@ extractkit deps --profile enonic
 extractkit doctor --source .
 ```
 
-Both first install the kit: the CLI link in `~/.local/bin` and the skill
-links in `~/.agents/skills` and `~/.claude/skills`. An install row that
-fails names its fix (`--force` for a foreign symlink, an `export PATH` line
-when `~/.local/bin` is not on PATH). `deps` then runs every probe.
+Both first check the install: the kit copy in `~/.local/share/extractkit`,
+the launcher in `~/.local/bin`, and the skill copies in `~/.agents/skills`
+(linked from `~/.claude/skills`). Run from the kit checkout they install it;
+run from the installed copy they only check it. An install row that fails
+names its fix (`--force` for a foreign symlink, an `export PATH` line when
+`~/.local/bin` is not on PATH). `deps` then runs every probe.
 `doctor --source` adds the target's readiness: Serena onboarding, a
 Graphify index (both must pass), a graft index (a warning), the stack it
 would detect, and the build scope (a warning that lists top-level folders no
@@ -178,8 +183,10 @@ when the operator asks.
 | Exit 1 with `error:` and `fix:   $ <command>` | Run the fix command. It is your own command with the missing flag added |
 | Exit 1 with a prose `fix:` | Do what it says, or report it to the operator when it needs a decision |
 | Exit 0, `Agent is next` | Run `extractkit agent next`, or the `or skip to check` line when the operator asked for less |
+| Exit 3 (`headless` only) | A task is blocked and a person must look. Read the blocker file the error names; do not retry the run |
 | `check` exit 1 | Fix each listed problem at its source, re-run the slot that writes the file, then `check` again |
 | Exit 2 | A wrong flag or command. Read `--help`; do not retry blindly |
+| Any command with `--json` | Read the one JSON document on stdout: `ok`, `error.code`, `error.fix` and `error.fix_command` (run it as given), `next_command.argv` (exec it without shell parsing), `rows`, `problems`. Exit codes are the same as in text mode |
 <!-- markdownlint-enable MD013 -->
 
 ## Failures and fixes
@@ -188,9 +195,16 @@ when the operator asks.
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | `BROKEN` in `deps` | The tool is on PATH but its probe failed (for example `graphify` with a missing package) | Report the printed `fix:`; reinstall is the operator's call |
-| `./extractkit: No such file or directory` or `extractkit: command not found` | The kit is not on PATH; `./extractkit` only works inside the kit repo | Ask the operator to run `./extractkit install` once in the kit repo, then use `extractkit` |
+| `./extractkit: No such file or directory` or `extractkit: command not found` | The kit is not on PATH; `./extractkit` only works inside the kit repo | Ask the operator to run `./extractkit install` once in a kit checkout, then use `extractkit`. The checkout can be deleted afterwards |
 | `extractkit on PATH` MISSING | `~/.local/bin` is not on PATH | Report the printed `export PATH=` line; editing shell profiles is the operator's call |
-| `link …` or `skill …` BROKEN | A symlink there points elsewhere, or a real file is in the way | Report the fix. `install --force` only on the operator's word; a real file is the operator's to move |
+| `install`, `launcher …` or `skill …` BROKEN | A symlink there points elsewhere, a file or folder the install did not create is in the way, or the installed copy is from another commit | Report the fix. `install --force` only on the operator's word; a real file or folder is the operator's to move. For a commit mismatch the operator runs `./extractkit install` from a kit checkout |
+| `kit_workspace` (exit 1) | The working folder, `--source` or `--out` is inside the kit repo or the installed kit | `cd` into the legacy checkout and run `extractkit` there. Do not work around it |
+| `readiness_missing` | `headless` preflight ran the agent and Serena onboarding or the Graphify index is still missing | The agent CLI needs the Serena MCP and the graphify skill on this runner; fix that and re-run |
+| `resource_unreachable` | A resource in the resources file does not answer: XP host, Guillotine, storage state, agent CLI or API key variable | The row names the key to fix; re-run `doctor --source --resources` |
+| `bad_env`, `env_forbidden` | An `EXTRACTKIT_*` value is not valid, two forms of the storage state are set, or `EXTRACTKIT_ALLOW_PRODUCTION` / `EXTRACTKIT_FORCE` is set | Fix or unset the variable. Those two variables never work |
+| `task_blocked` (exit 3) | An agent wrote `<sidecar>/reports/blockers/<id>.md`, or `check` still failed after the fix attempts | A person reads the blocker, fixes the input, and re-runs headless |
+| `task_inputs_missing` | In the final `agent` stage a task waits on a file no earlier stage wrote | A pipeline failure, not a question: run the phases that write it |
+| `agent_timeout`, `agent_failed`, `unknown_agent` | The agent CLI ran past `--task-timeout`, exited non-zero, or is not in the `agents:` block | See `reports/headless/*.log`; check the CLI login or API key |
 | `serena onboarding` MISSING | No `.serena/project.yml` or no memory file | Ask the operator to onboard the project in an agent session opened in the checkout, not in the kit |
 | `graphify index` MISSING | No `graphify-out/graph.json` | Ask the operator to build a Graphify index from a session opened in the checkout (the graphify skill, for example `/graphify .`) |
 | `graft index` warning | No `graft/` | Optional. `map.code` skips until the operator runs `graft build` |

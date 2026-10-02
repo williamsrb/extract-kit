@@ -8,6 +8,7 @@ from argparse import Namespace
 from pathlib import Path
 
 from . import agent_tasks, guide
+from . import result as _result
 from .common import Plan, write_text
 from .errors import ExtractkitError
 from .outtree import resolve_source
@@ -62,6 +63,7 @@ def cmd_promote(args: Namespace) -> int:
                 + "\n".join(lines),
                 "commit or stash them, or pass --force to overwrite",
                 fix_args={"--force": None},
+                code="promote_refused",
             )
     for src, dest in copies:
         plan.record(f"promote {src} -> {dest}")
@@ -74,6 +76,7 @@ def cmd_promote(args: Namespace) -> int:
         style=style,
     )
     suggestion = guide.next_for("promote", "done", args, source=source)
+    _result.note_run(source=source, sidecar=out, wrote=plan.entries)
     guide.emit(body, guide.render_next(suggestion, style))
     return 0
 

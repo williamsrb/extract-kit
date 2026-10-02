@@ -51,6 +51,7 @@ def assert_allowed(raw: str, *, allow_production: bool, what: str) -> str:
         f"{what} {url} is a production host; runtime inventory is deny-by-default",
         "point --xp-host / --guillotine at localhost or a *.k8s.seeds.no "
         "review host; --allow-production is not used in the definition of done",
+        code="production_host",
     )
 
 
@@ -62,4 +63,5 @@ def assert_branch(branch: str | None) -> str:
         "enonic.cms requires --branch draft|master",
         "pass --branch draft (or master) when inventory.runtime runs",
         fix_args={"--branch": "draft"},
+        code="missing_branch",
     )

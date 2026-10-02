@@ -18,6 +18,7 @@ import sys
 from argparse import Namespace
 
 from . import guide, manifest
+from . import result as collect
 from .common import Row
 
 PROBE_TIMEOUT = 5
@@ -113,6 +114,7 @@ def _check_module(module: str, required: bool) -> Row:
 
 
 def render_row(row: Row) -> list[str]:
+    collect.note_row(row)
     lines = [f"  {row.state:8s} {row.name:22s} {row.detail}".rstrip()]
     if row.fix and row.state != "ok":
         lines.append(f"{'':11s}fix: {row.fix}")

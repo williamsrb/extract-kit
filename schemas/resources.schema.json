@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.resources/v1",
+  "title": "extractkit resources file v1",
+  "description": "What a pipeline supplies to extractkit: the XP instance, the auth state and the agent CLI. Operator-owned; agents never write it.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "xp": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "host": { "type": "string", "minLength": 1 },
+        "project": { "type": "string", "minLength": 1 },
+        "branch": { "enum": ["draft", "master"] },
+        "guillotine": { "type": "string", "minLength": 1 },
+        "configenv": { "type": "string", "minLength": 1 },
+        "site_url": { "type": "string", "minLength": 1 },
+        "cms_keys": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "storage_state": { "type": "string", "minLength": 1 }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cli": { "type": "string", "minLength": 1 },
+        "allowed_tools": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "permissions": { "enum": ["allowlist", "bypass"] },
+        "api_key_env": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+        "timeout_seconds": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

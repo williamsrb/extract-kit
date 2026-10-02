@@ -12,7 +12,6 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 FIXTURE = REPO / "tests" / "fixtures" / "enonic-mini"
-CLI = [sys.executable, str(REPO / "extractkit")]
 
 # Preflight (`deps`, `doctor --source`) installs the kit into $HOME. Every CLI
 # subprocess gets a throwaway HOME so the suite never links into the real one.
@@ -23,19 +22,44 @@ from extractkit_cli import install as _install
 
 _install.install(home=TEST_HOME)
 
+# Subprocess runs go through the installed launcher, the way an operator runs
+# the kit: they exercise the detached copy, not the working tree.
+CLI = [sys.executable, str(_install.launcher_path(TEST_HOME))]
 
-def run(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+
+# The CLI refuses to run from the kit, so a test with no source of its own runs here.
+TEST_CWD = TEST_HOME / "cwd"
+TEST_CWD.mkdir(exist_ok=True)
+
+
+def _env(extra: dict[str, str] | None = None) -> dict[str, str]:
+    env = {
+        **os.environ,
+        "HOME": str(TEST_HOME),
+        "PATH": f"{TEST_HOME / '.local' / 'bin'}{os.pathsep}{os.environ.get('PATH', '')}",
+    }
+    for name in [n for n in env if n.startswith("EXTRACTKIT_")]:
+        del env[name]
+    env.update(extra or {})
+    return env
+
+
+def run(
+    *args: str, cwd: Path | None = None, env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [*CLI, *args],
-        cwd=cwd or REPO,
-        capture_output=True,
-        text=True,
-        check=False,
-        env={
-            **os.environ,
-            "HOME": str(TEST_HOME),
-            "PATH": f"{TEST_HOME / '.local' / 'bin'}{os.pathsep}{os.environ.get('PATH', '')}",
-        },
+        [*CLI, *args], cwd=cwd or TEST_CWD, capture_output=True, text=True, check=False,
+        env=_env(env),
+    )
+
+
+def run_checkout(
+    *args: str, cwd: Path | None = None, env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run the checkout's own `extractkit`, as `./extractkit` does inside the kit repo."""
+    return subprocess.run(
+        [sys.executable, str(REPO / "extractkit"), *args], cwd=cwd or REPO,
+        capture_output=True, text=True, check=False, env=_env(env),
     )
 
 

@@ -15,6 +15,8 @@ from . import (
     manifest,
     readiness,
     registry,
+    resources,
+    result,
     schema,
     scope,
 )
@@ -116,6 +118,9 @@ def cmd_doctor(args: Namespace) -> int:
         problems.extend(f"{name}: {problem}" for problem in guide.phase_problems(composed))
     rows = _preflight_rows(args)
     failed = [r for r in rows if r.failed]
+    result.note_problems(problems)
+    if getattr(args, "source", None):
+        result.note_run(source=resolve_source(args.source))
     lines = [line for r in rows for line in deps.render_row(r)]
     if not problems and not failed:
         suggestion = guide.next_for("doctor", "clean", args)
@@ -151,6 +156,7 @@ def _preflight_rows(args: Namespace) -> list[Row]:
         *install.install(), *deps.check_deps(profile), *readiness.check_source(source),
         _stack_row(source, exclude, getattr(args, "profile", None)),
         buildscope.check(source, exclude),
+        *resources.probe_rows(args),
     ]
 
 

@@ -54,12 +54,14 @@ def resolve_source(raw: str | None) -> Path:
         raise ExtractkitError(
             "no --source given",
             "pass --source pointing at the legacy checkout",
+            code="no_source",
         )
     path = Path(raw).expanduser().resolve()
     if not path.is_dir():
         raise ExtractkitError(
             f"source {path} is not a directory",
             "pass --source pointing at an existing checkout",
+            code="no_source",
         )
     return path
 

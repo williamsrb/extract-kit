@@ -35,20 +35,27 @@ From the kit repo, once:
 ./extractkit install
 ```
 
-`install` creates three kinds of symlink back into the kit repo:
+`install` copies the kit out of the checkout. Nothing it writes points back
+into the checkout, so the checkout can be deleted afterwards:
 
-- `~/.local/bin/extractkit`, the CLI. `~/.local/bin` must be on PATH; the
-  command fails and prints the `export` line when it is not.
-- `~/.agents/skills/extract-legacy` and `extract-agentic`, for Codex, Cursor
-  and other assistants.
-- `~/.claude/skills/<skill>`, pointing at the `~/.agents/skills/` link, for
-  Claude Code.
+- `~/.local/share/extractkit/`, a copy of the kit runtime, the agent docs
+  (`docs/*.md`, without the diagrams) and the skills.
+- `~/.local/bin/extractkit`, a launcher that runs that copy. `~/.local/bin`
+  must be on PATH; the command fails and prints the `export` line when it is
+  not.
+- `~/.agents/skills/extract-legacy` and `extract-agentic`, copied folders for
+  Codex, Cursor and other assistants.
+- `~/.claude/skills/<skill>`, a link to the `~/.agents/skills/<skill>` folder,
+  for Claude Code.
 
-A `git pull` in the kit updates the installed copy. `install` is
-idempotent. It replaces a symlink that points elsewhere only with `--force`,
-and never touches a real file or directory. Preflight (`deps` and
-`doctor --source`) runs the same install, so the first command of a run
-installs the kit even when nobody ran `install`.
+To update, run `./extractkit install` again from a fresh checkout. `install`
+is idempotent. Each copied folder carries a `.extractkit-install.json`
+marker, and `install` replaces only folders that carry it. It replaces a
+symlink that points into a kit checkout (the old install) and a symlink that
+points elsewhere only with `--force`. It never touches a file or folder it did
+not create. Run from the installed copy, `install` copies nothing and only
+checks. Preflight (`deps` and `doctor --source`) does the same, so the first
+command of a run installs the kit even when nobody ran `install`.
 
 ## Where to run
 
@@ -63,9 +70,17 @@ extractkit doctor --source .
 Do not drive an extract from the kit repo. Serena, Graphify and graft act on
 the folder the agent session was opened in. A session opened in the kit
 onboards and indexes the kit, so `doctor --source` keeps failing, and the
-agent tasks would read the kit instead of the legacy code. The CLI itself
-does not care where it runs: it finds its own files from its install path,
-and `--source` takes any path.
+agent tasks would read the kit instead of the legacy code. The CLI refuses
+to run an extract from the kit repo: it exits 1 with `kit_workspace` when the
+working folder, `--source` or `--out` is inside it. It finds its own files
+from its install path, and `--source` takes any legacy checkout.
+
+## Headless and pipelines
+
+`extractkit headless --source .` runs the whole extract with no human, for a
+CI job: it calls an agent CLI for the Serena and Graphify preflight and for
+each agent task. Every command also takes `--json` and reads `EXTRACTKIT_*`
+variables. See [Headless](headless.md), and `docker/Dockerfile` for an image.
 
 ## Commands
 
@@ -97,8 +112,9 @@ After synthesis, `next` points at `extractkit agent next` while a required
 agent task is pending. Agent tasks are prompts stored in `agent-tasks/`:
 they decide the context (`context.exclude`, `context.live_config`), name the
 view-layer rules and write `BUSINESS.md`. The two context tasks come earlier,
-right after the static phase and the CMS slot. The kit never calls a model;
-the `extract-agentic` skill runs them.
+right after the static phase and the CMS slot. The kit never calls a model
+(`extractkit headless` is the exception: it starts an agent CLI for a pipeline
+run); the `extract-agentic` skill runs them.
 
 The path is in [flow](flow.md). Flags, `-v` / `-q`, and the promote
 guard are in [CLI](cli.md).

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.result/v1",
+  "title": "extractkit --json result v1",
+  "description": "One document per command. Commands add their own keys (agent payloads, headless stages); the keys here are always present.",
+  "type": "object",
+  "required": [
+    "schema", "ok", "command", "exit", "phase", "sidecar", "source", "rows",
+    "wrote", "skips", "problems", "error", "next_command", "config"
+  ],
+  "properties": {
+    "schema": { "const": "99x.extract.result/v1" },
+    "ok": { "type": "boolean" },
+    "command": { "type": "string", "minLength": 1 },
+    "exit": { "enum": [0, 1, 3] },
+    "phase": { "type": ["string", "null"] },
+    "sidecar": { "type": ["string", "null"] },
+    "source": { "type": ["string", "null"] },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "state", "detail", "fix", "required"],
+        "properties": {
+          "name": { "type": "string" },
+          "state": { "type": "string" },
+          "detail": { "type": "string" },
+          "fix": { "type": ["string", "null"] },
+          "required": { "type": "boolean" }
+        }
+      }
+    },
+    "wrote": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step", "action"],
+        "properties": { "step": { "type": ["string", "null"] }, "action": { "type": "string" } }
+      }
+    },
+    "skips": { "type": "array", "items": { "type": "object" } },
+    "problems": { "type": "array", "items": { "type": "string" } },
+    "error": {
+      "type": ["object", "null"],
+      "required": ["code", "message", "fix", "fix_command"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "message": { "type": "string" },
+        "fix": { "type": ["string", "null"] },
+        "fix_command": { "type": ["string", "null"] }
+      }
+    },
+    "next_command": {
+      "type": ["object", "null"],
+      "required": ["command", "argv", "reason", "alternatives"],
+      "properties": {
+        "command": { "type": "string" },
+        "argv": { "type": "array", "items": { "type": "string" } },
+        "reason": { "type": "string" },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["command", "argv", "reason"],
+            "properties": {
+              "command": { "type": "string" },
+              "argv": { "type": "array", "items": { "type": "string" } },
+              "reason": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "origin", "value"],
+        "properties": {
+          "name": { "type": "string" },
+          "origin": { "enum": ["cli", "env", "file", "default"] },
+          "value": {}
+        }
+      }
+    }
+  }
+}

@@ -5,7 +5,7 @@ from __future__ import annotations
 from argparse import Namespace
 from pathlib import Path
 
-from . import context, guide, registry, runner
+from . import context, guide, registry, result, runner
 from .errors import ExtractkitError
 from .outtree import EXTRACT_DIRNAME, latest_run, resolve_source
 
@@ -105,6 +105,15 @@ def _profile_from_args(args: Namespace, out: Path) -> dict:
     raw = getattr(args, "source", None)
     source = resolve_source(raw) if raw else context.source_of(out)
     return context.resolve_profile(args, source, out)
+
+
+def current_phase(profile: dict, out: Path) -> str | None:
+    """Id of the phase the first incomplete required slot belongs to; None when complete."""
+    pending = first_incomplete(profile, out)
+    if pending is None:
+        return None
+    phase = guide.phase_of(profile, pending[0])
+    return phase.id if phase else None
 
 
 def pipeline_state(profile: dict, out: Path) -> str:
@@ -223,6 +232,9 @@ def cmd_status(args: Namespace) -> int:
     header = [f"extractkit status · {profile.get('name')} · sidecar {guide.rel_to_cwd(out)}"]
     suggestion = guide.next_for("status", pipeline_state(profile, out), args, profile, out)
     found = [] if getattr(args, "quiet", False) else optional_tips(profile, out, args)
+    result.note_run(
+        sidecar=out, source=source or guide.sidecar_source(out), phase=current_phase(profile, out),
+    )
     guide.emit(
         header + status_rows(profile, out, style),
         guide.render_tips(found, style),
@@ -243,6 +255,7 @@ def cmd_resume(args: Namespace) -> int:
     if pending is None:
         style = guide.style_for()
         suggestion = guide.next_for("resume", "complete", args, ctx.profile, ctx.out)
+        result.note_run(sidecar=ctx.out, source=ctx.source)
         guide.emit(
             [f"resume: nothing left to run ({guide.rel_to_cwd(ctx.out)})"],
             guide.render_next(suggestion, style),

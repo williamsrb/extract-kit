@@ -6,14 +6,13 @@ The kit never calls a model. A task is `agent-tasks/<id>/task.yaml` plus
 
 from __future__ import annotations
 
-import json
 import re
 import shlex
 from argparse import Namespace
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import guide, manifest, progress, schema
+from . import guide, manifest, progress, result, schema
 from .common import REPO_ROOT, load_json, load_yaml
 from .errors import ExtractkitError
 from .outtree import resolve_source
@@ -232,8 +231,8 @@ def _argv(args: Namespace, tail: list[str], out: Path) -> list[str]:
     return [prog, *guide.rewrite(["agent", *tail], keep=guide.OUTPUT_FLAGS, set={"--out": str(out)})]
 
 
-def _dump(payload: dict) -> None:
-    print(json.dumps(payload, indent=2, ensure_ascii=False))
+def _dump(payload: dict, args: Namespace | None = None) -> None:
+    result.emit_payload(payload, args)
 
 
 def cmd_list(args: Namespace) -> int:
@@ -243,7 +242,7 @@ def cmd_list(args: Namespace) -> int:
     first = next_task(out, profile)
     rows = [_row(t, out) for t in tasks]
     if getattr(args, "json", False):
-        _dump({"sidecar": str(out), "next": first.id if first else None, "tasks": rows})
+        _dump({"sidecar": str(out), "next": first.id if first else None, "tasks": rows}, args)
         return 0
     style = guide.style_for()
     width = max((len(t.id) for t in tasks), default=0) + 2
@@ -273,7 +272,7 @@ def cmd_show(args: Namespace) -> int:
         {"path": str(out / rel), "exists": progress._produced(out, rel)} for rel in task.reads
     ]
     if getattr(args, "json", False):
-        _dump({**_row(task, out), "prompt": prompt, "inputs": inputs})
+        _dump({**_row(task, out), "prompt": prompt, "inputs": inputs}, args)
         return 0
     print(prompt.rstrip("\n"))
     print("\n## Input files\n")
@@ -295,34 +294,37 @@ def cmd_next(args: Namespace) -> int:
     missing = {t.id: missing_reads(t, out) for t in waiting}
     task = next((t for t in waiting if not missing[t.id]), None)
     blocked = [{"id": t.id, "missing_reads": missing[t.id]} for t in waiting if missing[t.id]]
+    prog = getattr(args, "prog_display", None) or "extractkit"
+    if task:
+        suggestion = guide.Suggestion("Read the task and do it:", _argv(args, ["show", task.id], out))
+    elif blocked:
+        suggestion = guide.Suggestion(
+            "Finish the pipeline first:", [prog, "status", "--out", guide.rel_to_cwd(out)],
+        )
+    else:
+        suggestion = guide.Suggestion(
+            "Check the extract tree:", [prog, "check", "--out", guide.rel_to_cwd(out)],
+        )
+    result.note_next(suggestion)
     if getattr(args, "json", False):
         _dump({
             "sidecar": str(out),
             "next": _row(task, out) if task else None,
             "pending": [t.id for t in waiting],
             "blocked": blocked,
-        })
+        }, args)
         return 0
     style = guide.style_for()
     if task:
         guide.emit(
             [f"extractkit agent · next task {task.id}: {task.title}"],
-            guide.render_next(guide.Suggestion(
-                "Read the task and do it:", _argv(args, ["show", task.id], out),
-            ), style),
+            guide.render_next(suggestion, style),
         )
         return 0
-    prog = getattr(args, "prog_display", None) or "extractkit"
     if blocked:
         lines = ["extractkit agent · no required task can run"]
         lines.extend(f"  {b['id']} is waiting on {', '.join(b['missing_reads'])}" for b in blocked)
-        suggestion = guide.Suggestion(
-            "Finish the pipeline first:", [prog, "status", "--out", guide.rel_to_cwd(out)],
-        )
     else:
         lines = ["extractkit agent · no required task is pending"]
-        suggestion = guide.Suggestion(
-            "Check the extract tree:", [prog, "check", "--out", guide.rel_to_cwd(out)],
-        )
     guide.emit(lines, guide.render_next(suggestion, style))
     return 0

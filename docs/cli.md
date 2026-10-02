@@ -22,6 +22,7 @@ your own command with that flag added.
 | `status [--source DIR] [--out DIR]` | Phase checklist (alias `next`) |
 | `resume --source DIR [--profile NAME]` | Continue from first incomplete slot |
 | `promote --source DIR [--out DIR] [--force]` | Copy Spec Kit + PRODUCT |
+| `headless --source DIR [--agent NAME] [--resources FILE] [--until STAGE] [--promote]` | Run the whole extract with no human, calling an agent CLI for the preflight and each agent task. The one command that starts an agent CLI; see [Headless](headless.md) |
 <!-- markdownlint-enable MD013 -->
 
 ## Defaults
@@ -52,12 +53,40 @@ If `resume` lands on CMS, pass the CMS flags. To skip CMS, use
 | Code | Meaning |
 | --- | --- |
 | 0 | Done, or `check` / `doctor` / `deps` clean |
-| 1 | Refused (`error:` + `fix:`), `check` or `doctor` problems, required dep missing |
+| 1 | Refused (`error:` + `fix:`), `check` or `doctor` problems, required dep missing, or a `headless` stage failed |
 | 2 | Usage error: unknown command or flag |
+| 3 | `headless` only: a task is blocked and a person must look |
 | 130 | Interrupted |
 <!-- markdownlint-enable MD013 -->
 
 Bare `extractkit` and any `--help` print help and exit 0.
+
+## JSON output and environment variables
+
+`--json` is accepted by `install`, `deps`, `doctor`, `context`, `run`, `step`,
+`resume`, `status`, `check`, `promote`, `headless` and `agent list|show|next`.
+It prints one JSON document on stdout and nothing else, errors included
+(`ok: false`, `error.code`, `error.message`, `error.fix`, `error.fix_command`);
+exit codes do not change. The envelope is `schemas/result.schema.json`:
+`schema`, `ok`, `command`, `exit`, `phase`, `sidecar`, `source`, `rows`,
+`wrote`, `skips`, `problems`, `error`, `next_command` and `config`. The `agent`
+payloads keep their own keys (`next` stays a task id in `list` and a task row
+in `next`); the suggested command is `next_command`, with `argv` ready to
+exec. `config` gives each option's origin (`cli`, `env`, `file`, `default`)
+with secrets redacted. Argparse usage errors stay on stderr with exit 2.
+
+Every long option `--foo-bar` has an env form `EXTRACTKIT_FOO_BAR`, and
+`--resources FILE` (`EXTRACTKIT_RESOURCES`) fills what no flag or variable set.
+`--allow-production` and `--force` have no env form. See
+[Headless](headless.md) for the precedence, the table of variables and the
+resources file.
+
+## Kit workspace guard
+
+Every command except `install`, `deps`, `profile list|show`, bare invocation,
+`--help` and `doctor` without `--source` refuses to run when the working
+folder, `--source` or `--out` is inside the kit repo or the installed kit
+(`error.code: "kit_workspace"`, exit 1). Run from the legacy checkout.
 
 ## Phases
 
@@ -242,24 +271,32 @@ is gone, prints a `note:` and does not change the exit code.
 
 ## Install
 
-`extractkit install` links the kit into the user's home. Every link points
-back into the kit repo:
+`extractkit install` copies the kit into the user's home. Nothing it writes
+points back into the kit repo, so the checkout can be deleted afterwards. To
+update, run it again from a fresh checkout.
 
 <!-- markdownlint-disable MD013 -->
-| Row | Link | Target |
+| Row | Path | Content |
 | --- | --- | --- |
-| `link extractkit` | `~/.local/bin/extractkit` | `<kit>/extractkit` |
-| `skill <name>` | `~/.agents/skills/<name>` | `<kit>/skills/<name>` |
-| `claude <name>` | `~/.claude/skills/<name>` | `~/.agents/skills/<name>` |
+| `install` | `~/.local/share/extractkit/` | Kit runtime, `docs/*.md`, skills, and the `.extractkit-install.json` marker (commit, time, files). The row shows the installed commit and time |
+| `launcher extractkit` | `~/.local/bin/extractkit` | A regular file that runs the installed copy |
+| `skill <name>` | `~/.agents/skills/<name>` | A copy of `<kit>/skills/<name>` with the marker |
+| `claude <name>` | `~/.claude/skills/<name>` | A link to `~/.agents/skills/<name>` |
 | `extractkit on PATH` | (check only) | `~/.local/bin` is a PATH entry |
 <!-- markdownlint-enable MD013 -->
 
-A link that reaches the same endpoint by another path, such as a skill
-sync script linking straight to the kit, is `ok` and left alone. A
-symlink that points elsewhere is `BROKEN` until `--force` replaces it. A
-real file or directory is `BROKEN` and is never touched. A failing row
-exits 1. `deps` and `doctor --source` run the same install first, with the
-same rows.
+The marker, not the name, proves the install created a folder. A folder or
+file without it is `BROKEN` and is never touched. A symlink that resolves into
+a kit checkout (the old symlink install) is replaced. Any other symlink is
+`BROKEN` until `--force` replaces it. A failing row exits 1. A new install is
+written beside the old one and swapped in by rename, so a failed copy leaves
+the previous install in place.
+
+Run from the installed copy, `install` copies nothing. It checks that the
+launcher, the skills and their markers match the installed commit, and a
+mismatch is `BROKEN` with the fix `run ./extractkit install from a kit
+checkout`. `deps` and `doctor --source` run the same install first: a full
+install from a checkout, a check from the installed copy.
 
 Once the link is on PATH, `next` blocks and `fix:` lines print `extractkit`.
 Run from inside the kit repo without the link, they print `./extractkit`;

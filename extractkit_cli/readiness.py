@@ -29,9 +29,9 @@ def _serena(source: Path) -> Row:
     root = source / ".serena"
     fix = SERENA_FIX.format(source=source)
     if not (root / "project.yml").is_file():
-        return Row("serena onboarding", "MISSING", "no .serena/project.yml", fix)
+        return Row("serena onboarding", "MISSING", "no .serena/project.yml", fix, code="readiness_missing")
     if not any((root / "memories").glob("*.md")):
-        return Row("serena onboarding", "MISSING", "no .serena/memories/*.md", fix)
+        return Row("serena onboarding", "MISSING", "no .serena/memories/*.md", fix, code="readiness_missing")
     return Row("serena onboarding", "ok", str(root))
 
 
@@ -41,7 +41,7 @@ def _graphify(source: Path) -> Row:
         return Row("graphify index", "ok", str(graph))
     return Row(
         "graphify index", "MISSING", "no graphify-out/graph.json",
-        GRAPHIFY_FIX.format(source=source),
+        GRAPHIFY_FIX.format(source=source), code="readiness_missing",
     )
 
 

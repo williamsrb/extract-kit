@@ -10,17 +10,24 @@ description: >
 
 Run from the legacy checkout, in a session opened there, with `extractkit`
 on PATH. If `extractkit` is not found, ask the operator to run
-`./extractkit install` once in the kit repo. A session opened in the kit
-repo cannot prepare Serena or Graphify for the target: tell the operator to
-open the checkout instead. Plan and PRD live under `~/.agents/`, not in the
-kit tree.
+`./extractkit install` once in a kit checkout. The install copies the kit
+out of the checkout, so the checkout can be deleted afterwards; to update,
+run `./extractkit install` again from a fresh checkout. A session opened in
+the kit repo cannot prepare Serena or Graphify for the target: tell the
+operator to open the checkout instead. Plan and PRD live under `~/.agents/`,
+not in the kit tree.
 
-Read `docs/llm.md` first. It holds the invariants, the command sequence per
-phase, what to do for each exit code and `next` block, the failure table and
-the agent phase. This skill only adds what is specific to a skill run.
+Read `~/.local/share/extractkit/docs/llm.md` first. It holds the invariants,
+the command sequence per phase, what to do for each exit code and `next`
+block, the failure table and the agent phase. This skill only adds what is
+specific to a skill run.
 
 ## Rules
 
+- Prefer `--json` on every command: one JSON document on stdout with `ok`,
+  `error.code`, `error.fix_command` and `next_command.argv` an agent can act
+  on without parsing text. The kit refuses to run from its own repo
+  (`kit_workspace`): stop and ask for the legacy checkout.
 - Source is read-only until the operator runs `extractkit promote`.
   Promote refuses files git cannot restore; pass `--force` only when the
   operator says so.
@@ -41,9 +48,9 @@ the agent phase. This skill only adds what is specific to a skill run.
 
 ## Graph
 
-Diagrams: `docs/flow.md` and `docs/diagrams/*.png`. Required and optional
-inputs and the output of every phase and agent task:
-`docs/flow.md#inputs-and-outputs`.
+Diagrams live in the kit repo (`docs/diagrams/*.png`), not in the install.
+Required and optional inputs and the output of every phase and agent task:
+`~/.local/share/extractkit/docs/flow.md#inputs-and-outputs`.
 
 1. `extractkit deps --profile enonic` and
    `extractkit doctor --source <legacy>` (Serena onboarding and a Graphify
@@ -111,6 +118,6 @@ the `extract-agentic` skill.
 
 ## Artifacts
 
-See `docs/output.md`. What each slot reads, writes, and skips is in
-`docs/steps.md`. Constitution promote path is
-`.specify/memory/constitution.md`.
+See `~/.local/share/extractkit/docs/output.md`. What each slot reads,
+writes, and skips is in `~/.local/share/extractkit/docs/steps.md`.
+Constitution promote path is `.specify/memory/constitution.md`.

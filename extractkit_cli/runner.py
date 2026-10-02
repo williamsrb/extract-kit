@@ -6,7 +6,7 @@ from argparse import Namespace
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import context, guide, manifest, readiness, registry, schema, scope
+from . import context, guide, manifest, readiness, registry, result, schema, scope
 from .common import Plan, load_yaml, timestamp, write_json, write_text, write_yaml
 from .errors import ExtractkitError
 from .hygiene import after_step
@@ -286,6 +286,10 @@ def report_run(ctx: RunContext, rows: list[tuple[str, str]], args: Namespace) ->
     found = [] if getattr(args, "quiet", False) else guide.tips(report, truncated)
     state = progress.pipeline_state(ctx.profile, ctx.out)
     suggestion = guide.next_for("run", state, args, ctx.profile, ctx.out)
+    result.note_run(
+        sidecar=ctx.out, source=ctx.source, phase=progress.current_phase(ctx.profile, ctx.out),
+        wrote=ctx.plan.entries, skips=ctx.skips,
+    )
     guide.emit(body, guide.render_tips(found, style), guide.render_next(suggestion, style))
     return 0
 

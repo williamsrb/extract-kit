@@ -22,7 +22,8 @@ class Row:
     """One preflight line: a dependency or a target-readiness check.
 
     `state` is ok, MISSING, BROKEN, skipped or warn. Only a MISSING or BROKEN
-    row with `required` set counts as a failure.
+    row with `required` set counts as a failure. `code` is the `--json` error
+    id the row raises when it fails (`readiness_missing`, `resource_unreachable`).
     """
 
     name: str
@@ -30,6 +31,7 @@ class Row:
     detail: str = ""
     fix: str | None = None
     required: bool = True
+    code: str | None = None
 
     @property
     def failed(self) -> bool:
@@ -44,6 +46,18 @@ def ensure_dir(path: Path) -> None:
             directory.chmod(DIR_MODE)
         except OSError:
             pass
+
+
+def kit_tree_of(path: Path) -> Path | None:
+    """The kit tree `path` is in or under, found walking up; None outside every kit.
+
+    A kit tree holds both `extractkit.yaml` and `extractkit_cli/cli.py`: a
+    checkout of the kit repo and the installed copy look the same.
+    """
+    for folder in (path, *path.parents):
+        if (folder / "extractkit.yaml").is_file() and (folder / "extractkit_cli" / "cli.py").is_file():
+            return folder
+    return None
 
 
 def repo_file(name: str) -> Path:

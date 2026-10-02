@@ -1,0 +1,28 @@
+# Example: run `extractkit headless` against a legacy checkout.
+#   cp docker/.env.example docker/.env   # fill it in
+#   docker compose -f docker/compose.example.yml --env-file docker/.env run --rm kit
+# The exit code is extractkit's: 0 done, 1 failed, 3 blocked (needs a human).
+
+services:
+  kit:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    env_file: .env
+    volumes:
+      # The legacy checkout. Headless writes <checkout>/.extract/ and the
+      # .serena/, graphify-out/ and graft/ indexes there.
+      - ${LEGACY_DIR:?set LEGACY_DIR in docker/.env}:/work
+    # The container runs as uid 1000. Make the mounted folder writable for it.
+    command: ["--source", "/work"]
+
+  # An XP is optional. It only helps when you supply the application and a
+  # content dump to import; an empty XP has nothing to extract. Without it,
+  # point the resources file at an existing local or review XP, or run offline
+  # (no storage state, no CMS phase). Use the tag that matches the app's
+  # xpVersion, and a local or review host only: production is refused.
+  #
+  # xp:
+  #   image: enonic/xp:${XP_IMAGE_TAG:?set XP_IMAGE_TAG to the xpVersion of the app}
+  #   ports:
+  #     - "8080:8080"
