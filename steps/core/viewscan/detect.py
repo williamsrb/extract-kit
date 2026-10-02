@@ -9,14 +9,12 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 
-EXCLUDE_DIRS = {
-    "node_modules", "vendor", "dist", "build", "target", ".extract", ".git", "graft",
-    "graphify-out", ".serena",
-}
+from extractkit_cli import scope
+
 MAX_BYTES = 1_000_000
 RANK = {"low": 0, "medium": 1, "high": 2}
 
@@ -85,23 +83,9 @@ class Project:
                     yield engine, signal
 
 
-def iter_source_files(source: Path) -> Iterator[Path]:
-    """Files under `source`, excluded folders pruned, sorted for stable output."""
-    stack = [source]
-    while stack:
-        directory = stack.pop()
-        try:
-            entries = sorted(directory.iterdir())
-        except OSError:
-            continue
-        for entry in entries:
-            if entry.is_symlink():
-                continue
-            if entry.is_dir():
-                if entry.name not in EXCLUDE_DIRS:
-                    stack.append(entry)
-            elif entry.is_file():
-                yield entry
+def iter_source_files(source: Path, exclude: Iterable[str] = ()) -> Iterator[Path]:
+    """Files under `source`, skip dirs and operator excludes pruned, in stable order."""
+    return scope.iter_files(source, exclude)
 
 
 def rel_path(source: Path, path: Path) -> str:

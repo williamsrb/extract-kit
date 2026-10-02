@@ -10,9 +10,10 @@ from __future__ import annotations
 
 import posixpath
 import re
+from collections.abc import Iterable
 from pathlib import Path
 
-from extractkit_cli import schema
+from extractkit_cli import schema, scope
 from extractkit_cli.common import load_json
 from steps.core.viewscan import controller, detect, markup, script
 
@@ -131,8 +132,9 @@ def _controller_predicates(source: Path, rows: list[dict]) -> list[dict]:
 
 def collect(
     source: Path, bindings: dict[str, dict], react_refs: set[str], controllers: list[dict] | None = None,
+    exclude: Iterable[str] = (),
 ) -> dict:
-    paths = list(detect.iter_source_files(source))
+    paths = list(detect.iter_source_files(source, exclude))
     project = detect.build_project(source, paths)
     detections: dict[str, detect.Detection] = {}
     texts: dict[str, str] = {}
@@ -198,7 +200,7 @@ def collect(
             "scanned": scanned,
             "detected": len(entries),
             "skipped": skipped,
-            "excluded": sorted(detect.EXCLUDE_DIRS),
+            "excluded": sorted(scope.SKIP_DIRS | set(exclude)),
         },
     }
 
@@ -215,7 +217,7 @@ class TemplatesStep:
     def run(self, ctx: object) -> None:
         rows = controller_rows(ctx)
         bindings, react_refs = render_bindings(rows)
-        payload = collect(ctx.source, bindings, react_refs, rows)  # type: ignore[attr-defined]
+        payload = collect(ctx.source, bindings, react_refs, rows, scope.of(ctx))  # type: ignore[attr-defined]
         schema.validate(payload, "templates", what="inventory/templates.json")
         ctx.write_json("inventory/templates.json", payload)  # type: ignore[attr-defined]
 

@@ -45,8 +45,12 @@ links in `~/.agents/skills` and `~/.claude/skills`. An install row that
 fails names its fix (`--force` for a foreign symlink, an `export PATH` line
 when `~/.local/bin` is not on PATH). `deps` then runs every probe.
 `doctor --source` adds the target's readiness: Serena onboarding, a
-Graphify index (both must pass) and a graft index (a warning). The operator
-produces those in a session opened in the checkout.
+Graphify index (both must pass), a graft index (a warning) and the build
+scope (a warning that lists top-level folders no default-branch build
+names). The operator produces the indexes in a session opened in the
+checkout. Show the operator the build scope folders before the static run
+and pass each one they drop with `--exclude`. Do not exclude on your own: a
+folder outside the build can still be live.
 
 ### 2 Static
 
@@ -148,6 +152,8 @@ when the operator asks.
 | `serena onboarding` MISSING | No `.serena/project.yml` or no memory file | Ask the operator to onboard the project in an agent session opened in the checkout, not in the kit |
 | `graphify index` MISSING | No `graphify-out/graph.json` | Ask the operator to build a Graphify index from a session opened in the checkout (the graphify skill, for example `/graphify .`) |
 | `graft index` warning | No `graft/` | Optional. `map.code` skips until the operator runs `graft build` |
+| `build scope` warning | A top-level folder no default-branch build names | Ask the operator; pass the folders they drop with `--exclude` on the first `run` (the sidecar keeps it) |
+| `exclude … is not a path relative to the source` | An absolute `--exclude` or one with `..` | Name the folder relative to `--source` |
 | `profile 'core' has unbound required adapters` | `core` has no stack adapters | Use `enonic` (or `as`) |
 | `enonic.cms requires --branch` | The slice includes CMS | Add `--branch draft`, or stop at `--until static` |
 | a production host is refused | The URL is not local or review | Use a local or review XP; never override |

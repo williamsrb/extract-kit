@@ -6,8 +6,8 @@ from argparse import Namespace
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import guide, manifest, readiness, registry, schema
-from .common import Plan, timestamp, write_json, write_text, write_yaml
+from . import guide, manifest, readiness, registry, schema, scope
+from .common import Plan, load_yaml, timestamp, write_json, write_text, write_yaml
 from .errors import ExtractkitError
 from .hygiene import after_step
 from .hygiene import flush as flush_hygiene
@@ -35,6 +35,7 @@ class RunContext:
     cms: dict = field(default_factory=dict)
     tasks: bool = False
     out_existed: bool = False
+    exclude: list[str] = field(default_factory=list)
 
     def rel(self, *parts: str) -> Path:
         return self.out.joinpath(*parts)
@@ -202,6 +203,7 @@ def _execute(ctx: RunContext, rows: list[tuple[str, str]]) -> None:
         skips=ctx.skips,
         run_id=ctx.run_id,
         maps=ctx.map_pointers,
+        exclude=ctx.exclude,
     )
     schema.validate(payload, "manifest", what="MANIFEST.yaml")
     ctx.write_yaml("MANIFEST.yaml", payload)
@@ -219,6 +221,7 @@ def _context_from_args(args: Namespace) -> RunContext:
         source=source,
         out=out,
         out_existed=out.is_dir(),
+        exclude=_excludes(profile, args, out),
         profile=profile,
         plan=Plan(),
         run_id=run_id,
@@ -236,6 +239,19 @@ def _context_from_args(args: Namespace) -> RunContext:
         },
         tasks=bool(getattr(args, "tasks", False)),
     )
+
+
+def _excludes(profile: dict, args: Namespace, out: Path) -> list[str]:
+    """Profile `exclude:`, `--exclude`, and what the continued sidecar already excluded."""
+    recorded: list = []
+    previous = out / "MANIFEST.yaml"
+    if previous.is_file():
+        recorded = list((load_yaml(previous, "MANIFEST.yaml") or {}).get("exclude") or [])
+    return scope.normalize([
+        *(profile.get("exclude") or []),
+        *(getattr(args, "exclude", None) or []),
+        *recorded,
+    ])
 
 
 def report_run(ctx: RunContext, rows: list[tuple[str, str]], args: Namespace) -> int:

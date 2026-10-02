@@ -21,6 +21,10 @@
       },
       "additionalProperties": true
     },
+    "exclude": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
     "maps": {
       "type": "object",
       "additionalProperties": { "type": ["string", "null"] }

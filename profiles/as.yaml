@@ -6,8 +6,11 @@ _comment:
   - site_url_keys / hostmap_keys / providers match the casefolded leaf of a config key.
   - env_endpoints rows pick an origin from a config value (origins, else default) and
     append every entry of urls. path scopes the row to config keys containing it.
+  - exclude lists source folders outside every default-branch build (see the doctor build
+    scope row). prototype ships from the prototype branch only; prototype-old from nothing.
 name: as
 extends: enonic
+exclude: [prototype, prototype-old]
 live_config:
   configenv_path: /admin/tool/no.seeds.configenv/module-config
   site_url_keys: [tourplanurl]

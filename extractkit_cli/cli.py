@@ -114,6 +114,14 @@ def _add_cms_flags(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _add_exclude_flag(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--exclude", action="append", metavar="PATH",
+        help="Source-relative folder or file to leave out of every scan (repeatable). "
+             "Adds to the profile's exclude list; recorded in MANIFEST.yaml and kept on resume.",
+    )
+
+
 def _add_output_flags(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="List every recorded action with its path.")
@@ -217,6 +225,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--until", metavar="STEP",
                      help="Stop after this phase (id or number), slot, or plugin id.")
     _add_cms_flags(run)
+    _add_exclude_flag(run)
     _add_output_flags(run)
     run.set_defaults(func=runner.cmd_run)
 
@@ -227,6 +236,7 @@ def build_parser() -> argparse.ArgumentParser:
     step.add_argument("--source", required=True, metavar="DIR")
     step.add_argument("--out", metavar="DIR")
     _add_cms_flags(step)
+    _add_exclude_flag(step)
     _add_output_flags(step)
     step.set_defaults(func=runner.cmd_step)
 
@@ -259,6 +269,7 @@ def build_parser() -> argparse.ArgumentParser:
     res.add_argument("--until", metavar="STEP",
                      help="Stop after this phase (id or number), slot, or plugin id.")
     _add_cms_flags(res)
+    _add_exclude_flag(res)
     _add_output_flags(res)
     res.set_defaults(func=progress.cmd_resume)
 

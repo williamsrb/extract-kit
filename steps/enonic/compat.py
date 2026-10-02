@@ -8,8 +8,10 @@ page says so. Pages are named relative to `~/.agents/kb/offline-reference/`.
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 from pathlib import Path
 
+from extractkit_cli import scope
 from extractkit_cli.common import load_json
 from steps.enonic.controllers import HTTP_METHODS
 from steps.enonic.descriptors import collect_site_mappings
@@ -278,8 +280,10 @@ def _site_section(resources: list[dict], mappings: list[dict]) -> list[str]:
     return lines
 
 
-def render_report(source: Path, resources: list[dict], controllers: list[dict]) -> str:
-    applications = len(list(source.rglob("src/main/resources/application.xml")))
+def render_report(
+    source: Path, resources: list[dict], controllers: list[dict], exclude: Iterable[str] = (),
+) -> str:
+    applications = len(scope.kept(source, source.rglob("src/main/resources/application.xml"), exclude))
     lines = [
         "# XP8 compatibility (facts, not a plan)", "",
         "XP7-specific items this source uses. Written outside `spec-kit/`; `promote` does not copy it.",
@@ -295,7 +299,7 @@ def render_report(source: Path, resources: list[dict], controllers: list[dict]) 
     lines += _library_section(controllers)
     lines += _call_notes(controllers)
     lines += _export_section(controllers)
-    lines += _site_section(resources, collect_site_mappings(source))
+    lines += _site_section(resources, collect_site_mappings(source, exclude))
     return "\n".join(lines) + "\n"
 
 
@@ -325,7 +329,7 @@ class EnonicCompatStep:
         resources = load_json(static, "inventory/static.json").get("resources") or []
         ctx.write_text(  # type: ignore[attr-defined]
             "reports/xp8-compat.md",
-            render_report(ctx.source, resources, controllers),  # type: ignore[attr-defined]
+            render_report(ctx.source, resources, controllers, scope.of(ctx)),  # type: ignore[attr-defined]
         )
 
     def check(self, _ctx: object) -> list[str]:

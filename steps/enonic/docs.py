@@ -2,39 +2,21 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
-SKIP_DIR_NAMES = {
-    ".git",
-    ".extract",
-    "node_modules",
-    "graft",
-    "graphify-out",
-    "__pycache__",
-    ".gradle",
-    "build",
-}
+from extractkit_cli import scope
 
 
-def _iter_source_docs(source: Path) -> list[Path]:
+def _iter_source_docs(source: Path, exclude: list[str]) -> list[Path]:
     found: list[Path] = []
-    for dirpath, dirnames, filenames in os.walk(source, followlinks=False):
-        dirnames[:] = [d for d in dirnames if d not in SKIP_DIR_NAMES]
-        root = Path(dirpath)
-        rel_root = root.relative_to(source)
-        for name in filenames:
-            path = root / name
-            lowered = name.lower()
-            if lowered in {"readme.md", "readme", "product.md", "design.md"}:
-                found.append(path)
-                continue
-            if (
-                rel_root.parts
-                and rel_root.parts[0] in {"docs", "documentation"}
-                and path.suffix.lower() in {".md", ".txt", ".adoc"}
-            ):
-                found.append(path)
+    for path in scope.iter_files(source, exclude):
+        rel_root = path.parent.relative_to(source)
+        if path.name.lower() in {"readme.md", "readme", "product.md", "design.md"} or (
+            rel_root.parts
+            and rel_root.parts[0] in {"docs", "documentation"}
+            and path.suffix.lower() in {".md", ".txt", ".adoc"}
+        ):
+            found.append(path)
     return sorted(found)
 
 
@@ -46,12 +28,12 @@ class EnonicDocsStep:
 
     def plan(self, ctx: object) -> list[str]:
         source: Path = ctx.source  # type: ignore[attr-defined]
-        n = len(_iter_source_docs(source))
+        n = len(_iter_source_docs(source, scope.of(ctx)))
         return [f"harvest {n} source doc file(s) into docs/harvest/"]
 
     def run(self, ctx: object) -> None:
         source: Path = ctx.source  # type: ignore[attr-defined]
-        files = _iter_source_docs(source)
+        files = _iter_source_docs(source, scope.of(ctx))
         index_lines = [
             "# Harvested source docs",
             "",

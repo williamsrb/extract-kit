@@ -122,8 +122,18 @@ run still passes.
 
 | Flag | Effect |
 | --- | --- |
+| `--exclude PATH` | Leave a source-relative folder or file out of every scan. Repeatable; `run`, `step` and `resume` |
 | `-v`, `--verbose` | List every recorded action with its path |
 | `-q`, `--quiet` | Suppress tips |
+
+`--exclude` adds to the profile's `exclude:` list. The union is written to
+`MANIFEST.yaml` `exclude`, and a later `run`, `step` or `resume` on the same
+sidecar keeps it, so every slot reads the same tree. A path that is absolute
+or leaves the source exits 1. The built-in skip folders (`node_modules`,
+`vendor`, `dist`, `build`, `target`, `.git`, `.extract`, `graft`,
+`graphify-out`, `.serena`, `__pycache__`, `.gradle`) are always pruned.
+`map.code` and `map.semantic` reuse the source's own graft and Graphify
+indexes, which the kit does not rebuild, so an exclude does not reach them.
 
 ## Output
 
@@ -215,7 +225,19 @@ from anywhere else, the absolute path.
 | `serena onboarding` | `.serena/project.yml` exists and `.serena/memories/` holds a `*.md` | exit 1; fix: open an agent session in the source and run Serena onboarding |
 | `graphify index` | `graphify-out/graph.json` exists | exit 1; fix: run `/graphify .` from a session opened in the source |
 | `graft index` | `graft/` exists | warning only; fix: run `graft build` in the source |
+| `build scope` | every top-level folder is named by a default-branch build | warning only; lists the folders and the `--exclude` flags |
 <!-- markdownlint-enable MD013 -->
+
+`build scope` reads the build entry points without running them:
+`.gitlab-ci.yml` jobs whose `only`, `except` or `rules` let them run on the
+default branch (`origin/HEAD`, else a local `main` or `master`, else the
+checked-out branch), with local `extends` templates resolved; the Makefile
+targets the default goal reaches, plus the variables their recipes use; root
+`package.json` scripts; and root Gradle or Maven files, which also keep
+`src`. Hidden folders, the skip folders and the profile's `exclude:` are
+left out. A folder outside the build is not always dead (a cron script that
+calls the site, for example), so the row only reports. The operator decides
+with `--exclude` or the profile. With no entry point the row is `skipped`.
 
 The kit never runs Serena, graphify or graft; it detects them and prints the
 fix. The check is presence only, not freshness. `run` is not gated by it:

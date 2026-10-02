@@ -85,6 +85,7 @@ def build_manifest(
     skips: list[dict],
     run_id: str,
     maps: dict | None = None,
+    exclude: list[str] | None = None,
 ) -> dict:
     sha, dirty = git_state(source)
     return {
@@ -99,6 +100,7 @@ def build_manifest(
             "tools": tool_versions(),
         },
         "maps": maps or {},
+        "exclude": list(exclude or []),
         "skips": skips,
     }
 

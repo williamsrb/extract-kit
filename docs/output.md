@@ -54,6 +54,8 @@ Rewritten at the end of every `run`, `step` and `resume`:
 - `source`: `path`, git `sha` and `dirty` (null / false outside git),
   `profile`, `lineage`, and `tools` (extractkit and Python versions)
 - `maps`: `code` / `semantic` / `serena` pointers to reused source indexes, or null
+- `exclude`: source-relative paths every scan left out (profile `exclude:`
+  plus `--exclude`); kept by later runs on the same sidecar
 - `skips`: `step`, `reason`, `fix` for each slot skipped in that run
 
 ## Schemas
@@ -103,7 +105,8 @@ for each content-selector field.
 - `inventory/templates.json`: `engines[]` (confidence, `path:line` signals),
   `files[]` (one per template or view script, with its full `scan`),
   `controllers[]` (render-controller predicates) and `coverage` (files
-  scanned, skipped with reason, excluded folders)
+  scanned, skipped with reason, excluded folders: the skip folders plus the
+  run's `exclude`)
 - `rules/view-rules.json`: `rules[]` (`id`, `kind`, `bucket`, `score` and
   `signals`, `expression`, `shape`, `operands`, `literals`, `component`,
   `source`, `repeated`, `divergent`, `status`), `groups[]` and `removed[]`.

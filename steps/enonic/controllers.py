@@ -7,9 +7,10 @@ Comments are blanked before matching so commented-out code never reports.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from pathlib import Path
 
-from extractkit_cli import schema
+from extractkit_cli import schema, scope
 from steps.core.viewscan.base import Lines as _Lines
 from steps.core.viewscan.base import brace_block as _brace_block
 from steps.core.viewscan.base import strip_comments
@@ -374,9 +375,9 @@ def _candidates(root: Path) -> list[tuple[Path, str]]:
     return sorted(found.items())
 
 
-def collect_controllers(source: Path) -> list[dict]:
+def collect_controllers(source: Path, exclude: Iterable[str] = ()) -> list[dict]:
     rows: list[dict] = []
-    for root in iter_resources_roots(source):
+    for root in iter_resources_roots(source, exclude):
         app = app_name_for(root, source)
         for path, kind in _candidates(root):
             text = path.read_text(encoding="utf-8", errors="replace")
@@ -403,7 +404,7 @@ class EnonicControllersStep:
     def run(self, ctx: object) -> None:
         payload = {
             "schema": "99x.extract.controllers/v1",
-            "controllers": collect_controllers(ctx.source),  # type: ignore[attr-defined]
+            "controllers": collect_controllers(ctx.source, scope.of(ctx)),  # type: ignore[attr-defined]
         }
         schema.validate(payload, "controllers", what="inventory/controllers.json")
         ctx.write_json("inventory/controllers.json", payload)  # type: ignore[attr-defined]

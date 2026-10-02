@@ -14,7 +14,7 @@ from typing import Any
 from urllib import error as urlerror
 from urllib import request as urlrequest
 
-from extractkit_cli import cms_target, schema
+from extractkit_cli import cms_target, schema, scope
 from extractkit_cli.common import load_json
 from extractkit_cli.errors import ExtractkitError
 from steps.enonic import live_config, page_templates
@@ -370,7 +370,7 @@ def _static_resources(ctx: Any) -> list[dict]:
         return list(payload.get("resources") or [])
     from steps.enonic.descriptors import collect_resources
 
-    return collect_resources(ctx.source)
+    return collect_resources(ctx.source, scope.of(ctx))
 
 
 def _page_record(

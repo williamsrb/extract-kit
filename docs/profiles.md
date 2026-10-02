@@ -28,6 +28,7 @@ Extractor types are YAML files under `profiles/`.
 | `cms` | Enonic CMS defaults (below). |
 | `live_config` | Client rules for Site Config and Config Env endpoints (below). `{}` in `enonic`. |
 | `round2` | Bounded contexts to survey a second time. |
+| `exclude` | Source-relative folders or files every scan leaves out (lists extend the parent's). `--exclude` adds to it; see [CLI](cli.md#other-flags). `as` excludes `prototype` and `prototype-old`, which no default-branch build ships. |
 | `_comment` | Free text; ignored. |
 <!-- markdownlint-enable MD013 -->
 

@@ -5,8 +5,10 @@ from __future__ import annotations
 import json
 import re
 import shutil
+from collections.abc import Iterable
 from pathlib import Path
 
+from extractkit_cli import scope
 from extractkit_cli.common import REPO_ROOT, load_json, write_text
 from steps.enonic.controllers import HTTP_METHODS, http_requests
 from steps.enonic.descriptors import collect_resources
@@ -41,10 +43,10 @@ def _comment_line(line: str) -> bool:
     )
 
 
-def harvest_outbound(source: Path) -> list[dict]:
+def harvest_outbound(source: Path, exclude: Iterable[str] = ()) -> list[dict]:
     ops: list[dict] = []
-    for path in sorted(source.rglob("*")):
-        if not path.is_file() or path.suffix not in JS_SUFFIXES:
+    for path in sorted(scope.iter_files(source, exclude)):
+        if path.suffix not in JS_SUFFIXES:
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
         match = HTTP_CLIENT_RE.search(text)
@@ -70,10 +72,10 @@ def harvest_outbound(source: Path) -> list[dict]:
     return ops
 
 
-def harvest_browser_embed(source: Path) -> list[dict]:
+def harvest_browser_embed(source: Path, exclude: Iterable[str] = ()) -> list[dict]:
     ops: list[dict] = []
     seen: set[str] = set()
-    for path in sorted(source.rglob("*.html")):
+    for path in sorted(p for p in scope.iter_files(source, exclude) if p.suffix == ".html"):
         if "site" not in path.parts:
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -108,9 +110,11 @@ def _service_methods(controllers: list[dict], app: str, name: str) -> list[dict]
     return []
 
 
-def harvest_inbound(source: Path, controllers: list[dict] | None = None) -> list[dict]:
+def harvest_inbound(
+    source: Path, controllers: list[dict] | None = None, exclude: Iterable[str] = (),
+) -> list[dict]:
     ops: list[dict] = []
-    for resource in collect_resources(source):
+    for resource in collect_resources(source, exclude):
         if resource.get("kind") != "service":
             continue
         app = resource.get("app") or "unknown"
@@ -165,11 +169,13 @@ def _operation_block(op: dict) -> dict:
     return block
 
 
-def build_openapi(source: Path, title: str, controllers: list[dict] | None = None) -> dict:
+def build_openapi(
+    source: Path, title: str, controllers: list[dict] | None = None, exclude: Iterable[str] = (),
+) -> dict:
     ops = (
-        harvest_inbound(source, controllers)
-        + harvest_outbound(source)
-        + harvest_browser_embed(source)
+        harvest_inbound(source, controllers, exclude)
+        + harvest_outbound(source, exclude)
+        + harvest_browser_embed(source, exclude)
     )
     paths: dict[str, dict] = {}
     for op in ops:
@@ -243,7 +249,7 @@ class EnonicIntegrationsStep:
     def run(self, ctx: object) -> None:
         source: Path = ctx.source  # type: ignore[attr-defined]
         title = f"{ctx.profile.get('name', 'extract')} integration contracts"  # type: ignore[attr-defined]
-        spec = build_openapi(source, title, _controllers(ctx))
+        spec = build_openapi(source, title, _controllers(ctx), scope.of(ctx))
         ctx.write_yaml("integrations/openapi.yaml", spec)  # type: ignore[attr-defined]
         _copy_swagger_ui(ctx, spec)
 

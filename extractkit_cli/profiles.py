@@ -5,7 +5,17 @@ from __future__ import annotations
 import json
 from argparse import Namespace
 
-from . import deps, guide, install, manifest, readiness, registry, schema
+from . import (
+    buildscope,
+    deps,
+    guide,
+    install,
+    manifest,
+    readiness,
+    registry,
+    schema,
+    scope,
+)
 from .common import Row, load_kit_identity, load_yaml
 from .errors import ExtractkitError
 from .outtree import resolve_source
@@ -121,4 +131,8 @@ def _preflight_rows(args: Namespace) -> list[Row]:
         return []
     source = resolve_source(raw)
     profile = manifest.load(getattr(args, "profile", None) or "core")
-    return [*install.install(), *deps.check_deps(profile), *readiness.check_source(source)]
+    exclude = scope.normalize(profile.get("exclude") or [])
+    return [
+        *install.install(), *deps.check_deps(profile), *readiness.check_source(source),
+        buildscope.check(source, exclude),
+    ]

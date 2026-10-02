@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from extractkit_cli import scope
 from extractkit_cli.common import load_json
 from steps.core.behavior import walk_fields
 from steps.core.viewscan import components as view_components
@@ -148,7 +149,7 @@ def _load_resources(ctx: object) -> list[dict]:
     # `step maps.normalize` on a sidecar without inventory: re-scan source.
     from steps.enonic.descriptors import collect_resources
 
-    return collect_resources(ctx.source)  # type: ignore[attr-defined]
+    return collect_resources(ctx.source, scope.of(ctx))  # type: ignore[attr-defined]
 
 
 class NormalizeStep:
@@ -186,7 +187,7 @@ class NormalizeStep:
         components = [s for s in surfaces if s["kind"] in COMPONENT_KINDS]
         types = [s for s in surfaces if s["kind"] in MODEL_KINDS]
         routes = [s for s in surfaces if s["kind"] in ROUTE_KINDS | ADMIN_KINDS]
-        for mapping in collect_site_mappings(ctx.source):  # type: ignore[attr-defined]
+        for mapping in collect_site_mappings(ctx.source, scope.of(ctx)):  # type: ignore[attr-defined]
             controller = mapping.get("controller") or mapping.get("filter") or "mapping"
             routes.append({
                 "id": f"{mapping.get('app')}:mapping:{controller}",

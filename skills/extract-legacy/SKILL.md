@@ -41,8 +41,11 @@ Diagrams: `docs/flow.md` and `docs/diagrams/*.png`.
 
 1. `extractkit deps --profile enonic` and
    `extractkit doctor --profile enonic --source <legacy>` (Serena onboarding
-   and a Graphify index must be ready; the operator fixes them)
-2. Static: `extractkit run --profile enonic --source <legacy> --until static`
+   and a Graphify index must be ready; the operator fixes them). A
+   `build scope` warning lists top-level folders no default-branch build
+   names: ask the operator which to drop before step 2
+2. Static: `extractkit run --profile enonic --source <legacy> --until static`,
+   with one `--exclude <folder>` per folder the operator dropped
 3. `extractkit status --source <legacy>` — every phase as done / current /
    pending, the current phase's missing artifacts, and skill names
 4. Optional live CMS (Enonic profile only):

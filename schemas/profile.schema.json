@@ -11,6 +11,10 @@
       "type": "array",
       "items": { "type": "string" }
     },
+    "exclude": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
     "todo": {
       "type": "array",
       "items": { "type": "string" }

@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ET
+from collections.abc import Iterable
 from pathlib import Path
 
+from extractkit_cli import scope
 from steps.enonic.forms import parse_form, parse_regions
 
 # FR-10 coverage kinds. Sibling folders (services/, tasks/, admin/) sit beside site/,
@@ -29,12 +31,9 @@ SIBLING_KINDS: tuple[tuple[str, str], ...] = (
 SCRIPT_SUFFIXES = (".js", ".ts", ".es6")
 
 
-def iter_resources_roots(source: Path) -> list[Path]:
-    roots: list[Path] = []
-    for path in sorted(source.rglob("src/main/resources")):
-        if path.is_dir():
-            roots.append(path)
-    return roots
+def iter_resources_roots(source: Path, exclude: Iterable[str] = ()) -> list[Path]:
+    found = [p for p in sorted(source.rglob("src/main/resources")) if p.is_dir()]
+    return scope.kept(source, found, exclude)
 
 
 def _parse_properties(path: Path) -> dict[str, str]:
@@ -125,9 +124,9 @@ def collect_xdata_applicability(root: ET.Element) -> list[dict]:
     ]
 
 
-def collect_resources(source: Path) -> list[dict]:
+def collect_resources(source: Path, exclude: Iterable[str] = ()) -> list[dict]:
     resources: list[dict] = []
-    for root in iter_resources_roots(source):
+    for root in iter_resources_roots(source, exclude):
         app = app_name_for(root, source)
         site_xml = root / "site" / "site.xml"
         if site_xml.is_file():
@@ -296,9 +295,9 @@ def mapping_controllers(root: Path) -> list[Path]:
     return sorted(paths)
 
 
-def collect_site_mappings(source: Path) -> list[dict]:
+def collect_site_mappings(source: Path, exclude: Iterable[str] = ()) -> list[dict]:
     mappings: list[dict] = []
-    for root in iter_resources_roots(source):
+    for root in iter_resources_roots(source, exclude):
         site_xml = root / "site" / "site.xml"
         if not site_xml.is_file():
             continue
@@ -336,7 +335,7 @@ class EnonicDescriptorsStep:
         return []
 
     def run(self, ctx: object) -> None:
-        resources = collect_resources(ctx.source)  # type: ignore[attr-defined]
+        resources = collect_resources(ctx.source, scope.of(ctx))  # type: ignore[attr-defined]
         payload = {
             "schema": "99x.extract.inventory/v1",
             "resources": resources,
