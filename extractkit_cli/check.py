@@ -23,6 +23,12 @@ FR_HEADING = re.compile(r"^#{1,6}\s*FR-\d+\b", re.IGNORECASE)
 EVIDENCE_LINE = re.compile(r"^\s*Evidence\s*:\s*\S", re.MULTILINE)
 INFERRED = "`_(inferred)_`"
 BUSINESS_FILE = "business/BUSINESS.md"
+SPEC_REVIEW_FILE = "reports/spec-review.md"
+SPEC_REVIEW_SEVERITIES = ("high", "medium", "low")
+SPEC_REVIEW_FIX_IN = ("extractor", "rules/review.md", "spec.enrich", "source")
+SPEC_REVIEW_FIELDS = ("Spec", "Severity", "Fix in", "Evidence")
+FINDING_HEADING = re.compile(r"^###\s+(SR-\d+)\b.*$", re.MULTILINE)
+SPEC_PATH = re.compile(r"spec-kit/specs/[^/\s`]+/spec\.md")
 BUSINESS_SECTIONS = (
     "Purpose and audience", "Actors", "Capabilities", "Business flow",
     "Business rules by capability", "Glossary", "Integrations", "Open questions",
@@ -152,6 +158,15 @@ def _source_ref_resolves(ref: str, source: Path | None) -> bool:
     return 1 <= int(match.group(2)) <= lines
 
 
+def _manifest_source(out: Path) -> Path | None:
+    manifest_path = out / "MANIFEST.yaml"
+    source_raw = (
+        (load_yaml(manifest_path, "MANIFEST.yaml").get("source") or {}).get("path")
+        if manifest_path.is_file() else None
+    )
+    return Path(source_raw) if source_raw else None
+
+
 def _business_gaps(out: Path) -> list[str]:
     """Problems in `business/BUSINESS.md`. An absent file is not a problem."""
     path = out / BUSINESS_FILE
@@ -166,12 +181,7 @@ def _business_gaps(out: Path) -> list[str]:
     surface_ids = _ids_in_maps(out)
     rule_ids = _rule_ids(out)
     known = surface_ids | _context_ids(out) | rule_ids
-    manifest_path = out / "MANIFEST.yaml"
-    source_raw = (
-        (load_yaml(manifest_path, "MANIFEST.yaml").get("source") or {}).get("path")
-        if manifest_path.is_file() else None
-    )
-    source = Path(source_raw) if source_raw else None
+    source = _manifest_source(out)
     for ref in dict.fromkeys(_evidence_refs(text)):
         if ref in known or _source_ref_resolves(ref, source):
             continue
@@ -192,6 +202,63 @@ def _business_gaps(out: Path) -> list[str]:
             f"{BUSINESS_FILE} {where} has an {INFERRED} paragraph without an `Evidence:` line"
             for _ in _unevidenced_inferred(body)
         )
+    return problems
+
+
+def _field_value(block: str, name: str) -> str | None:
+    match = re.search(rf"^\s*{re.escape(name)}\s*:[ \t]*(.*)$", block, re.MULTILINE)
+    return match.group(1).strip() if match else None
+
+
+def _spec_review_gaps(out: Path) -> list[str]:
+    """Problems in `reports/spec-review.md`. An absent file is not a problem."""
+    path = out / SPEC_REVIEW_FILE
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8")
+    problems: list[str] = []
+    if not re.search(r"^# Spec review\s*$", text, re.MULTILINE):
+        problems.append(f"{SPEC_REVIEW_FILE} is missing the H1 '# Spec review'")
+    headings = list(FINDING_HEADING.finditer(text))
+    if not headings:
+        if not re.search(r"^No findings\.\s*$", text, re.MULTILINE):
+            problems.append(f"{SPEC_REVIEW_FILE} has no '### SR-<n>' finding and no 'No findings.' line")
+        return problems
+    known = _ids_in_maps(out) | _context_ids(out) | _rule_ids(out)
+    source = _manifest_source(out)
+    for index, heading in enumerate(headings):
+        end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
+        block = text[heading.end():end]
+        finding = heading.group(1)
+        values = {name: _field_value(block, name) for name in SPEC_REVIEW_FIELDS}
+        problems.extend(
+            f"{SPEC_REVIEW_FILE} {finding} has no `{name}:` line"
+            for name, value in values.items() if not value
+        )
+        severity, fix_in, spec = values["Severity"], values["Fix in"], values["Spec"]
+        if severity and severity not in SPEC_REVIEW_SEVERITIES:
+            problems.append(
+                f"{SPEC_REVIEW_FILE} {finding} Severity `{severity}` is not one of "
+                f"{', '.join(SPEC_REVIEW_SEVERITIES)}"
+            )
+        if fix_in and fix_in not in SPEC_REVIEW_FIX_IN:
+            problems.append(
+                f"{SPEC_REVIEW_FILE} {finding} Fix in `{fix_in}` is not one of "
+                f"{', '.join(SPEC_REVIEW_FIX_IN)}"
+            )
+        if spec:
+            spec_path = SPEC_PATH.search(spec)
+            if spec_path is None or not (out / spec_path.group(0)).is_file():
+                problems.append(
+                    f"{SPEC_REVIEW_FILE} {finding} Spec `{spec}` is not a "
+                    "spec-kit/specs/<slug>/spec.md in this sidecar"
+                )
+        for ref in dict.fromkeys(_evidence_refs(block)):
+            if ref not in known and not _source_ref_resolves(ref, source):
+                problems.append(
+                    f"{SPEC_REVIEW_FILE} {finding} Evidence ref `{ref}` does not resolve to a source "
+                    "path:line, a map id, a context id or a rule id"
+                )
     return problems
 
 
@@ -402,6 +469,7 @@ def check_tree(out: Path) -> list[str]:
     problems.extend(_rule_gaps(out))
     problems.extend(_spec_fr_gaps(out))
     problems.extend(_business_gaps(out))
+    problems.extend(_spec_review_gaps(out))
 
     return problems
 
@@ -464,7 +532,11 @@ def _spec_fr_gaps(out: Path) -> list[str]:
     return problems
 
 
-NAMED_CHECKS = {"business": _business_gaps, "spec_fr": _spec_fr_gaps}
+NAMED_CHECKS = {
+    "business": _business_gaps,
+    "spec_fr": _spec_fr_gaps,
+    "spec_review": _spec_review_gaps,
+}
 
 
 def cmd_check(args: Namespace) -> int:

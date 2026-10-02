@@ -2,7 +2,7 @@
   {
     "type": "cameraUpdate",
     "width": 1280,
-    "height": 700,
+    "height": 960,
     "x": 0,
     "y": 0
   },
@@ -235,6 +235,10 @@
       {
         "id": "a11",
         "type": "arrow"
+      },
+      {
+        "id": "a13",
+        "type": "arrow"
       }
     ],
     "roundness": {
@@ -273,7 +277,7 @@
     "type": "rectangle",
     "id": "comp",
     "x": 700,
-    "y": 547,
+    "y": 660,
     "width": 230,
     "height": 76,
     "backgroundColor": "#e9ecef",
@@ -286,6 +290,32 @@
     "boundElements": [
       {
         "id": "a9",
+        "type": "arrow"
+      }
+    ],
+    "roundness": {
+      "type": 3
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#868e96"
+  },
+  {
+    "type": "rectangle",
+    "id": "spec",
+    "x": 700,
+    "y": 540,
+    "width": 230,
+    "height": 64,
+    "backgroundColor": "#e9ecef",
+    "fillStyle": "solid",
+    "label": {
+      "text": "reports/spec-review.md",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "a13",
         "type": "arrow"
       }
     ],
@@ -593,7 +623,7 @@
     "x": 560,
     "y": 585.0,
     "width": 140,
-    "height": -10.0,
+    "height": 103.0,
     "points": [
       [
         0,
@@ -601,7 +631,7 @@
       ],
       [
         140,
-        -10.0
+        103.0
       ]
     ],
     "endArrowhead": "arrow",
@@ -747,6 +777,41 @@
     }
   },
   {
+    "type": "arrow",
+    "id": "a13",
+    "x": 815.0,
+    "y": 420,
+    "width": 0.0,
+    "height": 120,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.0,
+        120
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "syn",
+      "fixedPoint": [
+        0.5,
+        1
+      ]
+    },
+    "endBinding": {
+      "elementId": "spec",
+      "fixedPoint": [
+        0.5,
+        0
+      ]
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#868e96"
+  },
+  {
     "type": "text",
     "id": "a4_lbl",
     "x": 462.0,
@@ -799,8 +864,8 @@
   {
     "type": "text",
     "id": "a9_lbl",
-    "x": 595.0,
-    "y": 556.0,
+    "x": 640,
+    "y": 614,
     "text": "XP8 report",
     "fontSize": 14,
     "fontFamily": 5,
@@ -832,6 +897,16 @@
     "x": 1133.0,
     "y": 306.25,
     "text": "promote",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "a13_lbl",
+    "x": 722,
+    "y": 470,
+    "text": "agent review",
     "fontSize": 14,
     "fontFamily": 5,
     "strokeColor": "#495057"

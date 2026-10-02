@@ -94,6 +94,7 @@ pending. The `extract-agentic` skill runs this loop.
 | `rules.name` | `rules/review.md` (names and intents) | no business rule in `rules/view-rules.json` is still `extracted` |
 | `business` | `business/BUSINESS.md` | the file exists |
 | `spec.enrich` | `spec-kit/specs/`, `use-cases/` (prose only) | optional, never blocks |
+| `spec.review` | `reports/spec-review.md` (findings only; edits no spec) | optional, never blocks |
 <!-- markdownlint-enable MD013 -->
 
 `rules.name` needs a re-run: the names reach `rules/view-rules.json` only
@@ -141,6 +142,7 @@ when the operator asks.
 | `template … maps to no component surface` | A surface was removed from `map/component-map.json` | Re-run `maps.normalize`, never edit the map |
 | `component … is not spec-ready` | A `template` block lost a required key | Re-run `maps.normalize` |
 | `business/BUSINESS.md … does not resolve` | An `Evidence:` ref is not a source `path:line`, a map id, a context id or a rule id | Fix the ref in `business/BUSINESS.md`; do not edit the maps |
+| `reports/spec-review.md …` | The report breaks its format: no `# Spec review` H1, a finding without `Spec:`, `Severity:`, `Fix in:` or `Evidence:`, a value outside its set, a `Spec:` path not in the sidecar, or an `Evidence:` ref that does not resolve | Fix the report; never edit the specs. Findings never fail `check` |
 | `run --from agent` refuses | The agent phase is a command | `extractkit agent next --out <sidecar>` |
 | `business rule VR-… is not cited` | A business rule is in no spec FR and not dropped | Re-run `spec.kit`; if the operator says the rule is dropped, set `out-of-scope: yes` in `rules/review.md` |
 <!-- markdownlint-enable MD013 -->

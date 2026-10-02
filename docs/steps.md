@@ -622,6 +622,24 @@ fails an FR without an `Evidence:` line.
 `extractkit agent show spec.enrich --out <sidecar>`. Re-running `spec.kit`
 rewrites the specs, so enrich after the last run of that slot.
 
+### spec.review
+
+**Does.** Optional. After `spec.kit`. Reads `spec-kit/specs/`,
+`business/BUSINESS.md` (skipped when absent), `rules/view-rules.json` and
+`map/bounded-contexts.json`. Reviews the generated specs for meaning: an FR
+that misreads its cited line, a context split in the wrong place, duplicate
+or conflicting FRs, a contradiction with `BUSINESS.md`, behavior no spec
+covers, and a spec too vague for `/speckit.plan`. It edits no spec.
+
+**Writes.** `reports/spec-review.md` only: an H1 `# Spec review`, then one
+`### SR-<n>: <title>` per finding with `Spec:`, `Severity:`, `Fix in:` and
+`Evidence:` lines, or `No findings.`. `check` validates the format (see
+[output](output.md#spec-review)), never the findings. `promote` never
+copies the report.
+
+**Skip.** Never returned by `agent next`, and it never makes the agent
+phase pending. Run it with `extractkit agent show spec.review --out <sidecar>`.
+
 ## PHP
 
 The PHP profile leaves `inventory.descriptors`, `inventory.controllers`,

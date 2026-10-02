@@ -2240,7 +2240,7 @@
       "id": "ph_n6",
       "x": 983,
       "y": 1612,
-      "text": "+ rules.name, business\n(spec.enrich optional)",
+      "text": "+ rules.name, business\n(optional: spec.enrich,\nspec.review)",
       "fontSize": 15,
       "strokeColor": "#5f6368",
       "fontFamily": 5
@@ -2539,6 +2539,10 @@
           "type": "arrow"
         },
         {
+          "id": "ln_a13",
+          "type": "arrow"
+        },
+        {
           "id": "ln_syn_label",
           "type": "text"
         }
@@ -2608,7 +2612,7 @@
       "type": "rectangle",
       "id": "ln_comp",
       "x": 860,
-      "y": 2787,
+      "y": 2900,
       "width": 230,
       "height": 76,
       "backgroundColor": "#e9ecef",
@@ -2634,7 +2638,7 @@
       "type": "text",
       "id": "ln_comp_label",
       "x": 870,
-      "y": 2797,
+      "y": 2910,
       "width": 210,
       "height": 56,
       "text": "reports/xp8-compat.md",
@@ -2643,6 +2647,47 @@
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "ln_comp",
+      "strokeColor": "#868e96"
+    },
+    {
+      "type": "rectangle",
+      "id": "ln_spec",
+      "x": 860,
+      "y": 2780,
+      "width": 230,
+      "height": 64,
+      "backgroundColor": "#e9ecef",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ln_a13",
+          "type": "arrow"
+        },
+        {
+          "id": "ln_spec_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "strokeStyle": "dashed",
+      "strokeColor": "#868e96",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "ln_spec_label",
+      "x": 870,
+      "y": 2790,
+      "width": 210,
+      "height": 44,
+      "text": "reports/spec-review.md",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "ln_spec",
       "strokeColor": "#868e96"
     },
     {
@@ -2965,7 +3010,7 @@
       "x": 720,
       "y": 2825,
       "width": 140,
-      "height": -10,
+      "height": 103,
       "points": [
         [
           0,
@@ -2973,7 +3018,7 @@
         ],
         [
           140,
-          -10
+          103
         ]
       ],
       "endArrowhead": "arrow",
@@ -3137,6 +3182,42 @@
       "roughness": 2
     },
     {
+      "type": "arrow",
+      "id": "ln_a13",
+      "x": 975,
+      "y": 2660,
+      "width": 0,
+      "height": 120,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          120
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "ln_syn",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "endBinding": {
+        "elementId": "ln_spec",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "strokeStyle": "dashed",
+      "strokeColor": "#868e96",
+      "roughness": 2
+    },
+    {
       "type": "text",
       "id": "ln_a4_lbl",
       "x": 622,
@@ -3189,8 +3270,8 @@
     {
       "type": "text",
       "id": "ln_a9_lbl",
-      "x": 755,
-      "y": 2796,
+      "x": 800,
+      "y": 2854,
       "text": "XP8 report",
       "fontSize": 14,
       "fontFamily": 5,
@@ -3222,6 +3303,16 @@
       "x": 1293,
       "y": 2546.25,
       "text": "promote",
+      "fontSize": 14,
+      "fontFamily": 5,
+      "strokeColor": "#495057"
+    },
+    {
+      "type": "text",
+      "id": "ln_a13_lbl",
+      "x": 882,
+      "y": 2710,
+      "text": "agent review",
       "fontSize": 14,
       "fontFamily": 5,
       "strokeColor": "#495057"

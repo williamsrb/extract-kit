@@ -35,7 +35,7 @@ your own command with that flag added.
 | `status` profile | `MANIFEST.yaml` `source.profile` when `--profile` is omitted |
 | `resume` | First slot that is not done, through the end or `--until` |
 | `check` | Reads the sidecar only |
-| `agent` | Latest sidecar under `<source>/.extract/` when `--source` is given; otherwise `--out` is required. `next` lists required tasks only; `show spec.enrich` runs the optional one |
+| `agent` | Latest sidecar under `<source>/.extract/` when `--source` is given; otherwise `--out` is required. `next` lists required tasks only; `show spec.enrich` or `show spec.review` runs an optional one |
 <!-- markdownlint-enable MD013 -->
 
 `resume` never starts at an optional slot (`inventory.baseline`,
@@ -107,8 +107,8 @@ Phases 1, 6, 7 and 8 are commands. Passing them to `--from` / `--until` /
 
 A task is done when its `done` markers exist, or, for `rules.name`, when no
 business rule in `rules/view-rules.json` is still `extracted`. The agent
-phase is done when every required task is done. `spec.enrich` is optional
-and never blocks it.
+phase is done when every required task is done. `spec.enrich` and
+`spec.review` are optional and never block it.
 
 While a required task is pending, `status`, `run`, `step` and `resume` end
 with `Agent is next` and `agent next`, plus `or skip to check`. `check`

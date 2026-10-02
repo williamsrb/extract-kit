@@ -40,6 +40,11 @@ Run from the kit repo. `<sidecar>` is the extract run directory
 
 `spec.enrich` is optional and `agent next` never returns it. Run it only when
 the operator asks: `extractkit agent show spec.enrich --out <sidecar>`.
+`spec.review` is optional too, and `agent next` never returns it. It reviews the
+generated specs for meaning and writes only `reports/spec-review.md`; it
+edits no spec, and `promote` never copies the report. Run it when the
+operator asks: `extractkit agent show spec.review --out <sidecar>`. `check`
+validates the report's format, never its findings.
 
 ## Analyst gates
 

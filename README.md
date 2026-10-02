@@ -65,7 +65,14 @@ not connect to an AI model itself, so you choose which assistant runs them.
 | Name the business rules | Gives each extracted rule a plain business name and a one-sentence purpose | Yes |
 | Write the business overview | Writes BUSINESS.md from the extracted facts: purpose, actors, capabilities, business flow, rules, glossary, integrations, open questions | Yes |
 | Polish the specifications | Rewrites the requirement and journey text so it reads better, without changing the facts | No |
+| Review the specifications | Checks the specs against the code and the business overview, writes a findings report, and changes nothing | No |
 <!-- markdownlint-enable MD013 -->
+
+The Spec Kit files (constitution and specs) are not one of these steps. The
+kit writes them from rules, from the extracted facts, and never runs Spec Kit
+or an AI model to do it. Spec Kit's own agent commands, such as
+`/speckit.plan` and `/speckit.tasks`, run after hand-over, with the next
+team's own assistant.
 
 Every sentence an assistant adds that is not an extracted fact is marked as
 inferred and must cite its evidence, or the validation step fails. Rule

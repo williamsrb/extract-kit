@@ -36,7 +36,7 @@ def _rules(out: Path, *statuses: str, bucket: str = "business") -> None:
 class RegistryTests(unittest.TestCase):
     def test_shipped_tasks_load_and_validate(self) -> None:
         tasks = agent_tasks.load()
-        self.assertEqual({t.id for t in tasks}, {"rules.name", "business", "spec.enrich"})
+        self.assertEqual({t.id for t in tasks}, {"rules.name", "business", "spec.enrich", "spec.review"})
         for task in tasks:
             with self.subTest(task=task.id):
                 self.assertTrue(task.prompt.is_file())
@@ -44,10 +44,10 @@ class RegistryTests(unittest.TestCase):
                 for name in task.checks:
                     self.assertIn(name, check.NAMED_CHECKS)
 
-    def test_order_is_rules_then_business_then_spec_enrich(self) -> None:
+    def test_order_is_rules_then_business_then_spec_enrich_then_spec_review(self) -> None:
         self.assertEqual(
             [t.id for t in agent_tasks.ordered(manifest.load("enonic"))],
-            ["rules.name", "business", "spec.enrich"],
+            ["rules.name", "business", "spec.enrich", "spec.review"],
         )
 
     def test_declared_fields(self) -> None:
@@ -57,6 +57,9 @@ class RegistryTests(unittest.TestCase):
         self.assertEqual(by_id["business"].promote, (("business/BUSINESS.md", "BUSINESS.md"),))
         self.assertEqual(by_id["business"].writes, ("business/BUSINESS.md",))
         self.assertTrue(by_id["spec.enrich"].optional)
+        self.assertTrue(by_id["spec.review"].optional)
+        self.assertEqual(by_id["spec.review"].writes, ("reports/spec-review.md",))
+        self.assertEqual(by_id["spec.review"].promote, ())
         self.assertFalse(by_id["business"].optional)
 
     def test_schema_rejects_an_unknown_field_and_a_missing_one(self) -> None:
@@ -147,6 +150,16 @@ class DoneStateTests(unittest.TestCase):
         self.assertFalse(agent_tasks.is_done(self.by_id["spec.enrich"], self.out))
         self.assertNotIn("spec.enrich", [t.id for t in agent_tasks.pending(self.out)])
 
+    def test_spec_review_is_optional_and_never_pending(self) -> None:
+        task = self.by_id["spec.review"]
+        self.assertFalse(agent_tasks.is_done(task, self.out))
+        self.assertNotIn("spec.review", [t.id for t in agent_tasks.pending(self.out)])
+        (self.out / "reports").mkdir()
+        (self.out / "reports" / "spec-review.md").write_text("# Spec review\n\nNo findings.\n", encoding="utf-8")
+        self.assertTrue(agent_tasks.is_done(task, self.out))
+        self.assertNotIn("spec.review", [t.id for t in agent_tasks.pending(self.out)])
+        self.assertEqual(agent_tasks.promotions(self.out), [])
+
     def test_promotions_follow_the_registry(self) -> None:
         self.assertEqual(agent_tasks.promotions(self.out), [])
         (self.out / "business").mkdir()
@@ -177,11 +190,12 @@ class AgentCommandTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual(payload["next"], "business")
         rows = {t["id"]: t for t in payload["tasks"]}
-        self.assertEqual(list(rows), ["rules.name", "business", "spec.enrich"])
+        self.assertEqual(list(rows), ["rules.name", "business", "spec.enrich", "spec.review"])
         self.assertEqual(rows["rules.name"]["state"], "done")
         self.assertEqual(rows["business"]["state"], "pending")
         self.assertEqual(rows["business"]["missing_reads"], [])
         self.assertTrue(rows["spec.enrich"]["optional"])
+        self.assertTrue(rows["spec.review"]["optional"])
         self.assertEqual(rows["rules.name"]["rerun"], ["run", "--from", "merge", "--until", "synthesis"])
 
     def test_list_text(self) -> None:
@@ -209,7 +223,14 @@ class AgentCommandTests(unittest.TestCase):
     def test_show_unknown_task_names_the_available_ones(self) -> None:
         result = run("agent", "show", "nope", "--out", str(self.out))
         self.assertEqual(result.returncode, 1)
-        self.assertIn("rules.name, business, spec.enrich", result.stderr)
+        self.assertIn("rules.name, business, spec.enrich, spec.review", result.stderr)
+
+    def test_show_spec_review_renders_and_lists_the_missing_business_input(self) -> None:
+        result = run("agent", "show", "spec.review", "--out", str(self.out))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(f"`{self.out}`", result.stdout)
+        self.assertNotRegex(result.stdout, r"\{(sidecar|source|profile|run_id)\}")
+        self.assertIn("business/BUSINESS.md  (missing)", result.stdout)
 
     def test_next_names_the_first_pending_task_and_points_at_show(self) -> None:
         result = run("agent", "next", "--out", str(self.out))

@@ -317,6 +317,10 @@
           "type": "arrow"
         },
         {
+          "id": "a13",
+          "type": "arrow"
+        },
+        {
           "id": "syn_label",
           "type": "text"
         }
@@ -386,7 +390,7 @@
       "type": "rectangle",
       "id": "comp",
       "x": 700,
-      "y": 547,
+      "y": 660,
       "width": 230,
       "height": 76,
       "backgroundColor": "#e9ecef",
@@ -412,7 +416,7 @@
       "type": "text",
       "id": "comp_label",
       "x": 710,
-      "y": 557,
+      "y": 670,
       "width": 210,
       "height": 56,
       "text": "reports/xp8-compat.md",
@@ -421,6 +425,47 @@
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "comp",
+      "strokeColor": "#868e96"
+    },
+    {
+      "type": "rectangle",
+      "id": "spec",
+      "x": 700,
+      "y": 540,
+      "width": 230,
+      "height": 64,
+      "backgroundColor": "#e9ecef",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "a13",
+          "type": "arrow"
+        },
+        {
+          "id": "spec_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "strokeStyle": "dashed",
+      "strokeColor": "#868e96",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "spec_label",
+      "x": 710,
+      "y": 550,
+      "width": 210,
+      "height": 44,
+      "text": "reports/spec-review.md",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "spec",
       "strokeColor": "#868e96"
     },
     {
@@ -743,7 +788,7 @@
       "x": 560,
       "y": 585,
       "width": 140,
-      "height": -10,
+      "height": 103,
       "points": [
         [
           0,
@@ -751,7 +796,7 @@
         ],
         [
           140,
-          -10
+          103
         ]
       ],
       "endArrowhead": "arrow",
@@ -915,6 +960,42 @@
       "roughness": 2
     },
     {
+      "type": "arrow",
+      "id": "a13",
+      "x": 815,
+      "y": 420,
+      "width": 0,
+      "height": 120,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          120
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "syn",
+        "fixedPoint": [
+          0.5,
+          1
+        ]
+      },
+      "endBinding": {
+        "elementId": "spec",
+        "fixedPoint": [
+          0.5,
+          0
+        ]
+      },
+      "strokeStyle": "dashed",
+      "strokeColor": "#868e96",
+      "roughness": 2
+    },
+    {
       "type": "text",
       "id": "a4_lbl",
       "x": 462,
@@ -967,8 +1048,8 @@
     {
       "type": "text",
       "id": "a9_lbl",
-      "x": 595,
-      "y": 556,
+      "x": 640,
+      "y": 614,
       "text": "XP8 report",
       "fontSize": 14,
       "fontFamily": 5,
@@ -1000,6 +1081,16 @@
       "x": 1133,
       "y": 306.25,
       "text": "promote",
+      "fontSize": 14,
+      "fontFamily": 5,
+      "strokeColor": "#495057"
+    },
+    {
+      "type": "text",
+      "id": "a13_lbl",
+      "x": 722,
+      "y": 470,
+      "text": "agent review",
       "fontSize": 14,
       "fontFamily": 5,
       "strokeColor": "#495057"

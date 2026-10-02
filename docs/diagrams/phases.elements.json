@@ -528,7 +528,7 @@
     "id": "n6",
     "x": 865,
     "y": 232,
-    "text": "+ rules.name, business\n(spec.enrich optional)",
+    "text": "+ rules.name, business\n(optional: spec.enrich,\nspec.review)",
     "fontSize": 15,
     "strokeColor": "#5f6368",
     "fontFamily": 5

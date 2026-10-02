@@ -1,0 +1,15 @@
+id: spec.review
+title: Review the generated specs for meaning and write a findings report
+after: spec.kit
+optional: true
+reads:
+  - spec-kit/specs/
+  - business/BUSINESS.md
+  - rules/view-rules.json
+  - map/bounded-contexts.json
+writes:
+  - reports/spec-review.md
+done:
+  - reports/spec-review.md
+checks:
+  - spec_review

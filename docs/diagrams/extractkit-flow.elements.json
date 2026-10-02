@@ -2124,7 +2124,7 @@
     "id": "ph_n6",
     "x": 983,
     "y": 1612,
-    "text": "+ rules.name, business\n(spec.enrich optional)",
+    "text": "+ rules.name, business\n(optional: spec.enrich,\nspec.review)",
     "fontSize": 15,
     "strokeColor": "#5f6368",
     "fontFamily": 5
@@ -2338,6 +2338,10 @@
       {
         "id": "ln_a11",
         "type": "arrow"
+      },
+      {
+        "id": "ln_a13",
+        "type": "arrow"
       }
     ],
     "roundness": {
@@ -2376,7 +2380,7 @@
     "type": "rectangle",
     "id": "ln_comp",
     "x": 860,
-    "y": 2787,
+    "y": 2900,
     "width": 230,
     "height": 76,
     "backgroundColor": "#e9ecef",
@@ -2389,6 +2393,32 @@
     "boundElements": [
       {
         "id": "ln_a9",
+        "type": "arrow"
+      }
+    ],
+    "roundness": {
+      "type": 3
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#868e96"
+  },
+  {
+    "type": "rectangle",
+    "id": "ln_spec",
+    "x": 860,
+    "y": 2780,
+    "width": 230,
+    "height": 64,
+    "backgroundColor": "#e9ecef",
+    "fillStyle": "solid",
+    "label": {
+      "text": "reports/spec-review.md",
+      "fontSize": 16,
+      "fontFamily": 5
+    },
+    "boundElements": [
+      {
+        "id": "ln_a13",
         "type": "arrow"
       }
     ],
@@ -2696,7 +2726,7 @@
     "x": 720,
     "y": 2825.0,
     "width": 140,
-    "height": -10.0,
+    "height": 103.0,
     "points": [
       [
         0,
@@ -2704,7 +2734,7 @@
       ],
       [
         140,
-        -10.0
+        103.0
       ]
     ],
     "endArrowhead": "arrow",
@@ -2850,6 +2880,41 @@
     }
   },
   {
+    "type": "arrow",
+    "id": "ln_a13",
+    "x": 975.0,
+    "y": 2660,
+    "width": 0.0,
+    "height": 120,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.0,
+        120
+      ]
+    ],
+    "endArrowhead": "arrow",
+    "startBinding": {
+      "elementId": "ln_syn",
+      "fixedPoint": [
+        0.5,
+        1
+      ]
+    },
+    "endBinding": {
+      "elementId": "ln_spec",
+      "fixedPoint": [
+        0.5,
+        0
+      ]
+    },
+    "strokeStyle": "dashed",
+    "strokeColor": "#868e96"
+  },
+  {
     "type": "text",
     "id": "ln_a4_lbl",
     "x": 622.0,
@@ -2902,8 +2967,8 @@
   {
     "type": "text",
     "id": "ln_a9_lbl",
-    "x": 755.0,
-    "y": 2796.0,
+    "x": 800,
+    "y": 2854,
     "text": "XP8 report",
     "fontSize": 14,
     "fontFamily": 5,
@@ -2935,6 +3000,16 @@
     "x": 1293.0,
     "y": 2546.25,
     "text": "promote",
+    "fontSize": 14,
+    "fontFamily": 5,
+    "strokeColor": "#495057"
+  },
+  {
+    "type": "text",
+    "id": "ln_a13_lbl",
+    "x": 882,
+    "y": 2710,
+    "text": "agent review",
     "fontSize": 14,
     "fontFamily": 5,
     "strokeColor": "#495057"

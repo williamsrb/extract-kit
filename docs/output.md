@@ -19,6 +19,7 @@ Canonical extract tree. Enonic details live only under `stackRef`.
   baseline/INDEX.md               # optional
   baseline/<slug>/                # desktop.png, mobile.png, page.html, network.json
   reports/xp8-compat.md           # optional; never promoted
+  reports/spec-review.md          # optional; never promoted
   inventory/merge-report.md
   rules/view-rules.json
   rules/RULES.md
@@ -120,6 +121,18 @@ Business rules by capability, Glossary, Integrations and Open questions.
 `Evidence:` ref resolves (a source `path:line`, a map id, a context id or a
 rule id), every capability cites a rule id or a surface id, and every
 `_(inferred)_` paragraph has an `Evidence:` line.
+
+## Spec review
+
+`reports/spec-review.md` is written by the optional `spec.review` agent
+task. It never edits the specs and `promote` never copies it. `check`
+validates it only when it exists: the H1 `# Spec review`, then either
+`No findings.` or findings whose `### SR-<n>` block has `Spec:` (a
+`spec-kit/specs/<slug>/spec.md` in the sidecar), `Severity:` (`high`,
+`medium` or `low`), `Fix in:` (`extractor`, `rules/review.md`,
+`spec.enrich` or `source`) and `Evidence:` (every ref resolves like in
+`BUSINESS.md`). The FR id after a `Spec:` path is not validated, and the
+findings never fail `check`.
 
 ## Hygiene
 

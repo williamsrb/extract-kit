@@ -58,6 +58,9 @@ The checkout is read-only until `promote`. Default `--out` is
 
 ![Sidecar lineage](diagrams/sidecar-lineage.png)
 
+`reports/spec-review.md` is optional agent output (the `spec.review` task).
+It stays in the sidecar and `promote` never copies it.
+
 `runtime.json` is optional. It comes from a local or review XP, not from
 scanning the checkout.
 
