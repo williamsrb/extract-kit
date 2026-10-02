@@ -27,9 +27,10 @@ agent tasks and check.
 
 The container image ([`docker/Dockerfile`](../docker/Dockerfile)) bundles the
 tools: Python 3.12 with `pyyaml` and `jsonschema`, git, Node with graft,
-Graphify, Serena, Playwright with Chromium, and the `claude` and `codex`
-CLIs. The Compose example starts it, with an optional `enonic/xp` service that
-is only useful when you also supply the application and a content dump.
+Graphify, Serena, Playwright with Chromium, and the `claude`, `codex` and
+`cursor-agent` CLIs. The Compose example starts it, with an optional
+`enonic/xp` service that is only useful when you also supply the
+application and a content dump.
 
 ## The resources file
 
@@ -163,11 +164,31 @@ whose outputs exist reports `ok (already done)` and starts no agent. The
 The agent CLIs are data: the `agents:` block of `extractkit.yaml` gives each
 one an `argv` template (the prompt is always sent on stdin), the flags for
 `allowlist` and `bypass` permissions and a default tool allowlist.
-`claude` and `codex` ship, with argv checked against `claude` 2.1.280 and
-`codex-cli` 0.151.0. Another CLI is a new entry, no code change; `--agent` and
-`agent.cli` are checked against the block when the command runs. The block is
-read by one function, so no flag or env var can point headless at another
-binary.
+`claude`, `codex` and `cursor` ship, with argv checked against `claude`
+2.1.280, `codex-cli` 0.151.0 and `cursor-agent` 2026.10.01. Another CLI is a
+new entry, no code change; `--agent` and `agent.cli` are checked against the
+block when the command runs. The block is read by one function, so no flag or
+env var can point headless at another binary.
+
+What each assistant supports, checked on 2026-10-02 with one stdin run of each
+CLI (run `extractkit --help`, write a file, call a Serena tool):
+
+<!-- markdownlint-disable MD013 -->
+| | Claude Code | Codex | Cursor |
+| --- | --- | --- | --- |
+| Interactive: reads `AGENTS.md` | yes (`CLAUDE.md` is a symlink to it) | yes | yes |
+| Interactive: skills from | `~/.claude/skills` | `~/.agents/skills` | `~/.agents/skills`; depends on the Cursor version, not checked |
+| `--agent` value | `claude` | `codex` | `cursor` (binary `cursor-agent`) |
+| `allowlist` mode | per-tool: `allowed_tools` | `workspace-write` sandbox; `allowed_tools` is ignored | `--force` with `--sandbox enabled`; `allowed_tools` is ignored |
+| `bypass` mode | `bypassPermissions` | `--dangerously-bypass-approvals-and-sandbox` | `--force --sandbox disabled` |
+| Serena MCP in headless | needs the server in the agent's own config | same | same |
+| In the container image | yes, pinned | yes, pinned | yes, unpinned (official installer); key in `CURSOR_API_KEY` |
+<!-- markdownlint-enable MD013 -->
+
+Only Claude Code limits an agent to named tools. Codex and Cursor are limited
+to a sandbox, so the `--allowed-tools` override has no effect on them. Cursor
+in print mode waits for an approval no one answers unless `--force` is set,
+which is why its allowlist route is the sandbox.
 
 Permissions default to a narrow allowlist: the agent may read, edit files and
 run `extractkit`, and the preflight may run `graphify` and use the Serena MCP.

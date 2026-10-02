@@ -58,6 +58,12 @@ ENV HOME=/home/extract \
 RUN uv tool install "serena-agent==${SERENA_VERSION}" \
     && uv tool install "graphifyy==${GRAPHIFY_VERSION}"
 
+# cursor-agent, from Cursor's official installer into ~/.local/bin. Unlike the
+# other tools it has no pinned release, so a rebuild can pick up a newer
+# version than docs/headless.md names; `--agent cursor` is the only user.
+RUN curl -fsS https://cursor.com/install | bash \
+    && cursor-agent --version
+
 # Install the kit from a bind-mounted copy of the build context. The mount
 # exists only for this step, so no copy of the checkout stays in any layer, and
 # every build proves the detached install works.

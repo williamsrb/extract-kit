@@ -11,7 +11,8 @@ schema_versions: [1]
 #   preflight_tools default tool allowlist for the Serena and Graphify preflight
 # Templates accept {allowed_tools} (comma-joined) and {source}. Another CLI is a
 # new entry here, with no code change. Argv verified 2026-10-02 against
-# claude 2.1.280 and codex-cli 0.151.0 (`--help`).
+# claude 2.1.280, codex-cli 0.151.0 and cursor-agent 2026.10.01 (`--help`,
+# plus one stdin run of each in a scratch git folder).
 agents:
   claude:
     argv: [claude, -p, --output-format, text]
@@ -23,5 +24,14 @@ agents:
     argv: [codex, exec, --cd, "{source}"]
     allowlist_args: [--sandbox, workspace-write, "-"]
     bypass_args: [--dangerously-bypass-approvals-and-sandbox, "-"]
+    allowed_tools: []
+    preflight_tools: []
+  # cursor-agent has no per-tool allowlist flag, and in print mode it waits for
+  # an approval that never comes unless --force is set. The allowlist route is
+  # therefore its sandbox: --force with --sandbox enabled.
+  cursor:
+    argv: [cursor-agent, -p, --output-format, text, --trust, --approve-mcps]
+    allowlist_args: [--force, --sandbox, enabled]
+    bypass_args: [--force, --sandbox, disabled]
     allowed_tools: []
     preflight_tools: []

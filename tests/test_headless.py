@@ -274,6 +274,21 @@ class LoopTests(unittest.TestCase):
                     task_timeout=5, max_fix_attempts=2, storage_state=None))
                 self.assertEqual(driver._argv(driver.s.allowed_tools), expected)
 
+    def test_the_shipped_agents_build_a_stdin_command_per_permission_mode(self) -> None:
+        table = headless.agent_table()
+        self.assertEqual(sorted(table), ["claude", "codex", "cursor"])
+        for name, binary in (("claude", "claude"), ("codex", "codex"), ("cursor", "cursor-agent")):
+            driver = headless.Headless(Namespace(
+                source="/tmp", agent=name, agent_permissions=None, allowed_tools=None,
+                task_timeout=5, max_fix_attempts=2, storage_state=None))
+            allowlist = driver._argv(driver.s.allowed_tools)
+            driver.s.permissions = "bypass"
+            bypass = driver._argv(driver.s.allowed_tools)
+            with self.subTest(agent=name):
+                self.assertEqual(allowlist[0], binary)
+                self.assertNotEqual(allowlist, bypass)
+                self.assertFalse([a for a in allowlist + bypass if "{" in a])
+
     def test_the_offline_rerun_is_split_around_the_cms_phase(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             source = make_source(Path(raw))
