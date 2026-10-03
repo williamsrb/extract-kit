@@ -193,6 +193,13 @@ class Headless:
     def __init__(self, args: Namespace) -> None:
         self.args = args
         self.source = outtree.resolve_source(args.source)
+        if not os.access(self.source, os.W_OK | os.X_OK):
+            raise ExtractkitError(
+                f"source {self.source} is not writable by uid {os.getuid()}",
+                "headless writes <source>/.extract/: mount the checkout writable for this user, "
+                "or run the container as the checkout's owner (docker run --user)",
+                code="source_not_writable",
+            )
         self.out: Path | None = None
         self.log = RunLog()
         self.records: list[StageRecord] = []

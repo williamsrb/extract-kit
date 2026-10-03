@@ -1,0 +1,93 @@
+stages:
+  - package
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_BUILDKIT: "1"
+  DOCKERHUB_USER: leanon
+  DOCKERHUB_REPO: leanon/extractkit-headless
+  PUSHRM_VERSION: v1.9.0
+  PUSHRM_SHA256: 2f48649ce6c6aba1656a0fb3fc7a82971caf8ece7d86e6eed3d10c106d20fac8
+
+# The kit is copied into the image at build time, so any change to the kit
+# rebuilds it. Docs, tests and the README alone do not.
+.image-sources: &image-sources
+  - docker/**/*
+  - extractkit
+  - extractkit.yaml
+  - extractkit_cli/**/*
+  - steps/**/*
+  - profiles/**/*
+  - schemas/**/*
+  - templates/**/*
+  - headless/**/*
+  - agent-tasks/**/*
+  - skills/**/*
+
+# Build, smoke-test, then push. Runs only on the docker branch.
+docker-build:
+  stage: package
+  image: docker:29
+  services:
+    - docker:29-dind
+  tags:
+    - docker
+  rules:
+    - if: $CI_COMMIT_BRANCH == "docker"
+      changes: *image-sources
+  parallel:
+    matrix:
+      - VARIANT: full
+        WITH_PLAYWRIGHT: "1"
+        WITH_PHP: "1"
+        RUN_AS: extract
+        EXTRA_TAGS: "latest full"
+      - VARIANT: slim
+        WITH_PLAYWRIGHT: "0"
+        WITH_PHP: "0"
+        RUN_AS: extract
+        EXTRA_TAGS: "slim"
+      - VARIANT: root
+        WITH_PLAYWRIGHT: "1"
+        WITH_PHP: "1"
+        RUN_AS: root
+        EXTRA_TAGS: "root"
+  script:
+    - sha_tag="$CI_COMMIT_SHORT_SHA"
+    - '[ "$VARIANT" = full ] || sha_tag="$CI_COMMIT_SHORT_SHA-$VARIANT"'
+    - >
+      docker build -f docker/Dockerfile
+      --build-arg WITH_PLAYWRIGHT="$WITH_PLAYWRIGHT"
+      --build-arg WITH_PHP="$WITH_PHP"
+      --build-arg RUN_AS="$RUN_AS"
+      -t "$DOCKERHUB_REPO:$sha_tag" .
+    - sh docker/smoke.sh "$DOCKERHUB_REPO:$sha_tag"
+    - echo "$CI_DOCKER_TOKEN" | docker login --username "$DOCKERHUB_USER" --password-stdin
+    - docker push "$DOCKERHUB_REPO:$sha_tag"
+    - |
+      for tag in $EXTRA_TAGS; do
+        docker tag "$DOCKERHUB_REPO:$sha_tag" "$DOCKERHUB_REPO:$tag"
+        docker push "$DOCKERHUB_REPO:$tag"
+      done
+
+# The Docker Hub description comes from docker/README.md. It needs no Docker
+# daemon: docker-pushrm talks to the Hub API with these credentials. Started
+# by hand only, from a docker branch pipeline.
+dockerhub-description:
+  stage: package
+  image: alpine:3.22
+  tags:
+    - docker
+  rules:
+    - if: $CI_COMMIT_BRANCH == "docker"
+      when: manual
+      allow_failure: true
+  script:
+    - wget -q -O /usr/local/bin/docker-pushrm "https://github.com/christian-korneck/docker-pushrm/releases/download/$PUSHRM_VERSION/docker-pushrm_linux_amd64"
+    - echo "$PUSHRM_SHA256  /usr/local/bin/docker-pushrm" | sha256sum -c -
+    - chmod +x /usr/local/bin/docker-pushrm
+    - >
+      DOCKER_USER="$DOCKERHUB_USER" DOCKER_PASS="$CI_DOCKER_TOKEN"
+      docker-pushrm --file docker/README.md
+      --short "Headless 99x Extract Kit: read a legacy project and write its business rules and specs"
+      "$DOCKERHUB_REPO"

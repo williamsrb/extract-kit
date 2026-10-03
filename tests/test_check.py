@@ -120,8 +120,6 @@ class CheckTests(unittest.TestCase):
         from tests.support import REPO
 
         self.assertFalse((REPO / "PLAN.md").exists())
-        self.assertFalse((REPO / ".gitlab-ci.yml").exists())
-        self.assertFalse((REPO / ".gitlab-ci.yaml").exists())
         self.assertTrue((REPO / "docs" / "cli.md").is_file())
         self.assertTrue((REPO / "skills" / "extract-legacy" / "SKILL.md").is_file())
 

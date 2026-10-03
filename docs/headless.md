@@ -25,12 +25,13 @@ Headless needs a storage state to run the CMS phase. With none resolved the
 `cms` stage is `skipped` and the run continues offline: merge, synthesis, the
 agent tasks and check.
 
-The container image ([`docker/Dockerfile`](../docker/Dockerfile)) bundles the
-tools: Python 3.12 with `pyyaml` and `jsonschema`, git, Node with graft,
+The default container image ([`docker/Dockerfile`](../docker/Dockerfile))
+bundles the tools: Python 3.12 with `pyyaml` and `jsonschema`, git, Node with graft,
 Graphify, Serena, Playwright with Chromium, and the `claude`, `codex` and
 `cursor-agent` CLIs. The Compose example starts it, with an optional
 `enonic/xp` service that is only useful when you also supply the
-application and a content dump.
+application and a content dump. [Building and reusing the
+image](#building-and-reusing-the-image) covers slimmer variants.
 
 ## The resources file
 
@@ -182,7 +183,7 @@ CLI (run `extractkit --help`, write a file, call a Serena tool):
 | `allowlist` mode | per-tool: `allowed_tools` | `workspace-write` sandbox; `allowed_tools` is ignored | `--force` with `--sandbox enabled`; `allowed_tools` is ignored |
 | `bypass` mode | `bypassPermissions` | `--dangerously-bypass-approvals-and-sandbox` | `--force --sandbox disabled` |
 | Serena MCP in headless | needs the server in the agent's own config | same | same |
-| In the container image | yes, pinned | yes, pinned | yes, unpinned (official installer); key in `CURSOR_API_KEY` |
+| In the default container image | yes, pinned | yes, pinned | yes, unpinned (official installer); key in `CURSOR_API_KEY` |
 <!-- markdownlint-enable MD013 -->
 
 Only Claude Code limits an agent to named tools. Codex and Cursor are limited
@@ -239,6 +240,71 @@ attempt) with `ts`, `stage`, `task`, `attempt`, `ok`, `exit`, `code`,
 | 3 | Blocked: an agent wrote a blocker, a human is needed | fail, or `allow_failure` |
 <!-- markdownlint-enable MD013 -->
 
+## Building and reusing the image
+
+Build once, tag, push, and reuse: a run never builds an image. The image
+freezes the toolchain and a detached copy of the kit, including every profile.
+Everything that varies per run is supplied at run time: the checkout (mounted
+at `/work`), `--profile`, `--agent`, the resources file and the credentials.
+
+The default build has every feature. Build arguments drop parts you do not
+need; each is optional and keeps the default when omitted.
+
+<!-- markdownlint-disable MD013 -->
+| Build argument | Default | Effect |
+| --- | --- | --- |
+| `WITH_PLAYWRIGHT` | `1` | `0` leaves out Playwright and Chromium. The `enonic` baseline step needs them |
+| `WITH_PHP` | `1` | `0` leaves out `php-cli` and `composer`, which the `php` profile uses |
+| `WITH_1PASSWORD` | `1` | `0` leaves out the 1Password CLI (`op`), installed from its apt repository and not pinned |
+| `AGENTS` | `claude codex cursor` | The agent CLIs to install, space separated. An unknown name fails the build |
+| `RUN_AS` | `extract` | `root` starts the container as root, for runners that check the source out as root |
+| `*_VERSION` | pinned in the Dockerfile | Tool versions (`NODE`, `GRAFT`, `SERENA`, `GRAPHIFY`, `CLAUDE_CODE`, `CODEX`, ...). `cursor-agent` has no version argument |
+<!-- markdownlint-enable MD013 -->
+
+```bash
+# the default, full image
+docker build -f docker/Dockerfile -t extractkit-headless:full .
+# a slim image for the core profile, Claude only
+docker build -f docker/Dockerfile -t extractkit-headless:core-claude \
+  --build-arg WITH_PLAYWRIGHT=0 --build-arg WITH_PHP=0 \
+  --build-arg AGENTS=claude .
+```
+
+A slim image still runs every profile: the tools a profile needs are optional
+dependencies, so a missing one is `skipped` in `doctor` and its step reports
+what it lacks. Use the full image when in doubt. Tag images by the kit commit
+(or release) and the variant, so a pipeline run is reproducible and a
+regression rolls back by tag. A rebuild can pick up a newer `cursor-agent`
+than the one this page names, because its installer is unpinned.
+
+### How a pipeline starts the image
+
+The entrypoint ([`docker/entrypoint.sh`](../docker/entrypoint.sh)) follows the
+`docker:cli` convention: flags run `extractkit headless --json`, another
+`extractkit` command runs as given, and anything else (`sh`, `git`) is
+executed unchanged with its exit code. A runner that starts the job container
+with a shell and pipes the job script into it therefore gets its shell, so the
+`image:` keyword needs no `entrypoint: [""]`. [`docker/smoke.sh`](../docker/smoke.sh)
+checks those ways of starting the image, and the CI job runs it before any push.
+
+The default image runs as uid 1000. When the source is not writable for that
+user, headless stops before any stage with `source_not_writable`. Pass
+`--user` to `docker run`, or use the `root` variant on a runner that clones as
+root. The `claude` bypass permission mode refuses root; the default
+`allowlist` mode works.
+
+### Publishing to Docker Hub
+
+[`.gitlab-ci.yml`](../.gitlab-ci.yml) builds three variants on every change to
+the kit on the `docker` branch, and on no other branch: `full` (tagged
+`latest` and `full`), `slim` and `root`, each also tagged with the kit commit.
+Each is smoke-tested before it is pushed. The Docker Hub description is
+`docker/README.md`, pushed by `docker-pushrm` from a manual job in a `docker`
+branch pipeline; it never runs on its own. The pipeline needs
+`CI_DOCKER_TOKEN`, a Docker Hub access token with `admin` scope (pushrm needs
+it to write the description); `DOCKERHUB_USER` and `DOCKERHUB_REPO` are
+variables at the top of the file.
+
 ## GitLab CI
 
 ```yaml
@@ -267,6 +333,6 @@ extract:
 ```
 
 `.extract/` is the artifact: the sidecar, `reports/headless.jsonl`, the agent
-logs and any blocker file. In the container the entrypoint is
+logs and any blocker file. In the container, flags go to
 `extractkit headless --json`, so `docker run` and a Compose service take the
-same flags.
+same flags; see [How a pipeline starts the image](#how-a-pipeline-starts-the-image).

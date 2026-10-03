@@ -166,6 +166,19 @@ class StageTests(HeadlessCase):
         self.assertEqual(doc["error"]["code"], "unknown_agent")
         self.assertIn("fake", doc["error"]["fix"])
 
+    def test_an_unwritable_source_stops_before_any_stage(self) -> None:
+        buffer = io.StringIO()
+        os.chdir(self.source)
+        try:
+            with contextlib.redirect_stdout(buffer), mock.patch.object(headless.os, "access", return_value=False):
+                code = cli.main(["headless", "--source", ".", "--agent", "fake", "--json"])
+        finally:
+            os.chdir(REPO)
+        doc = json.loads(buffer.getvalue())
+        self.assertEqual(code, 1)
+        self.assertEqual(doc["error"]["code"], "source_not_writable")
+        self.assertIn("--user", doc["error"]["fix"])
+
     def test_the_resources_file_supplies_the_agent_and_the_timeout(self) -> None:
         resources = self.source.parent / "resources.yaml"
         resources.write_text(yaml.safe_dump({"agent": {"cli": "fake", "timeout_seconds": 7}}))
