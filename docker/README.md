@@ -36,7 +36,7 @@ agent and its credentials.
 docker run --rm \
   -v "$PWD:/work" --user "$(id -u):$(id -g)" \
   -e ANTHROPIC_API_KEY \
-  leanon/extractkit-headless:latest --source /work
+  leanon/extractkit-ci:latest --source /work
 ```
 
 The run writes `.extract/` into the mounted checkout and nothing else. The
@@ -63,7 +63,7 @@ entrypoint hands that shell through unchanged, so `image:` works without
 
 ```yaml
 extract:
-  image: leanon/extractkit-headless:latest
+  image: leanon/extractkit-ci:latest
   variables:
     EXTRACTKIT_AGENT: claude
   script:

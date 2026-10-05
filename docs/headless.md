@@ -263,9 +263,9 @@ need; each is optional and keeps the default when omitted.
 
 ```bash
 # the default, full image
-docker build -f docker/Dockerfile -t extractkit-headless:full .
+docker build -f docker/Dockerfile -t extractkit-ci:full .
 # a slim image for the core profile, Claude only
-docker build -f docker/Dockerfile -t extractkit-headless:core-claude \
+docker build -f docker/Dockerfile -t extractkit-ci:core-claude \
   --build-arg WITH_PLAYWRIGHT=0 --build-arg WITH_PHP=0 \
   --build-arg AGENTS=claude .
 ```
@@ -309,7 +309,7 @@ variables at the top of the file.
 
 ```yaml
 extract:
-  image: registry.example.com/tools/extractkit-headless:latest   # built from docker/Dockerfile
+  image: registry.example.com/tools/extractkit-ci:latest   # built from docker/Dockerfile
   variables:
     EXTRACTKIT_AGENT: claude
     EXTRACTKIT_RESOURCES: .extractkit/resources.yaml

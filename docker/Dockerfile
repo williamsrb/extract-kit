@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Image for `extractkit headless` in a pipeline. Build from the repo root:
-#   docker build -f docker/Dockerfile -t extractkit-headless .
+#   docker build -f docker/Dockerfile -t extractkit-ci .
 # Every tool version is a build argument; the last step fails the build when a
 # required tool is broken. The default build has every feature. Slimmer
 # variants drop parts with build arguments:

@@ -5,7 +5,7 @@ variables:
   DOCKER_TLS_CERTDIR: ""
   DOCKER_BUILDKIT: "1"
   DOCKERHUB_USER: leanon
-  DOCKERHUB_REPO: leanon/extractkit-headless
+  DOCKERHUB_REPO: leanon/extractkit-ci
   PUSHRM_VERSION: v1.9.0
   PUSHRM_SHA256: 2f48649ce6c6aba1656a0fb3fc7a82971caf8ece7d86e6eed3d10c106d20fac8
 
