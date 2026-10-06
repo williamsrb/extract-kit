@@ -82,7 +82,9 @@ from its install path, and `--source` takes any legacy checkout.
 `extractkit headless --source .` runs the whole extract with no human, for a
 CI job: it calls an agent CLI for the Serena and Graphify preflight and for
 each agent task. Every command also takes `--json` and reads `EXTRACTKIT_*`
-variables. See [Headless](headless.md), and `docker/Dockerfile` for an image.
+variables. See [Headless](headless.md). The published image is
+[`leanon/extractkit-ci`](https://hub.docker.com/r/leanon/extractkit-ci), built
+from `docker/Dockerfile`.
 
 ![Headless pipeline](diagrams/headless-pipeline.png)
 

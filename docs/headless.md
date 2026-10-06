@@ -27,8 +27,10 @@ agent tasks and check.
 
 The default container image ([`docker/Dockerfile`](../docker/Dockerfile))
 bundles the tools: Python 3.12 with `pyyaml` and `jsonschema`, git, Node with graft,
-Graphify, Serena, Playwright with Chromium, and the `claude`, `codex` and
-`cursor-agent` CLIs. The Compose example starts it, with an optional
+Graphify, Serena, Playwright with Chromium, PHP with Composer, the `claude`,
+`codex` and `cursor-agent` CLIs, and for the
+[agent credentials](#agent-credentials) the 1Password CLI (`op`), 7-Zip and
+`/filter-by-name.sh`. The Compose example starts it, with an optional
 `enonic/xp` service that is only useful when you also supply the
 application and a content dump. [Building and reusing the
 image](#building-and-reusing-the-image) covers slimmer variants.
@@ -309,7 +311,7 @@ and `DOCKERHUB_REPO` are variables at the top of the file.
 
 ```yaml
 extract:
-  image: registry.example.com/tools/extractkit-ci:latest   # built from docker/Dockerfile
+  image: leanon/extractkit-ci:latest   # or your own build of docker/Dockerfile
   variables:
     EXTRACTKIT_AGENT: claude
     EXTRACTKIT_RESOURCES: .extractkit/resources.yaml

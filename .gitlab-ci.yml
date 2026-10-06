@@ -10,9 +10,10 @@ variables:
   PUSHRM_SHA256: 2f48649ce6c6aba1656a0fb3fc7a82971caf8ece7d86e6eed3d10c106d20fac8
 
 # The kit is copied into the image at build time, so any change to the kit
-# rebuilds it. Docs, tests and the README alone do not.
+# rebuilds it. Docs, tests, the README and docker/README.md alone do not.
 .image-sources: &image-sources
-  - docker/**/*
+  - docker/Dockerfile
+  - docker/*.sh
   - extractkit
   - extractkit.yaml
   - extractkit_cli/**/*
