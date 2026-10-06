@@ -37,38 +37,15 @@ docker-build:
       changes: *image-sources
   parallel:
     matrix:
-      - VARIANT: full
-        WITH_PLAYWRIGHT: "1"
-        WITH_PHP: "1"
+      - TAG: latest
         RUN_AS: extract
-        EXTRA_TAGS: "latest full"
-      - VARIANT: slim
-        WITH_PLAYWRIGHT: "0"
-        WITH_PHP: "0"
-        RUN_AS: extract
-        EXTRA_TAGS: "slim"
-      - VARIANT: root
-        WITH_PLAYWRIGHT: "1"
-        WITH_PHP: "1"
+      - TAG: root
         RUN_AS: root
-        EXTRA_TAGS: "root"
   script:
-    - sha_tag="$CI_COMMIT_SHORT_SHA"
-    - '[ "$VARIANT" = full ] || sha_tag="$CI_COMMIT_SHORT_SHA-$VARIANT"'
-    - >
-      docker build -f docker/Dockerfile
-      --build-arg WITH_PLAYWRIGHT="$WITH_PLAYWRIGHT"
-      --build-arg WITH_PHP="$WITH_PHP"
-      --build-arg RUN_AS="$RUN_AS"
-      -t "$DOCKERHUB_REPO:$sha_tag" .
-    - sh docker/smoke.sh "$DOCKERHUB_REPO:$sha_tag"
+    - docker build -f docker/Dockerfile --build-arg RUN_AS="$RUN_AS" -t "$DOCKERHUB_REPO:$TAG" .
+    - sh docker/smoke.sh "$DOCKERHUB_REPO:$TAG"
     - echo "$CI_DOCKER_TOKEN" | docker login --username "$DOCKERHUB_USER" --password-stdin
-    - docker push "$DOCKERHUB_REPO:$sha_tag"
-    - |
-      for tag in $EXTRA_TAGS; do
-        docker tag "$DOCKERHUB_REPO:$sha_tag" "$DOCKERHUB_REPO:$tag"
-        docker push "$DOCKERHUB_REPO:$tag"
-      done
+    - docker push "$DOCKERHUB_REPO:$TAG"
 
 # The Docker Hub description comes from docker/README.md. It needs no Docker
 # daemon: docker-pushrm talks to the Hub API with these credentials. Started

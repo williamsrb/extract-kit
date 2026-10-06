@@ -36,6 +36,16 @@ if [ "${SMOKE_WITHOUT_1PASSWORD:-}" = 1 ]; then
 else
 	check "1password cli" "[0-9]\\.[0-9]" "$(docker run --rm "$image" op --version 2>&1 || true)"
 fi
+# 6b. /filter-by-name.sh turns an `op vault list` table into the ID of the matching vault (needs no op)
+table='ID    NAME
+aaa1  Other
+bbb2  CI Vault'
+check "vault id lookup" "bbb2" "$(printf '%s\n' "$table" | docker run --rm -i "$image" sh -c '/filter-by-name.sh "$0"' CI 2>&1 || true)"
+code=0
+printf '%s\n' "$table" | docker run --rm -i "$image" sh -c '/filter-by-name.sh "$0"' Nope > /dev/null 2>&1 || code=$?
+check "vault id lookup without match" "1" "$code"
+# 6c. 7z writes a password-protected archive and reads it back to stdout, as the pipeline job does
+check "7zip round trip" "dummy-ok" "$(docker run --rm "$image" sh -c 'cd "$(mktemp -d)" && echo "k: dummy-ok" > k.yaml && 7z a -mhe=on -ppass k.yaml.7z k.yaml > /dev/null && 7z x -so -ppass k.yaml.7z' 2>&1 || true)"
 # 7. an arbitrary command and its exit code survive the wrapper
 code=0
 docker run --rm "$image" sh -c 'exit 7' > /dev/null 2>&1 || code=$?

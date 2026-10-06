@@ -54,7 +54,7 @@ agent:
   cli: claude                  # a name in the agents: block of extractkit.yaml
   permissions: allowlist       # or bypass
   allowed_tools: [Read, Write, Edit, Glob, Grep, "Bash(extractkit *)", mcp__serena]
-  api_key_env: ANTHROPIC_API_KEY   # the variable's name, never a value
+  api_key_env: ANTHROPIC_API_KEY   # the agent's variable, never a value
   timeout_seconds: 1800
 ```
 
@@ -263,7 +263,7 @@ need; each is optional and keeps the default when omitted.
 
 ```bash
 # the default, full image
-docker build -f docker/Dockerfile -t extractkit-ci:full .
+docker build -f docker/Dockerfile -t extractkit-ci:latest .
 # a slim image for the core profile, Claude only
 docker build -f docker/Dockerfile -t extractkit-ci:core-claude \
   --build-arg WITH_PLAYWRIGHT=0 --build-arg WITH_PHP=0 \
@@ -272,9 +272,9 @@ docker build -f docker/Dockerfile -t extractkit-ci:core-claude \
 
 A slim image still runs every profile: the tools a profile needs are optional
 dependencies, so a missing one is `skipped` in `doctor` and its step reports
-what it lacks. Use the full image when in doubt. Tag images by the kit commit
-(or release) and the variant, so a pipeline run is reproducible and a
-regression rolls back by tag. A rebuild can pick up a newer `cursor-agent`
+what it lacks. Use the full image when in doubt. The published tags are
+overwritten by each build, so a pipeline that needs a fixed toolchain should
+build and tag its own image. A rebuild can pick up a newer `cursor-agent`
 than the one this page names, because its installer is unpinned.
 
 ### How a pipeline starts the image
@@ -295,15 +295,15 @@ root. The `claude` bypass permission mode refuses root; the default
 
 ### Publishing to Docker Hub
 
-[`.gitlab-ci.yml`](../.gitlab-ci.yml) builds three variants on every change to
-the kit on the `docker` branch, and on no other branch: `full` (tagged
-`latest` and `full`), `slim` and `root`, each also tagged with the kit commit.
-Each is smoke-tested before it is pushed. The Docker Hub description is
-`docker/README.md`, pushed by `docker-pushrm` from a manual job in a `docker`
-branch pipeline; it never runs on its own. The pipeline needs
-`CI_DOCKER_TOKEN`, a Docker Hub access token with `admin` scope (pushrm needs
-it to write the description); `DOCKERHUB_USER` and `DOCKERHUB_REPO` are
-variables at the top of the file.
+[`.gitlab-ci.yml`](../.gitlab-ci.yml) builds two images on every change to
+the kit on the `docker` branch, and on no other branch: `latest` (uid 1000) and
+`root` (the same image started as root). Each tag is overwritten by the next
+build; there are no per-commit tags. Each is smoke-tested before it is
+pushed. The Docker Hub description is `docker/README.md`, pushed by
+`docker-pushrm` from a manual job in a `docker` branch pipeline; it never runs
+on its own. The pipeline needs `CI_DOCKER_TOKEN`, a Docker Hub access token
+with `admin` scope (pushrm needs it to write the description); `DOCKERHUB_USER`
+and `DOCKERHUB_REPO` are variables at the top of the file.
 
 ## GitLab CI
 
@@ -314,9 +314,9 @@ extract:
     EXTRACTKIT_AGENT: claude
     EXTRACTKIT_RESOURCES: .extractkit/resources.yaml
     EXTRACTKIT_UNTIL: check
-    # Masked CI/CD variables: the agent API key and the storage-state contents.
-    # ANTHROPIC_API_KEY
+    # Masked CI/CD variable: the storage-state contents.
     # EXTRACTKIT_STORAGE_STATE_JSON
+    # The agent credential: see "Agent credentials" below.
   script:
     # The checkout is the legacy project, so cwd is the source.
     - extractkit headless --source "$CI_PROJECT_DIR" --json | tee extract-result.json
@@ -336,3 +336,82 @@ extract:
 logs and any blocker file. In the container, flags go to
 `extractkit headless --json`, so `docker run` and a Compose service take the
 same flags; see [How a pipeline starts the image](#how-a-pipeline-starts-the-image).
+
+## Agent credentials
+
+The kit never reads or stores the agent's credential. `extractkit headless`
+passes the environment to the agent and removes only `EXTRACTKIT_*`, so a job
+can read the credential from 1Password and export it before `extractkit`
+starts. One 1Password item holds a password-protected 7z archive for each
+agent, attached to the item and named after the variable that agent reads. The
+job reads `EXTRACTKIT_AGENT`, opens only that agent's archive with the
+passphrase in `PASSWORD`, and exports the credential. The full flow, including
+how to make the archives, is in the
+[Docker Hub page](https://hub.docker.com/r/leanon/extractkit-ci)
+(`docker/README.md`).
+
+<!-- markdownlint-disable MD013 -->
+
+| Variable | Holds |
+| --- | --- |
+| `OP_SERVICE_ACCOUNT_TOKEN_FACTORY` | The 1Password service account token |
+| `OP_VAULT_NAME_FACTORY` | The vault name |
+| `OP_EXTRACT_NAME_FACTORY` | The title of the item with the archives |
+| `PASSWORD` | The archives' passphrase, set on each pipeline run |
+
+| `EXTRACTKIT_AGENT` | Attachment |
+| --- | --- |
+| `claude` | `CLAUDE_CODE_OAUTH_TOKEN.yaml.7z`, a `claude setup-token` token |
+| `codex` | `OPENAI_API_KEY.yaml.7z` |
+| `cursor` | `CURSOR_API_KEY.yaml.7z` |
+
+<!-- markdownlint-enable MD013 -->
+
+Seeds projects take the job from the `seeds/ci-templates` project:
+`.extractkit_template` in `general/extractkit.yml` reads the variables above,
+holds the credential lines and the `extractkit headless` call, and the project
+sets only its own `EXTRACTKIT_*` values and when the job runs. The template
+runs in the `extract` stage, so the project's `stages:` must list it. The
+Docker Hub page shows the same lines as a plain job script.
+
+```yaml
+include:
+  - project: "seeds/ci-templates"
+    ref: master
+    file: "/general/extractkit.yml"
+
+extract:
+  extends: .extractkit_template
+  variables:
+    EXTRACTKIT_PROFILE: enonic
+    EXTRACTKIT_UNTIL: check
+  rules:
+    - if: $CI_COMMIT_BRANCH == "review"
+      when: manual
+```
+
+- The run picks the agent. `EXTRACTKIT_AGENT` selects the agent CLI and the
+  attachment, and a variable set on the Run pipeline page overrides the job's
+  YAML. Set it there, not only as `agent.cli` in a resources file, or the job
+  loads Claude's attachment for another agent. An agent missing from the
+  template's `case` stops the job before `op read`; add a line there when you
+  add an agent to `extractkit.yaml`.
+- Only the selected agent's credential is read and exported. It is piped from
+  `7z` to `python3` and never written unencrypted. A missing or wrong
+  `PASSWORD`, or an archive without a `token` key, stops the job.
+- The job unsets the passphrase and the service account token before the agent
+  starts. The agent inherits the environment, and one that can run `env` would
+  write them into logs the job keeps as artifacts.
+- For `claude`, `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` and `apiKeyHelper`
+  outrank `CLAUDE_CODE_OAUTH_TOKEN`, so the job unsets the API key. Claude
+  Code's bare mode ignores `CLAUDE_CODE_OAUTH_TOKEN`; the `claude` entry in
+  `extractkit.yaml` has no `--bare`, keep it that way.
+- `agent.api_key_env` names the selected agent's variable
+  (`CLAUDE_CODE_OAUTH_TOKEN`, `OPENAI_API_KEY` or `CURSOR_API_KEY`). `doctor`
+  checks only that it is set.
+- The Claude token lasts a year; renew it with a new archive and replace the
+  1Password attachment.
+- Not tested in the container by this repository: the credential archives from
+  1Password (the `claude setup-token` token, `OPENAI_API_KEY`,
+  `CURSOR_API_KEY`), and running `--agent codex` and `--agent cursor` in the
+  image.

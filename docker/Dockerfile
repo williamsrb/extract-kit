@@ -36,9 +36,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright
 
-# System tools, Node (tarball, so its version is pinned) and the Python modules the kit imports.
+# System tools (7-Zip opens the password-protected agent credentials), Node (tarball, so its version is pinned) and the Python modules the kit imports.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git curl ca-certificates xz-utils \
+    && apt-get install -y --no-install-recommends git curl ca-certificates xz-utils p7zip-full \
     && arch="$(dpkg --print-architecture | sed 's/amd64/x64/')" \
     && curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${arch}.tar.xz" \
        | tar -xJ -C /usr/local --strip-components=1 \
@@ -100,6 +100,8 @@ RUN set -eu; \
     && rm -rf /var/lib/apt/lists/* /root/.npm
 
 COPY --chmod=0755 docker/entrypoint.sh /usr/local/bin/extractkit-entrypoint
+# Copy of the script the 1Password jobs of the other pipelines call: turns a vault name into its ID.
+COPY --chmod=0755 docker/filter-by-name.sh /filter-by-name.sh
 
 # The agent CLIs refuse some permission modes as root, so everything below runs as a normal user.
 RUN useradd --create-home --uid 1000 extract
