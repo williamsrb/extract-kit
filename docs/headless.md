@@ -227,6 +227,39 @@ sets `out-of-scope: yes`, and an agent keeps a folder when unsure.
 
 ## Output and exit codes
 
+### Progress on stderr
+
+stdout stays clean for `--json`; progress goes to stderr, one line per event
+with a time stamp, so a CI log shows the run moving:
+
+```text
+10:02:11 [4/11] static ...
+10:02:11   step 1/6 map.code ...
+10:02:14   step 1/6 map.code done in 3s, 4 action(s) recorded
+10:02:40 [4/11] static ok in 29s: ok
+10:02:40 [5/11] agent:context ...
+10:02:41   agent claude started on context.decide (attempt 1, timeout 30m00s) ...
+10:03:11   agent still working on context.decide: 30s elapsed, log 2048 B ...
+```
+
+Every stage prints its start and its result. The `run`, `resume` and `step`
+children print one line per pipeline step (headless passes them `--progress`;
+you can pass it too). An agent task prints when it starts, a heartbeat every
+30 seconds with the log size and its last line, then the re-run, the `check`
+result and each fix attempt. At the end headless prints a summary with the
+duration of every stage, the total time, and the tokens and money the agent
+runs reported. Each `agents:` entry in `extractkit.yaml` says how to read its
+own log with a `usage:` block: `tokens` (JSON paths, summed), `cost_usd` (one
+JSON path) or `tokens_regex` (one number group, for plain text). `claude`
+runs with `--output-format json` and reads both; Codex reports tokens only;
+Cursor's `json` and `stream-json` results carry no usage fields
+([output format](https://cursor.com/docs/cli/reference/output-format)), so it
+has no `usage:` block. An agent that reports nothing prints `the agent reported
+no token or cost data`. The totals are in the envelope as `summary`
+(`duration_s`, `agent_runs`, `usage.tokens`, `usage.cost_usd`), and each agent
+line of `headless.jsonl` carries its own `tokens` and `cost_usd`. `-q`
+silences all of it. The full record stays in `reports/headless.jsonl`.
+
 `--json` (or `EXTRACTKIT_JSON=1`) prints one document on stdout and nothing
 else, for every command. The same envelope carries the failure: `ok: false`,
 and `error` with a stable `code`, the `message`, the `fix` text and, when the
@@ -301,15 +334,17 @@ root. The `claude` bypass permission mode refuses root; the default
 
 ### Publishing to Docker Hub
 
-[`.gitlab-ci.yml`](../.gitlab-ci.yml) builds two images on every change to
-the kit on the `docker` branch, and on no other branch: `latest` (uid 1000) and
-`root` (the same image started as root). Each tag is overwritten by the next
-build; there are no per-commit tags. Each is smoke-tested before it is
-pushed. The Docker Hub description is `docker/README.md`, pushed by
-`docker-pushrm` from a manual job in a `docker` branch pipeline; it never runs
-on its own. The pipeline needs `CI_DOCKER_TOKEN`, a Docker Hub access token
-with `admin` scope (pushrm needs it to write the description); `DOCKERHUB_USER`
-and `DOCKERHUB_REPO` are variables at the top of the file.
+[`.gitlab-ci.yml`](../.gitlab-ci.yml) builds two images of
+[leanon/extractkit-ci](https://hub.docker.com/r/leanon/extractkit-ci) on every
+change to the kit on the `docker` branch, and on no other branch: `latest`
+(uid 1000) and `root` (the same image started as root). Each tag is
+overwritten by the next build; there are no per-commit tags. Each is
+smoke-tested before it is pushed. The Docker Hub description is
+`docker/README.md`, pushed by `docker-pushrm` from a manual job in a `docker`
+branch pipeline; it never runs on its own. The pipeline needs
+`CI_DOCKER_TOKEN`, a Docker Hub access token with `admin` scope (pushrm needs
+it to write the description); `DOCKERHUB_USER` and `DOCKERHUB_REPO` are
+variables at the top of the file.
 
 ## GitLab CI
 
@@ -327,6 +362,7 @@ extract:
     # The checkout is the legacy project, so cwd is the source.
     - extractkit headless --source "$CI_PROJECT_DIR" --json | tee extract-result.json
   artifacts:
+    name: extract_${PROJECT_SHORT_NAME}_artifacts
     when: always
     paths:
       - .extract/
@@ -338,8 +374,11 @@ extract:
     exit_codes: [3]
 ```
 
-`.extract/` is the artifact: the sidecar, `reports/headless.jsonl`, the agent
-logs and any blocker file. In the container, flags go to
+The job's artifact archive downloads as
+`extract_<PROJECT_SHORT_NAME>_artifacts.zip` (GitLab adds the `.zip`;
+`PROJECT_SHORT_NAME` comes from the base `.gitlab-ci`). `.extract/` is the
+artifact: the sidecar, `reports/headless.jsonl`, the agent logs and any
+blocker file. In the container, flags go to
 `extractkit headless --json`, so `docker run` and a Compose service take the
 same flags; see [How a pipeline starts the image](#how-a-pipeline-starts-the-image).
 

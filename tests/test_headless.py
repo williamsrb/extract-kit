@@ -76,6 +76,26 @@ class HeadlessCase(unittest.TestCase):
         return yaml.safe_load((self.sidecar() / "context" / "profile.yaml").read_text())
 
 
+USAGE_JSON = {"tokens": ["usage.input_tokens", "usage.output_tokens", "usage.cache_read_input_tokens"],
+              "cost_usd": "total_cost_usd"}
+
+
+class UsageTests(unittest.TestCase):
+
+    def test_json_paths_are_summed(self) -> None:
+        text = json.dumps({"result": "x", "total_cost_usd": 0.12345,
+                           "usage": {"input_tokens": 10, "output_tokens": 5, "cache_read_input_tokens": 100}})
+        self.assertEqual(headless.agent_usage(text, USAGE_JSON), {"tokens": 115, "cost_usd": 0.1235})
+
+    def test_a_regex_reads_plain_text(self) -> None:
+        spec = {"tokens_regex": r"tokens used\W+([\d,]+)"}
+        self.assertEqual(headless.agent_usage("done\ntokens used\n12,345\n", spec), {"tokens": 12345})
+
+    def test_no_spec_or_no_match_reports_nothing(self) -> None:
+        self.assertEqual(headless.agent_usage('{"usage": {"input_tokens": 1}}', None), {})
+        self.assertEqual(headless.agent_usage("plain text\n", USAGE_JSON), {})
+
+
 class StageTests(HeadlessCase):
     def test_context_stage_runs_the_preflight_and_the_context_agent(self) -> None:
         self.assertFalse((self.source / ".serena").exists())
@@ -106,6 +126,30 @@ class StageTests(HeadlessCase):
         manifest = yaml.safe_load((self.sidecar() / "MANIFEST.yaml").read_text())
         self.assertEqual(manifest["exclude"], ["prototype"])
         self.assertTrue((self.sidecar() / "inventory" / "static.json").is_file())
+
+    def test_progress_goes_to_stderr_and_stdout_stays_json(self) -> None:
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code, _ = self.headless("--until", "static")
+        self.assertEqual(code, 0)
+        text = err.getvalue()
+        for expected in ("[1/4] install ...", "[4/4] static ok", "step 1/", "done in"):
+            self.assertIn(expected, text)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.headless("--until", "static", "-q")
+        self.assertEqual(err.getvalue(), "")
+
+    def test_the_summary_carries_durations_and_agent_runs(self) -> None:
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            _, doc = self.headless("--until", "agent:context")
+        self.assertIn("summary:", err.getvalue())
+        self.assertEqual(doc["summary"]["agent_runs"], len(self.agent_runs()))
+        self.assertGreater(doc["summary"]["duration_s"], 0)
+
+    def agent_runs(self) -> list[dict]:
+        return [l for l in self.lines() if l["message"] == "agent finished"]
 
     def test_a_second_run_resumes_and_runs_no_agent(self) -> None:
         self.assertEqual(self.headless("--until", "synthesis")[0], 0)

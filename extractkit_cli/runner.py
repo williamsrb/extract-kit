@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import time
 from argparse import Namespace
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import context, guide, manifest, readiness, registry, result, schema, scope
+from . import context, guide, live, manifest, readiness, registry, result, schema, scope
 from .common import Plan, load_yaml, timestamp, write_json, write_text, write_yaml
 from .errors import ExtractkitError
 from .hygiene import after_step
@@ -181,9 +182,12 @@ def _execute(ctx: RunContext, rows: list[tuple[str, str]]) -> None:
         ensure_self_ignore(ctx.source, ctx.plan.record)
         write_self_ignore(ctx.source)
 
-    for slot, plugin_id in rows:
+    total = len(rows)
+    for index, (slot, plugin_id) in enumerate(rows, 1):
         step = registry.instantiate(plugin_id)
         ctx.plan.step = plugin_id
+        began, written = time.monotonic(), len(ctx.plan.entries)
+        live.say(f"step {index}/{total} {slot} ({plugin_id}) ...", indent=1)
         try:
             planned = step.plan(ctx) or []
             for action in planned:
@@ -196,6 +200,11 @@ def _execute(ctx: RunContext, rows: list[tuple[str, str]]) -> None:
             ) from None
         after_step(ctx, plugin_id)
         ctx.plan.step = None
+        live.say(
+            f"step {index}/{total} {slot} done in {live.duration(time.monotonic() - began)}, "
+            f"{len(ctx.plan.entries) - written} action(s) recorded",
+            indent=1,
+        )
 
     flush_hygiene(ctx)
     payload = build_manifest(
@@ -295,6 +304,7 @@ def report_run(ctx: RunContext, rows: list[tuple[str, str]], args: Namespace) ->
 
 
 def cmd_run(args: Namespace) -> int:
+    live.enable(args)
     ctx = _context_from_args(args)
     _ensure_context(ctx, args)
     rows = _slice_pipeline(
@@ -308,6 +318,7 @@ def cmd_run(args: Namespace) -> int:
 
 
 def cmd_step(args: Namespace) -> int:
+    live.enable(args)
     ctx = _context_from_args(args)
     rows = _slice_pipeline(
         _bound_pipeline(ctx.profile), None, None, only=args.step_id, profile=ctx.profile,

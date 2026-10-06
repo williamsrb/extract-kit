@@ -5,7 +5,7 @@ from __future__ import annotations
 from argparse import Namespace
 from pathlib import Path
 
-from . import context, guide, registry, result, runner
+from . import context, guide, live, registry, result, runner
 from .errors import ExtractkitError
 from .outtree import EXTRACT_DIRNAME, latest_run, resolve_source
 
@@ -244,6 +244,7 @@ def cmd_status(args: Namespace) -> int:
 
 
 def cmd_resume(args: Namespace) -> int:
+    live.enable(args)
     source = resolve_source(getattr(args, "source", None))
     if not getattr(args, "out", None):
         latest = latest_run(source)

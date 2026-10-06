@@ -74,6 +74,7 @@ extract:
   script:
     - extractkit headless --source "$CI_PROJECT_DIR" --json | tee extract-result.json
   artifacts:
+    name: extract_${PROJECT_SHORT_NAME}_artifacts
     when: always
     paths:
       - .extract/

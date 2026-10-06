@@ -27,10 +27,12 @@ import argparse
 import datetime as _dt
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from argparse import Namespace
 from dataclasses import dataclass
@@ -41,6 +43,7 @@ from . import (
     context,
     guide,
     install,
+    live,
     outtree,
     progress,
     readiness,
@@ -57,6 +60,8 @@ STAGES = (
 HEADLESS_DIR = REPO_ROOT / "headless"
 DEFAULT_AGENT = "claude"
 GRAFT_TIMEOUT = 600
+HEARTBEAT = 30
+PROGRESS_COMMANDS = ("run", "step", "resume")
 CMS_VALUES = (
     ("--branch", "branch"), ("--xp-host", "xp_host"), ("--guillotine", "guillotine"),
     ("--project", "project"), ("--storage-state", "storage_state"),
@@ -221,6 +226,8 @@ class Headless:
         self.out: Path | None = None
         self.log = RunLog(self.source)
         self.records: list[StageRecord] = []
+        self._number = ""
+        self.usage: list[dict] = []
         self.s = self._settings()
 
     # -- settings ---------------------------------------------------------------
@@ -256,27 +263,49 @@ class Headless:
         env["PATH"] = f"{launcher}{os.pathsep}{env.get('PATH', '')}"
         return env
 
+    def _say(self, text: str, *, indent: int = 0) -> None:
+        if not getattr(self.args, "quiet", False):
+            live.say(text, indent=indent, force=True)
+
     def _kit(self, *argv: str, allow_fail: bool = False) -> dict:
-        command = [sys.executable, str(REPO_ROOT / "extractkit"), *argv, "--json"]
-        done = subprocess.run(
-            command, cwd=self.source, capture_output=True, text=True, check=False, env=self._env(),
+        progress_flag = ["--progress"] if argv[0] in PROGRESS_COMMANDS else []
+        command = [sys.executable, str(REPO_ROOT / "extractkit"), *argv, *progress_flag, "--json"]
+        child = subprocess.Popen(
+            command, cwd=self.source, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, env=self._env(),
         )
+        errors: list[str] = []
+        pump = threading.Thread(target=self._forward, args=(child.stderr, errors), daemon=True)
+        pump.start()
+        stdout = child.stdout.read()
+        child.wait()
+        pump.join()
+        child.stdout.close()
+        child.stderr.close()
         try:
-            doc = json.loads(done.stdout)
+            doc = json.loads(stdout)
         except ValueError:
+            detail = "\n".join(errors) or stdout
             raise StageFailed(
                 "kit_failed",
-                f"extractkit {argv[0]} exited {done.returncode} without a JSON result: "
-                f"{(done.stderr or done.stdout).strip()[:300]}",
+                f"extractkit {argv[0]} exited {child.returncode} without a JSON result: {detail.strip()[:300]}",
             ) from None
-        if done.returncode != 0 and not allow_fail:
+        if child.returncode != 0 and not allow_fail:
             error = doc.get("error") or {}
             raise StageFailed(
                 error.get("code") or "kit_failed",
-                error.get("message") or f"extractkit {argv[0]} exited {done.returncode}",
+                error.get("message") or f"extractkit {argv[0]} exited {child.returncode}",
                 error.get("fix"),
             )
         return doc
+
+    def _forward(self, stream, errors: list[str]) -> None:
+        """Show a child's progress lines as they come; keep every line for an error message."""
+        for raw in stream:
+            line = raw.rstrip()
+            errors.append(line)
+            if line and not getattr(self.args, "quiet", False):
+                print(line, file=sys.stderr, flush=True)
 
     def _common(self, *, exclude: bool = True) -> list[str]:
         flags = ["--source", str(self.source)]
@@ -345,12 +374,14 @@ class Headless:
         log = self.log.agent_log(stage, task, attempt)
         argv = self._argv(tools)
         start = time.monotonic()
+        self._say(f"agent {argv[0]} started on {task} (attempt {attempt}, timeout {live.duration(self.s.timeout)}), log {self.log.where(log)}", indent=1)
         try:
             with log.open("w", encoding="utf-8") as handle:
-                done = subprocess.run(
-                    argv, input=prompt, cwd=self.source, env=self._env(), text=True,
-                    stdout=handle, stderr=subprocess.STDOUT, timeout=self.s.timeout, check=False,
+                child = subprocess.Popen(
+                    argv, stdin=subprocess.PIPE, cwd=self.source, env=self._env(), text=True,
+                    stdout=handle, stderr=subprocess.STDOUT,
                 )
+                self._wait(child, prompt, log, task, start)
         except subprocess.TimeoutExpired:
             self._line(stage, task, attempt, False, 1, "agent_timeout", f"{argv[0]} ran over {self.s.timeout}s", start, log)
             raise StageFailed(
@@ -360,20 +391,41 @@ class Headless:
         except OSError as exc:
             self._line(stage, task, attempt, False, 1, "agent_failed", str(exc), start, log)
             raise StageFailed("agent_failed", f"could not start {argv[0]}: {exc}", f"install {argv[0]}") from None
-        if done.returncode != 0:
-            self._line(stage, task, attempt, False, done.returncode, "agent_failed", f"{argv[0]} exited {done.returncode}", start, log)
+        if child.returncode != 0:
+            self._line(stage, task, attempt, False, child.returncode, "agent_failed", f"{argv[0]} exited {child.returncode}", start, log)
             raise StageFailed(
-                "agent_failed", f"{argv[0]} exited {done.returncode} on {task}; see {self.log.where(log)}",
+                "agent_failed", f"{argv[0]} exited {child.returncode} on {task}; see {self.log.where(log)}",
                 "check the agent CLI login or API key in this environment",
             )
-        self._line(stage, task, attempt, True, 0, None, "agent finished", start, log)
+        usage = agent_usage(log.read_text(encoding="utf-8", errors="replace"), self.s.entry.get("usage"))
+        self.usage.append(usage)
+        self._say(f"agent finished {task} in {live.duration(time.monotonic() - start)}{_spent(usage)}", indent=1)
+        self._line(stage, task, attempt, True, 0, None, "agent finished", start, log, usage)
         return log
 
+    def _wait(self, child: subprocess.Popen, prompt: str, log: Path, task: str, start: float) -> None:
+        """Feed the prompt, then wait for the agent, saying every HEARTBEAT seconds that it is alive."""
+        pending: str | None = prompt
+        while True:
+            left = self.s.timeout - (time.monotonic() - start)
+            try:
+                child.communicate(input=pending, timeout=max(0.1, min(HEARTBEAT, left)))
+                return
+            except subprocess.TimeoutExpired:
+                pending = None
+                if time.monotonic() - start >= self.s.timeout:
+                    child.kill()
+                    child.communicate()
+                    raise
+                self._say(f"agent still working on {task}: {live.duration(time.monotonic() - start)} elapsed, {_tail(log)}", indent=1)
+
     def _line(self, stage: str, task: str | None, attempt: int | None, ok: bool, code_exit: int,
-              code: str | None, message: str, start: float, log: Path | None = None) -> None:
+              code: str | None, message: str, start: float, log: Path | None = None,
+              usage: dict | None = None) -> None:
         self.log.add(
             stage=stage, task=task, attempt=attempt, ok=ok, exit=code_exit, code=code,
             message=message, duration_s=round(time.monotonic() - start, 3), log=self.log.rel(log),
+            **(usage or {}),
         )
 
     # -- stages -----------------------------------------------------------------
@@ -389,11 +441,12 @@ class Headless:
             "check": self._check, "promote": self._promote,
         }
         exit_code, failure = 0, None
+        planned = STAGES[: STAGES.index(until) + 1] if until else STAGES
+        self._say(f"headless: {len(planned)} stage(s) on {self.source} with agent {self.s.agent}")
         try:
-            for stage in STAGES:
+            for number, stage in enumerate(planned, 1):
+                self._number = f"[{number}/{len(planned)}]"
                 self._stage(stage, stages[stage])
-                if until == stage:
-                    break
         except StageFailed as exc:
             exit_code, failure = exc.exit, exc
         finally:
@@ -403,6 +456,7 @@ class Headless:
 
     def _stage(self, stage: str, fn) -> None:
         start = time.monotonic()
+        self._say(f"{self._number} {stage} ...")
         try:
             message = fn()
         except StageFailed as exc:
@@ -413,6 +467,7 @@ class Headless:
     def _finish(self, stage: str, ok: bool, status: str, code_exit: int, code: str | None, message: str, start: float) -> None:
         duration = round(time.monotonic() - start, 3)
         self.records.append(StageRecord(stage, ok, status, code_exit, code, message, duration))
+        self._say(f"{self._number} {stage} {status} in {live.duration(duration)}: {message}")
         self._line(stage, None, None, ok, code_exit, code, message, start)
 
     def _install(self) -> str:
@@ -422,6 +477,7 @@ class Headless:
     def _preflight(self) -> str:
         notes: list[str] = []
         if not (self.source / "graft").is_dir() and shutil.which("graft"):
+            self._say("building the graft index (optional) ...", indent=1)
             try:
                 built = subprocess.run(
                     ["graft", "build"], cwd=self.source, capture_output=True, text=True, check=False,
@@ -513,6 +569,7 @@ class Headless:
                 break
             if task["id"] in ran:
                 raise StageFailed("agent_failed", f"{task['id']} is still pending after its agent run")
+            self._say(f"next agent task: {task['id']}", indent=1)
             self._run_task(stage, task["id"])
             ran.append(task["id"])
         return f"ok: ran {', '.join(ran)}" if ran else "ok (already done)"
@@ -525,7 +582,9 @@ class Headless:
         shown = self._kit("agent", "show", task_id, *self._out_flag())
         preamble = render_prompt(HEADLESS_DIR / "preamble.md", source=str(self.source), sidecar=str(self.out))
         problems: list[str] = []
-        for attempt in range(1, self.s.max_fix + 2):
+        attempts = self.s.max_fix + 1
+        for attempt in range(1, attempts + 1):
+            self._say(f"task {task_id}: attempt {attempt}/{attempts}" + (f", fixing {len(problems)} check problem(s)" if problems else ""), indent=1)
             prompt = f"{preamble}\n\n{shown['prompt']}"
             if problems:
                 prompt += (
@@ -537,9 +596,11 @@ class Headless:
             blocker = self._blocker(task_id)
             if blocker.is_file():
                 raise Blocked("task_blocked", f"{task_id} wrote a blocker: reports/blockers/{task_id}.md", f"read {blocker}")
+            self._say(f"task {task_id}: re-running {' '.join(shown.get('rerun') or []) or 'nothing'}, then check", indent=1)
             self._rerun(shown.get("rerun") or [])
             check = self._kit("check", *self._out_flag(), allow_fail=True)
             problems = list(check.get("problems") or [])
+            self._say(f"task {task_id}: check " + ("passed" if check.get("exit") == 0 else f"found {len(problems)} problem(s): {'; '.join(problems[:2])[:200]}"), indent=1)
             if check.get("exit") == 0 and self._kit("agent", "show", task_id, *self._out_flag()).get("state") == "done":
                 return
             if check.get("exit") == 0:
@@ -590,13 +651,34 @@ class Headless:
             pieces.append(["run", "--from", order[mid + 1], "--until", end.id])
         return pieces
 
+    def _summary(self) -> dict:
+        usage: dict = {}
+        if any("tokens" in u for u in self.usage):
+            usage["tokens"] = sum(u.get("tokens", 0) for u in self.usage)
+        if any("cost_usd" in u for u in self.usage):
+            usage["cost_usd"] = round(sum(u.get("cost_usd", 0) for u in self.usage), 4)
+        return {
+            "duration_s": round(sum(r.duration_s for r in self.records), 3),
+            "agent_runs": len(self.usage), "usage": usage,
+        }
+
     # -- result -----------------------------------------------------------------
 
     def _report(self, exit_code: int, failure: StageFailed | None) -> None:
         result.note_run(sidecar=self.out, source=self.source)
         result.note_extra(stages=[r.as_dict() for r in self.records])
+        summary = self._summary()
+        result.note_extra(summary=summary)
+        self._say("summary:")
         for record in self.records:
-            print(f"  {record.status:8s} {record.id:18s} {record.message}")
+            row = f"{record.status:8s} {record.id:18s} {live.duration(record.duration_s):>7s}  {record.message}"
+            print(f"  {row}")
+            self._say(row, indent=1)
+        total = f"total {live.duration(summary['duration_s'])}, {summary['agent_runs']} agent run(s)"
+        if summary["agent_runs"]:
+            total += _spent(summary["usage"]) if summary["usage"] else " (the agent reported no token or cost data)"
+        print(f"  {total}")
+        self._say(total, indent=1)
         if failure is not None:
             result.note_error(failure.code, str(failure), failure.fix)
             print(f"\nheadless: stopped (exit {exit_code}): {failure}")
@@ -608,6 +690,65 @@ class Headless:
                 "Review the extract, then promote it into the checkout:",
                 [prog, "promote", "--source", str(self.source), "--out", str(self.out)],
             ))
+
+
+def _path(doc: object, dotted: str) -> object:
+    for key in dotted.split("."):
+        doc = doc.get(key) if isinstance(doc, dict) else None
+    return doc
+
+
+def agent_usage(text: str, spec: dict | None) -> dict:
+    """Tokens and cost read from an agent's log with the entry's `usage:` block, or {}.
+
+    `tokens`: JSON paths whose numbers are summed; `cost_usd`: one JSON path; both are read from
+    the last JSON line that has any of them. `tokens_regex`: a pattern with one number group,
+    for an agent that prints plain text. An agent with no `usage:` block reports nothing.
+    """
+    spec = spec or {}
+    found: dict = {}
+    if spec.get("tokens") or spec.get("cost_usd"):
+        for line in reversed([l for l in text.splitlines() if l.strip()][-40:]):
+            try:
+                doc = json.loads(line)
+            except ValueError:
+                continue
+            tokens = [_path(doc, p) for p in spec.get("tokens") or []]
+            cost = _path(doc, spec["cost_usd"]) if spec.get("cost_usd") else None
+            if all(t is None for t in tokens) and cost is None:
+                continue
+            if any(t is not None for t in tokens):
+                found["tokens"] = sum(int(t or 0) for t in tokens)
+            if cost is not None:
+                found["cost_usd"] = round(float(cost), 4)
+            return found
+    if spec.get("tokens_regex"):
+        match = re.search(spec["tokens_regex"], text, re.IGNORECASE)
+        if match:
+            found["tokens"] = int(match.group(1).replace(",", ""))
+    return found
+
+
+def _spent(usage: dict) -> str:
+    parts = []
+    if usage.get("tokens"):
+        parts.append(f"{usage['tokens']:,} tokens")
+    if usage.get("cost_usd") is not None:
+        parts.append(f"${usage['cost_usd']:.2f}")
+    return f" ({', '.join(parts)})" if parts else ""
+
+
+def _tail(log: Path) -> str:
+    """Log size and its last line, for a heartbeat."""
+    try:
+        size = log.stat().st_size
+        with log.open("rb") as handle:
+            handle.seek(max(0, size - 4096))
+            lines = [l for l in handle.read().decode("utf-8", "replace").splitlines() if l.strip()]
+    except OSError:
+        return "no log yet"
+    last = lines[-1].strip()[:100] if lines else ""
+    return f"log {size} B" + (f", last: {last}" if last else ", no output yet")
 
 
 def _flag(tokens: list[str], name: str) -> str | None:

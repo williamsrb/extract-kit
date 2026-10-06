@@ -155,6 +155,11 @@ def _add_resources_flag(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _add_progress_flag(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--progress", action="store_true",
+                        help="Print one line per step on stderr as it starts and finishes.")
+
+
 def _add_json_flag(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--json", action="store_true",
                         help="Print one JSON result document instead of text.")
@@ -278,6 +283,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_exclude_flag(run)
     _add_output_flags(run)
     _add_resources_flag(run)
+    _add_progress_flag(run)
     _add_json_flag(run)
     run.set_defaults(func=runner.cmd_run)
 
@@ -291,6 +297,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_exclude_flag(step)
     _add_output_flags(step)
     _add_resources_flag(step)
+    _add_progress_flag(step)
     _add_json_flag(step)
     step.set_defaults(func=runner.cmd_step)
 
@@ -328,6 +335,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_exclude_flag(res)
     _add_output_flags(res)
     _add_resources_flag(res)
+    _add_progress_flag(res)
     _add_json_flag(res)
     res.set_defaults(func=progress.cmd_resume)
 
@@ -365,6 +373,7 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Fix attempts per agent task after a failed check (default 2).")
     hl.add_argument("--task-timeout", dest="task_timeout", type=int, default=1800, metavar="SECONDS",
                     help="Kill an agent process after this long (default 1800).")
+    hl.add_argument("-q", "--quiet", action="store_true", help="No progress lines on stderr.")
     _add_json_flag(hl)
     hl.set_defaults(func=headless.cmd_headless)
 

@@ -9,26 +9,33 @@ schema_versions: [1]
 #   bypass_args     appended only when agent.permissions is `bypass`
 #   allowed_tools   default tool allowlist for an agent task
 #   preflight_tools default tool allowlist for the Serena and Graphify preflight
+#   usage           optional: how to read tokens and cost from the agent's log
 # Templates accept {allowed_tools} (comma-joined) and {source}. Another CLI is a
 # new entry here, with no code change. Argv verified 2026-10-02 against
 # claude 2.1.280, codex-cli 0.151.0 and cursor-agent 2026.10.01 (`--help`,
 # plus one stdin run of each in a scratch git folder).
 agents:
   claude:
-    argv: [claude, -p, --output-format, text]
+    argv: [claude, -p, --output-format, json]
     allowlist_args: [--permission-mode, acceptEdits, --allowedTools, "{allowed_tools}"]
     bypass_args: [--permission-mode, bypassPermissions]
     allowed_tools: [Read, Write, Edit, Glob, Grep, "Bash(extractkit *)", mcp__serena]
     preflight_tools: [Read, Write, Edit, Glob, Grep, "Bash(graphify *)", mcp__serena]
+    usage:
+      tokens: [usage.input_tokens, usage.output_tokens, usage.cache_creation_input_tokens, usage.cache_read_input_tokens]
+      cost_usd: total_cost_usd
   codex:
     argv: [codex, exec, --cd, "{source}"]
     allowlist_args: [--sandbox, workspace-write, "-"]
     bypass_args: [--dangerously-bypass-approvals-and-sandbox, "-"]
     allowed_tools: []
     preflight_tools: []
+    usage:
+      tokens_regex: 'tokens used\W+([\d,]+)'
   # cursor-agent has no per-tool allowlist flag, and in print mode it waits for
   # an approval that never comes unless --force is set. The allowlist route is
-  # therefore its sandbox: --force with --sandbox enabled.
+  # therefore its sandbox: --force with --sandbox enabled. Its `json` and
+  # `stream-json` results carry no token or cost fields, so it has no usage: block.
   cursor:
     argv: [cursor-agent, -p, --output-format, text, --trust, --approve-mcps]
     allowlist_args: [--force, --sandbox, enabled]
