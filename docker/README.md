@@ -2,16 +2,24 @@
 
 ## Quick reference
 
-- **Maintained by**: [99x Brazil](https://99x.io/services/web-solutions)
-- **Where to get help**: the private team Slack
+- **Maintained by**:
+  [99x Brazil](https://99x.io/services/web-solutions)
+- **Where to get help**:
+  [the private team Slack](https://leanonteam.slack.com)
 
-## Supported tags
+## Supported tags and respective image links
 
-- `latest`: starts as uid 1000.
-- `root`: the same image, started as root.
+- [`latest`](https://hub.docker.com/layers/leanon/extractkit-ci/latest)
+- [`root`](https://hub.docker.com/layers/leanon/extractkit-ci/root)
 
-Both tags are `linux/amd64` and are rebuilt on every change to the kit; there
-are no per-commit tags.
+## Quick reference (cont.)
+
+- **Published image artifact details**:
+  [`docker/Dockerfile`](https://git.seeds.no/williams/99x-extract-kit/-/blob/docker/docker/Dockerfile)
+  ([history](https://git.seeds.no/williams/99x-extract-kit/-/commits/docker/docker/Dockerfile))
+- **Source of this description**:
+  [`docker/README.md`](https://git.seeds.no/williams/99x-extract-kit/-/blob/docker/docker/README.md)
+  ([history](https://git.seeds.no/williams/99x-extract-kit/-/commits/docker/docker/README.md))
 
 ## What is it?
 
@@ -22,6 +30,27 @@ headless in a CI pipeline, calling an agent CLI for each agent task.
 
 Included: the kit, the `claude`, `codex` and `cursor-agent` CLIs, Playwright
 with Chromium, PHP and Composer, the 1Password CLI (`op`) and 7-Zip (`7z`).
+
+### `latest`
+
+Starts as uid 1000 (`extract`).
+
+- **Dockerfile**: [`docker/Dockerfile`](https://git.seeds.no/williams/99x-extract-kit/-/blob/docker/docker/Dockerfile)
+- **Architecture**: `linux/amd64`
+- **Pull command**: `docker pull leanon/extractkit-ci:latest`
+
+### `root`
+
+The same image, started as root. Use it on runners that clone the source as
+root; with `latest` the run stops there with `source_not_writable`.
+
+- **Dockerfile**: [`docker/Dockerfile`](https://git.seeds.no/williams/99x-extract-kit/-/blob/docker/docker/Dockerfile)
+  with `--build-arg RUN_AS=root`
+- **Architecture**: `linux/amd64`
+- **Pull command**: `docker pull leanon/extractkit-ci:root`
+
+Both tags are rebuilt on every change to the kit; there are no per-commit
+tags.
 
 ## Quick start
 
@@ -54,6 +83,3 @@ extract:
 The job needs the selected agent's credential in its environment. The image
 needs no `entrypoint: [""]`: flags run `extractkit headless --json`, and any
 other command (`sh`, `git`) runs unchanged.
-
-On a runner that clones the source as root, use the `root` tag; otherwise the
-run stops with `source_not_writable`.
