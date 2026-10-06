@@ -460,8 +460,8 @@ script:
     esac
     : "${PASSWORD:?the passphrase of the credential archives}"
     AGENT_KEY_DIR=$(mktemp -d)
-    AGENT_KEY_REF="op://${OP_VAULT_ID}/${CI_AGENT_SECRET_NAME}/${AGENT_KEY_VAR}.yaml.7z?attribute=content"
-    op read "$AGENT_KEY_REF" > "$AGENT_KEY_DIR/archive.7z"
+    AGENT_KEY_REF="op://${OP_VAULT_ID}/${CI_AGENT_SECRET_NAME}/${AGENT_KEY_VAR}.yaml.7z"
+    op read --out-file "$AGENT_KEY_DIR/archive.7z" "$AGENT_KEY_REF"
     AGENT_KEY=$(7z x -so -p"$PASSWORD" "$AGENT_KEY_DIR/archive.7z" \
       | python3 -c '
     import sys, yaml
