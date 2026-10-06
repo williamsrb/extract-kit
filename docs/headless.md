@@ -347,10 +347,7 @@ can read the credential from 1Password and export it before `extractkit`
 starts. One 1Password item holds a password-protected 7z archive for each
 agent, attached to the item and named after the variable that agent reads. The
 job reads `EXTRACTKIT_AGENT`, opens only that agent's archive with the
-passphrase in `PASSWORD`, and exports the credential. The full flow, including
-how to make the archives, is in the
-[Docker Hub page](https://hub.docker.com/r/leanon/extractkit-ci)
-(`docker/README.md`).
+passphrase in `PASSWORD`, and exports the credential.
 
 <!-- markdownlint-disable MD013 -->
 
@@ -373,8 +370,8 @@ Seeds projects take the job from the `seeds/ci-templates` project:
 `.extractkit_template` in `general/extractkit.yml` reads the variables above,
 holds the credential lines and the `extractkit headless` call, and the project
 sets only its own `EXTRACTKIT_*` values and when the job runs. The template
-runs in the `extract` stage, so the project's `stages:` must list it. The
-Docker Hub page shows the same lines as a plain job script.
+runs in the `extract` stage, so the project's `stages:` must list it. Outside
+Seeds, use the [plain job script](#plain-job-script).
 
 ```yaml
 include:
@@ -417,3 +414,72 @@ extract:
   1Password (the `claude setup-token` token, `OPENAI_API_KEY`,
   `CURSOR_API_KEY`), and running `--agent codex` and `--agent cursor` in the
   image.
+
+### Making the archives
+
+Make an archive once per agent, on your machine. Each archive holds one YAML
+file named like the attachment minus `.7z`; its `token` key holds the
+credential, other keys (such as `validity`) are not read. Never put the
+credential or the passphrase in a command argument: `-p` without a value makes
+`7z` ask for the passphrase, and `-mhe=on` also encrypts the file names.
+
+```bash
+umask 077
+claude setup-token   # put the token in CLAUDE_CODE_OAUTH_TOKEN.yaml as token: "<token>"
+7z a -mhe=on -p CLAUDE_CODE_OAUTH_TOKEN.yaml.7z CLAUDE_CODE_OAUTH_TOKEN.yaml
+```
+
+Attach the `.7z` file to the item in the 1Password app, then delete both local
+files with `shred -u`. Repeat with `OPENAI_API_KEY` and `CURSOR_API_KEY`. The
+Claude token needs a Claude Pro, Max, Team or Enterprise plan and covers model
+requests only; `codex` and `cursor` take API keys.
+
+### Plain job script
+
+The image ships `/filter-by-name.sh`, which turns the vault name into the
+vault ID. The service account must be able to read the vault.
+
+```yaml
+variables:
+  EXTRACTKIT_AGENT: claude
+  CI_SERVICE_ACCOUNT_TOKEN: $OP_SERVICE_ACCOUNT_TOKEN_FACTORY
+  CI_VAULT_NAME: $OP_VAULT_NAME_FACTORY
+  CI_AGENT_SECRET_NAME: $OP_EXTRACT_NAME_FACTORY
+script:
+  - export OP_SERVICE_ACCOUNT_TOKEN=$CI_SERVICE_ACCOUNT_TOKEN
+  - OP_VAULT_ID=$(op vault list | /filter-by-name.sh "${CI_VAULT_NAME}")
+  - |
+    # For claude an API key outranks the OAuth token, so a leftover one is dropped.
+    case "$EXTRACTKIT_AGENT" in
+      claude) AGENT_KEY_VAR=CLAUDE_CODE_OAUTH_TOKEN; unset ANTHROPIC_API_KEY ;;
+      codex) AGENT_KEY_VAR=OPENAI_API_KEY ;;
+      cursor) AGENT_KEY_VAR=CURSOR_API_KEY ;;
+      *)
+        echo "no 1Password credential mapped for agent '$EXTRACTKIT_AGENT'" >&2
+        exit 1 ;;
+    esac
+    : "${PASSWORD:?the passphrase of the credential archives}"
+    AGENT_KEY_DIR=$(mktemp -d)
+    AGENT_KEY_REF="op://${OP_VAULT_ID}/${CI_AGENT_SECRET_NAME}/${AGENT_KEY_VAR}.yaml.7z?attribute=content"
+    op read "$AGENT_KEY_REF" > "$AGENT_KEY_DIR/archive.7z"
+    AGENT_KEY=$(7z x -so -p"$PASSWORD" "$AGENT_KEY_DIR/archive.7z" \
+      | python3 -c '
+    import sys, yaml
+    data = yaml.safe_load(sys.stdin)
+    if not isinstance(data, dict) or not data.get("token"):
+        sys.exit("no token in the archive (wrong PASSWORD?)")
+    print(data["token"])
+    ')
+    rm -rf "$AGENT_KEY_DIR"
+  - export "${AGENT_KEY_VAR}=${AGENT_KEY}"
+  # The agent inherits the environment; drop what opens the vault.
+  - unset PASSWORD OP_SERVICE_ACCOUNT_TOKEN OP_SERVICE_ACCOUNT_TOKEN_FACTORY CI_SERVICE_ACCOUNT_TOKEN
+  - extractkit headless --source "$CI_PROJECT_DIR" --json | tee extract-result.json
+```
+
+Assign first and `export` after: `export VAR=$(...)` hides a failed `7z` or
+`op read`. `7z` takes the passphrase as `-p` on its command line, so other
+processes in the job container can see it while `7z` runs; the agent has not
+started yet. To use an Anthropic API key instead, archive it as
+`ANTHROPIC_API_KEY.yaml.7z`, set `AGENT_KEY_VAR` to that name and drop the
+`unset`.
