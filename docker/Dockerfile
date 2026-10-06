@@ -113,6 +113,13 @@ ENV HOME=/home/extract \
 RUN uv tool install "serena-agent==${SERENA_VERSION}" \
     && uv tool install "graphifyy==${GRAPHIFY_VERSION}"
 
+# The headless preflight onboards Serena through its MCP tools, so the agent
+# needs the server in its own user config; installing the binary is not enough.
+RUN case " ${AGENTS} " in \
+        *" claude "*) claude mcp add --scope user serena -- \
+            serena start-mcp-server --project-from-cwd --context=claude-code ;; \
+    esac
+
 # cursor-agent, from Cursor's official installer into ~/.local/bin. Unlike the
 # other tools it has no pinned release, so a rebuild can pick up a newer
 # version than docs/headless.md names; `--agent cursor` is the only user.

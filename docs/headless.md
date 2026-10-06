@@ -200,13 +200,17 @@ Override it with `agent.allowed_tools` or `--allowed-tools`. Setting
 the allowlist; it is the operator's call and never a kit default. Prefer to
 run a bypass only inside the container. The agent inherits the environment
 (minus `EXTRACTKIT_*`) so its API key reaches it. Its output goes to
-`<sidecar>/reports/headless/<stage>-<task>-<attempt>.log`; those logs are agent
-output and may echo prompts.
+`<sidecar>/reports/headless/<stage>-<task>-<attempt>.log`; a run that stops
+before the sidecar exists (a failed preflight) keeps them as
+`<source>/.extract/headless-<stage>-<task>-<attempt>.log`, inside the `.extract/`
+artifact. Those logs are agent output and may echo prompts.
 
 Preflight needs the Serena MCP and, for the Graphify skill fallback, the
 graphify skill configured for the agent on the runner. Headless detects a
 missing readiness item and fails with `readiness_missing`; it does not
-install tools. The container image has them.
+install tools. The container image has them, and registers Serena as a
+user-scope MCP server for `claude`; for `codex` and `cursor` the server still
+has to be added to that agent's own config.
 
 ## Blockers and exit 3
 

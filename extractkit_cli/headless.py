@@ -110,10 +110,12 @@ class RunLog:
     """`<sidecar>/reports/headless.jsonl` and the agent logs next to it.
 
     Before the sidecar exists, lines and agent logs wait in a temp folder and
-    move into `reports/` when `attach` is called.
+    move into `reports/` when `attach` is called. A run that stops before any
+    sidecar exists keeps those logs as `<source>/.extract/headless-*.log`.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, source: Path) -> None:
+        self.source = source
         self.out: Path | None = None
         self.lines: list[dict] = []
         self.pending: Path | None = None
@@ -128,6 +130,16 @@ class RunLog:
 
     def rel(self, path: Path | None) -> str | None:
         return f"reports/headless/{path.name}" if path else None
+
+    def where(self, path: Path) -> str:
+        """Where the log ends up once the run closes, for a fix message."""
+        if self.out is not None:
+            return str(self.out / "reports" / "headless" / path.name)
+        return str(self._kept(path.name))
+
+    def _kept(self, name: str) -> Path:
+        # Files, not a folder: every folder under .extract/ counts as a run.
+        return self.source / outtree.EXTRACT_DIRNAME / f"headless-{name}"
 
     def attach(self, out: Path) -> None:
         if self.out == out:
@@ -155,8 +167,14 @@ class RunLog:
             handle.write(json.dumps(line, ensure_ascii=False) + "\n")
 
     def close(self) -> None:
-        if self.pending is not None:
-            shutil.rmtree(self.pending, ignore_errors=True)
+        if self.pending is None:
+            return
+        logs = sorted(self.pending.iterdir())
+        if self.out is None and logs:
+            outtree.write_self_ignore(self.source)
+            for item in logs:
+                shutil.move(str(item), str(self._kept(item.name)))
+        shutil.rmtree(self.pending, ignore_errors=True)
 
 
 # --- the run ---------------------------------------------------------------------
@@ -201,7 +219,7 @@ class Headless:
                 code="source_not_writable",
             )
         self.out: Path | None = None
-        self.log = RunLog()
+        self.log = RunLog(self.source)
         self.records: list[StageRecord] = []
         self.s = self._settings()
 
@@ -345,7 +363,7 @@ class Headless:
         if done.returncode != 0:
             self._line(stage, task, attempt, False, done.returncode, "agent_failed", f"{argv[0]} exited {done.returncode}", start, log)
             raise StageFailed(
-                "agent_failed", f"{argv[0]} exited {done.returncode} on {task}; see {self.log.rel(log)}",
+                "agent_failed", f"{argv[0]} exited {done.returncode} on {task}; see {self.log.where(log)}",
                 "check the agent CLI login or API key in this environment",
             )
         self._line(stage, task, attempt, True, 0, None, "agent finished", start, log)
@@ -416,10 +434,13 @@ class Headless:
         if not missing:
             return "ok (already done)" if not notes else "ok: " + ", ".join(notes)
         prompt = render_prompt(HEADLESS_DIR / "preflight.md", source=str(self.source))
-        self._agent("preflight", "preflight", 1, prompt, self.s.preflight_tools)
+        log = self._agent("preflight", "preflight", 1, prompt, self.s.preflight_tools)
         still = [r for r in readiness.check_source(self.source) if r.failed]
         if still:
-            raise StageFailed("readiness_missing", f"{still[0].name}: {still[0].detail}", still[0].fix)
+            raise StageFailed(
+                "readiness_missing", f"{still[0].name}: {still[0].detail}",
+                f"{still[0].fix}; the agent's account of the attempt is in {self.log.where(log)}",
+            )
         return "ok: " + ", ".join([*notes, "Serena onboarding and Graphify index created by the agent"])
 
     def _doctor(self) -> str:

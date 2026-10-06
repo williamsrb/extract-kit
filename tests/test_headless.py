@@ -143,6 +143,15 @@ class StageTests(HeadlessCase):
         attempts = [line["attempt"] for line in self.lines() if line["task"] == "context.exclude"]
         self.assertEqual(attempts, [1, 2])
 
+    def test_a_failed_preflight_keeps_the_agent_log_with_no_sidecar(self) -> None:
+        code, doc = self.headless("--until", "preflight", mode="noop")
+        self.assertEqual(code, 1, doc)
+        self.assertEqual(doc["error"]["code"], "readiness_missing")
+        kept = self.source / ".extract" / "headless-preflight-preflight-1.log"
+        self.assertTrue(kept.is_file())
+        self.assertIn(str(kept), doc["error"]["fix"])
+        self.assertEqual([p for p in (self.source / ".extract").iterdir() if p.is_dir()], [])
+
     def test_a_hung_agent_is_killed_at_the_timeout(self) -> None:
         code, doc = self.headless("--task-timeout", "1", mode="sleep")
         self.assertEqual(code, 1, doc)
