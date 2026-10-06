@@ -49,9 +49,9 @@ must cite its evidence too.
    listed below.
 5. **AI steps.** An AI assistant decides which folders and configuration
    keys belong to the project, names the business rules, and writes the
-   business overview. The two context decisions come early, after steps 1
-   and 2, because the later steps read them. See
-   [AI steps](#ai-steps) below.
+   business overview and the project constitution. The two context
+   decisions come early, after steps 1 and 2, because the later steps read
+   them. See [AI steps](#ai-steps) below.
 6. **Validate.** Check that every requirement and rule cites its evidence.
 7. **Hand over.** Copy the main documents into the project, where the next
    team picks them up.
@@ -70,13 +70,15 @@ not connect to an AI model itself, so you choose which assistant runs them.
 | Decide the context | Picks which folders outside the main build are not part of the product, and which configuration keys carry the project's service addresses; the kit checks both against the code | Yes (the service-address half only after a live capture) |
 | Name the business rules | Gives each extracted rule a plain business name and a one-sentence purpose | Yes |
 | Write the business overview | Writes BUSINESS.md from the extracted facts: purpose, actors, capabilities, business flow, rules, glossary, integrations, open questions | Yes |
-| Polish the specifications | Rewrites the requirement and journey text so it reads better, without changing the facts | No |
+| Write the constitution | Writes the project's ground rules as they are today: stack with versions, architecture, conventions, integrations, delivery, and the invariants a change must keep; each part cites its evidence | Yes |
+| Polish the specifications | Describes the requirements the extraction left thin, and rewrites the requirement and journey text so it reads better, without changing the facts | No (headless runs it unless told not to) |
 | Review the specifications | Checks the specs against the code and the business overview, writes a findings report, and changes nothing | No |
 <!-- markdownlint-enable MD013 -->
 
-The Spec Kit files (constitution and specs) are not one of these steps. The
-kit writes them from rules, from the extracted facts, and never runs Spec Kit
-or an AI model to do it. Spec Kit's own agent commands, such as
+The Spec Kit specs are not one of these steps: the kit writes them from
+rules and the extracted facts. The constitution adds the project part the
+AI step wrote to fixed governance text. The kit never runs Spec Kit to do
+either. Spec Kit's own agent commands, such as
 `/speckit.plan` and `/speckit.tasks`, run after hand-over, with the next
 team's own assistant.
 
@@ -90,12 +92,12 @@ confirms its own work.
 <!-- markdownlint-disable MD013 -->
 | Document | What it answers |
 | --- | --- |
-| Constitution | The ground rules of the extract: evidence over assumption, what is in and out of scope |
+| Constitution | The project's ground rules as they are today: stack, architecture, conventions, integrations, delivery, and the invariants a change must keep |
 | Specification, one per business area | What each part of the system does today, as numbered requirements with acceptance criteria and evidence |
 | Business overview (BUSINESS.md) | Purpose and audience, actors, capabilities, the business flow, business rules, glossary, integrations, and open questions |
 | Business rules catalogue | Every rule found in templates and scripts, where it lives, and which ones repeat or differ |
 | User journeys | Scenarios for each page and component, written as Given / When / Then |
-| Product summary (PRODUCT.md) | The capabilities of the system and whether each one is in use |
+| Product summary (PRODUCT.md) | Users, jobs and capabilities from the business overview, and how many pages and components of each kind are in use |
 | Front-end patterns (DESIGN.md) | Every page, layout, and component, with its inputs and what it contains |
 | Integrations API docs (OpenAPI, Swagger UI) | The services the system offers, the outside systems it calls, and third-party scripts, in a browsable page |
 | Project map | Components, content types, routes, and business areas, and how they relate |

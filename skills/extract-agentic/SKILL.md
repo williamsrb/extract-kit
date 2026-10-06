@@ -3,10 +3,10 @@ name: extract-agentic
 description: >
   Run the agent tasks of a 99x-extract-kit sidecar after synthesis: name the
   view-layer business rules, write BUSINESS.md (the general business flow),
-  optionally enrich specs. Also decides the project context
+  write the project constitution, optionally enrich specs. Also decides the project context
   (`context.exclude`, `context.live_config`). Use when `extractkit status` shows the agent
-  phase as current, or when asked to run agent steps, write BUSINESS.md,
-  name rules, or enrich a spec. Not for the deterministic pipeline (use
+  phase as current, or when asked to run agent steps, write BUSINESS.md or
+  the constitution, name rules, or enrich a spec. Not for the deterministic pipeline (use
   extract-legacy) and not for XP8/React4XP ports.
 ---
 
@@ -24,7 +24,8 @@ Run from the legacy checkout, in a session opened there, so Serena and
 file reads resolve against the code being described. `extractkit` must be
 on PATH (`./extractkit install` in a kit checkout; the checkout can be
 deleted afterwards). `<sidecar>` is the extract run directory
-(`.extract/<run-id>` under the checkout).
+(`.extract/<run-id>` under the checkout, or `extract/<run-id>` after a
+headless run).
 
 In a headless run there is no operator. The prompt you are given then starts
 with the headless preamble: where a task says to stop and ask the operator,
@@ -46,7 +47,9 @@ lines) and stop. The analyst gates stay: never tick a review box, never set
    `--source` and `--out` added, plus `--profile` when detection needs it
    (`agent list --json` shows the tokens). `rules.name` needs this:
    `rules/view-rules.json` only changes on re-run, and that is what marks the
-   task done. The two `context.*` tasks must also repeat the CMS flags of
+   task done. `business` re-runs `product.impeccable` and `constitution`
+   re-runs `spec.kit`, so PRODUCT.md and `spec-kit/constitution.md` pick up
+   what they wrote. The two `context.*` tasks must also repeat the CMS flags of
    the earlier run (`--branch`, `--storage-state`, `--guillotine` or
    `--xp-host`, `--cms-key`), because the `Re-run:` line prints only the
    `rerun` tokens.
@@ -65,7 +68,9 @@ unsure whether a folder is part of the product, keep it: an exclusion cannot
 be undone in the same sidecar.
 
 `spec.enrich` is optional and `agent next` never returns it. Run it only when
-the operator asks: `extractkit agent show spec.enrich --out <sidecar>`.
+the operator asks: `extractkit agent show spec.enrich --out <sidecar>`
+(`extractkit headless` runs it unless `--no-enrich`). It writes
+`reports/spec-enrich.md` last.
 `spec.review` is optional too, and `agent next` never returns it. It reviews the
 generated specs for meaning and writes only `reports/spec-review.md`; it
 edits no spec, and `promote` never copies the report. Run it when the
@@ -94,5 +99,6 @@ validates the report's format, never its findings.
   under an `Evidence:` line.
 - As-is only. No port plans, XP8 advice, `DECISIONS.md` or `IMPLEMENTATION.md`.
 - Do not run graft, graphify, Serena onboarding or `git` writes in the source.
-- `promote` copies `business/BUSINESS.md` to `BUSINESS.md` in the checkout.
-  Run it only when the operator asks.
+- `promote` copies `business/BUSINESS.md` to `BUSINESS.md` and
+  `spec-kit/constitution.md` to `.specify/memory/constitution.md` in the
+  checkout. Run it only when the operator asks.

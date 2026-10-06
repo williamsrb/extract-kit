@@ -15,9 +15,9 @@ no resource type for either.
 <!-- markdownlint-disable MD013 -->
 | Resource | What | How to supply it | Checked by |
 | --- | --- | --- | --- |
-| Legacy checkout | The folder to extract. Mounted or checked out; the run writes `.extract/` there | `--source` / `EXTRACTKIT_SOURCE` | `doctor --source` |
+| Legacy checkout | The folder to extract. Mounted or checked out; the run writes `extract/` there | `--source` / `EXTRACTKIT_SOURCE` | `doctor --source` |
 | XP instance (optional) | A local or review XP with the app and a content dump. Production hosts are refused. Without it the run is offline and skips the CMS phase | `xp:` in the resources file, or the CMS flags | `xp host`, `guillotine` rows |
-| Auth (needed for the XP) | A Playwright storage state for that XP | `auth.storage_state`, `--storage-state`, or `EXTRACTKIT_STORAGE_STATE_JSON` (the file contents) | `storage state` row |
+| Auth (needed for the XP) | A Playwright storage state for that XP | `auth.storage_state`, `--storage-state`, or `EXTRACTKIT_STORAGE_STATE_JSON` (the file contents, or the path a CI file variable gives) | `storage state` row |
 | Agent | An agent CLI that is logged in or has an API key | `agent:` in the resources file, `--agent` | `agent cli`, `agent api key` rows |
 <!-- markdownlint-enable MD013 -->
 
@@ -95,8 +95,10 @@ These variables never work, and setting them fails with `env_forbidden`:
 `EXTRACTKIT_ALLOW_PRODUCTION` and `EXTRACTKIT_FORCE` (for `--allow-production`,
 `promote --force` and `install --force`). Headless never passes either flag.
 
-`EXTRACTKIT_STORAGE_STATE_JSON` holds the storage-state file contents (a
-masked CI variable). It is written to a mode 0600 file in a private temp
+`EXTRACTKIT_STORAGE_STATE_JSON` holds the storage-state file contents. In
+GitLab make it a File-type variable: the JSON cannot be masked, and the
+variable then holds the path of a file with the contents, which the kit reads.
+It is written to a mode 0600 file in a private temp
 folder, used as `--storage-state`, and deleted at exit. It conflicts with
 `--storage-state` and `EXTRACTKIT_STORAGE_STATE`: set one (`bad_env`). Its
 contents appear nowhere in stdout, the JSONL log or `MANIFEST.yaml`, and the
@@ -123,6 +125,7 @@ variable. It passes every setting as a flag, so a variable meant for headless
 | `EXTRACTKIT_AGENT`, `EXTRACTKIT_AGENT_PERMISSIONS`, `EXTRACTKIT_ALLOWED_TOOLS` | `--agent`, `--agent-permissions`, `--allowed-tools` | `headless` |
 | `EXTRACTKIT_MAX_FIX_ATTEMPTS`, `EXTRACTKIT_TASK_TIMEOUT` | `--max-fix-attempts`, `--task-timeout` | `headless` |
 | `EXTRACTKIT_PROMOTE` | `--promote` | `headless` |
+| `EXTRACTKIT_NO_ENRICH` | `--no-enrich` | `headless` |
 | `EXTRACTKIT_STORAGE_STATE_JSON` | storage-state contents | commands with `--storage-state` |
 <!-- markdownlint-enable MD013 -->
 
@@ -140,12 +143,12 @@ the entries of `stages[]` in the result.
 | `install` | `extractkit install --json` (a check when run from the installed copy) |
 | `preflight` | Builds the graft index if `graft/` is missing. When Serena onboarding or the Graphify index is missing, starts one agent process with `headless/preflight.md`, then re-checks readiness (`readiness_missing`) |
 | `doctor` | `doctor --source` with `--resources` |
-| `static` | `run --until static` |
+| `static` | `run --until static --out <source>/extract/<run-id>` |
 | `agent:context` | The agent loop, limited to `context.*` tasks |
 | `cms` | `resume --until cms`, only when a storage state is resolved; otherwise `skipped` |
 | `agent:live_config` | The same `context.*` loop, after the CMS slot |
 | `synthesis` | `run --from merge --until synthesis` |
-| `agent` | The full agent loop; `task_inputs_missing` when a task waits on a file nothing wrote |
+| `agent` | The full agent loop, then the optional `spec.enrich` unless `--no-enrich` (its failure is reported in the stage message, not as a stop); `task_inputs_missing` when a task waits on a file nothing wrote |
 | `check` | `check`; `check_failed` with the problems |
 | `promote` | Only with `--promote`; never `--force` |
 <!-- markdownlint-enable MD013 -->
@@ -157,6 +160,22 @@ agent process in the source folder with the rendered prompt behind
 `--max-fix-attempts` (default 2) times, then writes a blocker. On the offline
 route a `run` rerun whose range holds the CMS phase is split into the slice
 before it and the slice after it, so it cannot fail at CMS preflight.
+
+Headless writes the sidecar to `<source>/extract/<run-id>/`, a visible
+folder with no `.gitignore`, so a pipeline publishes it as is. Interactive
+commands keep `<source>/.extract/` and find the newest run under either
+folder. Scans skip `<source>/extract/` once it holds a run.
+
+The required tasks are `rules.name`, `business` (it re-runs
+`product.impeccable`, which takes PRODUCT.md's users, jobs and capabilities
+from `BUSINESS.md`) and `constitution` (it re-runs `spec.kit`, which composes
+`spec-kit/constitution.md` from it). Then `spec.enrich` rewrites the spec and
+use-case prose; it is done while `reports/spec-enrich.md` is newer than every
+`spec.md`. On a large project it can need more than the default
+`--task-timeout` of 1800 seconds. It is optional, so a timeout, a blocker or
+fix attempts that ran out do not stop the run: the `agent` stage message says
+`spec.enrich failed and was skipped`, the agent log and any blocker file stay
+in the sidecar, and `check` still runs and fails if enrich left a spec invalid.
 
 Re-running headless on the same source resumes the latest sidecar. A stage
 whose outputs exist reports `ok (already done)` and starts no agent. The
@@ -202,7 +221,7 @@ run a bypass only inside the container. The agent inherits the environment
 (minus `EXTRACTKIT_*`) so its API key reaches it. Its output goes to
 `<sidecar>/reports/headless/<stage>-<task>-<attempt>.log`; a run that stops
 before the sidecar exists (a failed preflight) keeps them as
-`<source>/.extract/headless-<stage>-<task>-<attempt>.log`, inside the `.extract/`
+`<source>/extract/headless-<stage>-<task>-<attempt>.log`, inside the `extract/`
 artifact. Those logs are agent output and may echo prompts.
 
 Preflight needs the Serena MCP and, for the Graphify skill fallback, the
@@ -355,7 +374,7 @@ extract:
     EXTRACTKIT_AGENT: claude
     EXTRACTKIT_RESOURCES: .extractkit/resources.yaml
     EXTRACTKIT_UNTIL: check
-    # Masked CI/CD variable: the storage-state contents.
+    # File-type CI/CD variable: the storage-state contents.
     # EXTRACTKIT_STORAGE_STATE_JSON
     # The agent credential: see "Agent credentials" below.
   script:
@@ -365,7 +384,7 @@ extract:
     name: extract_${PROJECT_SHORT_NAME}_artifacts
     when: always
     paths:
-      - .extract/
+      - extract/
       - extract-result.json
     expire_in: 2 weeks
   # Exit 3 means a task is blocked and a person must look; make it non-fatal
@@ -376,7 +395,7 @@ extract:
 
 The job's artifact archive downloads as
 `extract_<PROJECT_SHORT_NAME>_artifacts.zip` (GitLab adds the `.zip`;
-`PROJECT_SHORT_NAME` comes from the base `.gitlab-ci`). `.extract/` is the
+`PROJECT_SHORT_NAME` comes from the base `.gitlab-ci`). `extract/` is the
 artifact: the sidecar, `reports/headless.jsonl`, the agent logs and any
 blocker file. In the container, flags go to
 `extractkit headless --json`, so `docker run` and a Compose service take the

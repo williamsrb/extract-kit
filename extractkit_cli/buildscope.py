@@ -18,6 +18,7 @@ from pathlib import Path
 import yaml
 
 from .common import Row
+from .outtree import is_headless_root
 from .scope import SKIP_DIRS, is_excluded
 
 CI_FILE = ".gitlab-ci.yml"
@@ -118,6 +119,7 @@ def _top_level_dirs(source: Path) -> list[str]:
     return sorted(
         p.name for p in source.iterdir()
         if p.is_dir() and not p.is_symlink() and not p.name.startswith(".") and p.name not in SKIP_DIRS
+        and not is_headless_root(p, source)
     )
 
 

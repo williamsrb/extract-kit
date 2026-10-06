@@ -1,5 +1,8 @@
 """product.impeccable — as-is PRODUCT.md + DESIGN.md from maps.
 
+PRODUCT.md takes its users, jobs and capabilities from `business/BUSINESS.md`
+once the `business` agent task wrote it; that task re-runs this step.
+
 Impeccable init/document is an agent skill. This step writes the required
 extract artifacts from maps so the pipeline is deterministic. `extractkit next`
 still names the impeccable skill when an operator wants a richer rewrite.
@@ -7,10 +10,13 @@ still names the impeccable skill when an operator wants a richer rewrite.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from extractkit_cli.common import load_json
 from steps.core.normalize import COMPONENT_KINDS
+
+BUSINESS = "business/BUSINESS.md"
 
 
 def _load_surfaces(ctx: object) -> list[dict]:
@@ -24,6 +30,7 @@ def _load_surfaces(ctx: object) -> list[dict]:
 def _product_md(ctx: object, surfaces: list[dict]) -> str:
     profile = (getattr(ctx, "profile", {}) or {}).get("name") or "unknown"
     source = getattr(ctx, "source", Path("."))
+    business = _business_sections(ctx)
     lines = [
         "# PRODUCT (as-is)",
         "",
@@ -34,22 +41,35 @@ def _product_md(ctx: object, surfaces: list[dict]) -> str:
         "",
         "## Users and jobs",
         "",
-        (
-            "Not interviewed. Surfaces below are inferred from static inventory "
-            "and optional runtime survey."
-        ),
-        "",
-        "## Capabilities (from maps)",
-        "",
     ]
+    if business:
+        for title in ("Purpose and audience", "Actors"):
+            lines += [f"### {title}", "", business.get(title, "").strip() or "Not stated.", ""]
+        lines += ["## Capabilities", "", "From `business/BUSINESS.md`, where each one cites its evidence.", ""]
+        lines += _capability_outline(business.get("Capabilities", "")) or ["None listed."]
+        lines.append("")
+    else:
+        lines += [
+            (
+                "Not known yet. The `business` agent task writes `business/BUSINESS.md`; "
+                "re-run `product.impeccable` afterwards to fill this section and the capabilities."
+            ),
+            "",
+        ]
+    lines += ["## Surfaces (from maps)", ""]
     if not surfaces:
         lines.append("No surfaces in `map/project-map.json`.")
     else:
+        kinds: dict[str, dict[str, int]] = {}
         for surface in surfaces:
-            ident = surface.get("id") or ""
-            kind = surface.get("kind") or ""
-            status = surface.get("status") or "unverified-live"
-            lines.append(f"- `{ident}` ({kind}) — status `{status}`")
+            per = kinds.setdefault(str(surface.get("kind") or "surface"), {})
+            status = str(surface.get("status") or "unverified-live")
+            per[status] = per.get(status, 0) + 1
+        lines += ["| kind | count | status |", "|---|---|---|"]
+        for kind, per in sorted(kinds.items(), key=lambda item: (-sum(item[1].values()), item[0])):
+            status = ", ".join(f"{n} {s}" for s, n in sorted(per.items()))
+            lines.append(f"| {kind} | {sum(per.values())} | {status} |")
+        lines += ["", "Every surface, with its id and evidence, is in `map/project-map.json`."]
     lines.append("")
     lines.append("## Platform")
     lines.append("")
@@ -62,6 +82,32 @@ def _product_md(ctx: object, surfaces: list[dict]) -> str:
         lines.append("See `docs/harvest/INDEX.md`.")
         lines.append("")
     return "\n".join(lines)
+
+
+def _business_sections(ctx: object) -> dict[str, str]:
+    """H2 title to body of `business/BUSINESS.md`, or {} before the `business` task ran."""
+    path: Path = ctx.rel(BUSINESS)  # type: ignore[attr-defined]
+    if not path.is_file():
+        return {}
+    sections: dict[str, list[str]] = {}
+    current: list[str] | None = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        match = re.match(r"^##\s+(.+?)\s*$", line)
+        if match:
+            current = sections.setdefault(match.group(1), [])
+        elif current is not None:
+            current.append(line)
+    return {title: "\n".join(body) for title, body in sections.items()}
+
+
+def _capability_outline(section: str) -> list[str]:
+    """The `###`/`####` headings of the Capabilities section as a nested list."""
+    outline: list[str] = []
+    for line in section.splitlines():
+        match = re.match(r"^(#{3,6})\s+(.+?)\s*$", line)
+        if match:
+            outline.append(f"{'  ' * (len(match.group(1)) - 3)}- {match.group(2)}")
+    return outline
 
 
 def _design_md(surfaces: list[dict]) -> str:

@@ -15,8 +15,9 @@ Run: `{run_id}`
   the kit would onboard and index the kit. If it refuses, stop and ask the
   operator to open the legacy checkout.
 - The source checkout is read-only. Every run writes only
-  `<source>/.extract/<run-id>/`. Only `promote` writes into the checkout, and
-  only when the operator asked for it.
+  `<source>/.extract/<run-id>/`, or `<source>/extract/<run-id>/` under
+  `extractkit headless`. Only `promote` writes into the checkout, and only
+  when the operator asked for it.
 - There is no dry run. Every command writes on its first call.
 - The profile is not yours to write. The only profile file an agent task
   edits is `<sidecar>/context/profile.yaml`, and only the key the task names.
@@ -52,7 +53,9 @@ Read these, in this order. Paths are under `{sidecar}`.
 - `map/content-model.json`: the content types, which set the Glossary.
 - `map/route-map.json`: sites, services, tasks and admin tools, which set the
   Actors and Integrations.
-- `product/PRODUCT.md`: the as-is capability list.
+- `product/PRODUCT.md`: the surface counts per kind. After you finish,
+  `product.impeccable` re-runs and fills its users, jobs and capabilities from
+  your file.
 - `docs/harvest/`: Enonic product docs, when the folder exists.
 
 Read the source under `{source}` only to confirm a claim at a `path:line`.
@@ -113,5 +116,6 @@ List here, as separate items:
 Then run:
 
 ```bash
+extractkit step product.impeccable --profile {profile} --source {source} --out {sidecar}
 extractkit check --out {sidecar}
 ```

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from . import context, guide, live, registry, result, runner
 from .errors import ExtractkitError
-from .outtree import EXTRACT_DIRNAME, latest_run, resolve_source
+from .outtree import EXTRACT_DIRNAME, HEADLESS_DIRNAME, latest_run, resolve_source
 
 # Distinctive artifacts so overlapping produces (e.g. project-map.json) do not
 # mark a later step complete.
@@ -70,7 +70,7 @@ def resolve_out_dir(args: Namespace, source: Path | None) -> Path:
     latest = latest_run(source)
     if latest is None:
         raise ExtractkitError(
-            f"no extract run under {source / EXTRACT_DIRNAME}",
+            f"no extract run under {source / EXTRACT_DIRNAME} or {source / HEADLESS_DIRNAME}",
             "run extractkit run first, or pass --out",
         )
     return latest

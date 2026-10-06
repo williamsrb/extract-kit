@@ -11,10 +11,12 @@ it uses the same contract an external agent uses and does not depend on PATH:
 Preflight builds the graft index directly and asks the agent CLI for Serena
 onboarding and the Graphify index. An agent task runs in a fresh agent process
 in the source folder, with the rendered prompt behind `headless/preamble.md`;
-then its `rerun`, then `check`. A `check` failure feeds the problems back to a
-new process, up to `--max-fix-attempts` times. Where a prompt says "ask the
-operator", the agent writes `<sidecar>/reports/blockers/<task id>.md` instead,
-and headless stops with exit 3.
+then its `rerun`, then `check`. After the required tasks the agent stage runs
+the optional `spec.enrich`, unless `--no-enrich`. A `check` failure feeds the
+problems back to a new process, up to `--max-fix-attempts` times. Where a
+prompt says "ask the operator", the agent writes
+`<sidecar>/reports/blockers/<task id>.md` instead, and headless stops with
+exit 3.
 
 Exit codes: 0 every stage passed, 1 a stage failed, 3 a blocker file exists
 (a human is needed). Headless never passes `--allow-production` and never runs
@@ -59,6 +61,7 @@ STAGES = (
 )
 HEADLESS_DIR = REPO_ROOT / "headless"
 DEFAULT_AGENT = "claude"
+ENRICH = "spec.enrich"
 GRAFT_TIMEOUT = 600
 HEARTBEAT = 30
 PROGRESS_COMMANDS = ("run", "step", "resume")
@@ -116,7 +119,7 @@ class RunLog:
 
     Before the sidecar exists, lines and agent logs wait in a temp folder and
     move into `reports/` when `attach` is called. A run that stops before any
-    sidecar exists keeps those logs as `<source>/.extract/headless-*.log`.
+    sidecar exists keeps those logs as `<source>/extract/headless-*.log`.
     """
 
     def __init__(self, source: Path) -> None:
@@ -143,8 +146,8 @@ class RunLog:
         return str(self._kept(path.name))
 
     def _kept(self, name: str) -> Path:
-        # Files, not a folder: every folder under .extract/ counts as a run.
-        return self.source / outtree.EXTRACT_DIRNAME / f"headless-{name}"
+        # Files, not a folder, so they are never taken for a run.
+        return self.source / outtree.HEADLESS_DIRNAME / f"headless-{name}"
 
     def attach(self, out: Path) -> None:
         if self.out == out:
@@ -176,7 +179,7 @@ class RunLog:
             return
         logs = sorted(self.pending.iterdir())
         if self.out is None and logs:
-            outtree.write_self_ignore(self.source)
+            (self.source / outtree.HEADLESS_DIRNAME).mkdir(parents=True, exist_ok=True)
             for item in logs:
                 shutil.move(str(item), str(self._kept(item.name)))
         shutil.rmtree(self.pending, ignore_errors=True)
@@ -219,7 +222,7 @@ class Headless:
         if not os.access(self.source, os.W_OK | os.X_OK):
             raise ExtractkitError(
                 f"source {self.source} is not writable by uid {os.getuid()}",
-                "headless writes <source>/.extract/: mount the checkout writable for this user, "
+                "headless writes <source>/extract/: mount the checkout writable for this user, "
                 "or run the container as the checkout's owner (docker run --user)",
                 code="source_not_writable",
             )
@@ -437,7 +440,7 @@ class Headless:
             "static": self._static, "cms": self._cms_stage, "synthesis": self._synthesis,
             "agent:context": lambda: self._loop("agent:context", only_context=True),
             "agent:live_config": lambda: self._loop("agent:live_config", only_context=True),
-            "agent": lambda: self._loop("agent", only_context=False),
+            "agent": self._agent_stage,
             "check": self._check, "promote": self._promote,
         }
         exit_code, failure = 0, None
@@ -510,14 +513,14 @@ class Headless:
         return "ok"
 
     def _static(self) -> str:
-        latest = outtree.latest_run(self.source)
+        latest = outtree.latest_run(self.source, outtree.HEADLESS_DIRNAME)
         if latest is not None:
             self.out = latest
             self.log.attach(latest)
             if self._phase_done("static"):
                 return "ok (already done)"
-        extra = self._out_flag() if self.out else []
-        doc = self._kit("run", *self._common(), "--until", "static", *extra)
+        out = self.out or outtree.default_out(self.source, dirname=outtree.HEADLESS_DIRNAME)
+        doc = self._kit("run", *self._common(), "--until", "static", "--out", str(out))
         self._attach(doc.get("sidecar"))
         return "ok"
 
@@ -573,6 +576,21 @@ class Headless:
             self._run_task(stage, task["id"])
             ran.append(task["id"])
         return f"ok: ran {', '.join(ran)}" if ran else "ok (already done)"
+
+    def _agent_stage(self) -> str:
+        """The required tasks, then `spec.enrich` unless `--no-enrich`. A failed enrich does not stop the run."""
+        message = self._loop("agent", only_context=False)
+        if getattr(self.args, "no_enrich", False):
+            return message
+        if self._kit("agent", "show", ENRICH, *self._out_flag()).get("state") == "done":
+            return message
+        self._say(f"optional agent task: {ENRICH}", indent=1)
+        try:
+            self._run_task("agent", ENRICH)
+        except StageFailed as exc:
+            self._say(f"{ENRICH} failed, going on to check: {exc}", indent=1)
+            return f"{message}; {ENRICH} failed and was skipped: {exc}"
+        return f"{message}, {ENRICH}" if message.startswith("ok: ran") else f"ok: ran {ENRICH}"
 
     def _blocker(self, task_id: str) -> Path:
         return self.out / "reports" / "blockers" / f"{task_id}.md"

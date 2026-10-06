@@ -23,6 +23,11 @@ FR_HEADING = re.compile(r"^#{1,6}\s*FR-\d+\b", re.IGNORECASE)
 EVIDENCE_LINE = re.compile(r"^\s*Evidence\s*:\s*\S", re.MULTILINE)
 INFERRED = "`_(inferred)_`"
 BUSINESS_FILE = "business/BUSINESS.md"
+CONSTITUTION_FILE = "spec-kit/constitution/project.md"
+CONSTITUTION_SECTIONS = (
+    "Product", "Stack", "Architecture", "Conventions", "Integrations", "Delivery",
+    "Invariants", "Open questions",
+)
 SPEC_REVIEW_FILE = "reports/spec-review.md"
 SPEC_REVIEW_SEVERITIES = ("high", "medium", "low")
 SPEC_REVIEW_FIX_IN = ("extractor", "rules/review.md", "spec.enrich", "source")
@@ -174,32 +179,52 @@ def _business_gaps(out: Path) -> list[str]:
         return []
     text = path.read_text(encoding="utf-8")
     sections = _split_h2(text)
-    problems = [
-        f"{BUSINESS_FILE} is missing the section '## {title}'"
-        for title in BUSINESS_SECTIONS if title not in sections
-    ]
+    problems = _evidenced_doc_gaps(out, BUSINESS_FILE, text, sections, BUSINESS_SECTIONS)
     surface_ids = _ids_in_maps(out)
     rule_ids = _rule_ids(out)
-    known = surface_ids | _context_ids(out) | rule_ids
+    for title, body in _capabilities(sections.get("Capabilities", "")):
+        cited = set(BACKTICKED.findall(body)) | set(RULE_ID.findall(body))
+        if not cited & (surface_ids | rule_ids):
+            problems.append(f"{BUSINESS_FILE} capability '{title}' cites no rule id or surface id")
+    return problems
+
+
+def _constitution_gaps(out: Path) -> list[str]:
+    """Problems in `spec-kit/constitution/project.md`. An absent file is not a problem."""
+    path = out / CONSTITUTION_FILE
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8")
+    sections = _split_h2(text)
+    problems = _evidenced_doc_gaps(out, CONSTITUTION_FILE, text, sections, CONSTITUTION_SECTIONS)
+    problems.extend(
+        f"{CONSTITUTION_FILE} section '## {title}' has no `Evidence:` line"
+        for title in CONSTITUTION_SECTIONS
+        if title != "Open questions" and title in sections and not EVIDENCE_LINE.search(sections[title])
+    )
+    return problems
+
+
+def _evidenced_doc_gaps(out: Path, rel: str, text: str, sections: dict[str, str],
+                        required: tuple[str, ...]) -> list[str]:
+    """Missing H2 sections, unresolved `Evidence:` refs and inferred paragraphs with no evidence."""
+    problems = [f"{rel} is missing the section '## {title}'" for title in required if title not in sections]
+    known = _ids_in_maps(out) | _context_ids(out) | _rule_ids(out)
     source = _manifest_source(out)
     for ref in dict.fromkeys(_evidence_refs(text)):
         if ref in known or _source_ref_resolves(ref, source):
             continue
         if RULE_ID.fullmatch(ref):
-            problems.append(f"{BUSINESS_FILE} cites rule {ref}, which is not in rules/view-rules.json")
+            problems.append(f"{rel} cites rule {ref}, which is not in rules/view-rules.json")
         else:
             problems.append(
-                f"{BUSINESS_FILE} Evidence ref `{ref}` does not resolve to a source path:line, "
+                f"{rel} Evidence ref `{ref}` does not resolve to a source path:line, "
                 "a map id, a context id or a rule id"
             )
-    for title, body in _capabilities(sections.get("Capabilities", "")):
-        cited = set(BACKTICKED.findall(body)) | set(RULE_ID.findall(body))
-        if not cited & (surface_ids | rule_ids):
-            problems.append(f"{BUSINESS_FILE} capability '{title}' cites no rule id or surface id")
     for title, body in sections.items():
         where = f"section '## {title}'" if title else "text before the first section"
         problems.extend(
-            f"{BUSINESS_FILE} {where} has an {INFERRED} paragraph without an `Evidence:` line"
+            f"{rel} {where} has an {INFERRED} paragraph without an `Evidence:` line"
             for _ in _unevidenced_inferred(body)
         )
     return problems
@@ -469,6 +494,7 @@ def check_tree(out: Path) -> list[str]:
     problems.extend(_rule_gaps(out))
     problems.extend(_spec_fr_gaps(out))
     problems.extend(_business_gaps(out))
+    problems.extend(_constitution_gaps(out))
     problems.extend(_spec_review_gaps(out))
     problems.extend(context.grounding_gaps(out))
 
@@ -536,6 +562,7 @@ def _spec_fr_gaps(out: Path) -> list[str]:
 NAMED_CHECKS = {
     "context_grounded": context.grounding_gaps,
     "business": _business_gaps,
+    "constitution": _constitution_gaps,
     "spec_fr": _spec_fr_gaps,
     "spec_review": _spec_review_gaps,
 }

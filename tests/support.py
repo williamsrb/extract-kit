@@ -150,6 +150,64 @@ BUSINESS_SECTIONS = (
 )
 
 
+def valid_constitution() -> str:
+    """A constitution/project.md that passes `check` on the fixture sidecar."""
+    return """## Product
+
+The mini site serves articles to visitors.
+
+Evidence: `com.example.mini:content-type:mini-article`
+
+## Stack
+
+- Enonic XP site application.
+
+Evidence: `xp/src/main/resources/site/site.xml:1`
+
+## Architecture
+
+Pages are assembled from parts and layouts _(inferred)_.
+
+Evidence: `com.example.mini:part:mini-part`, `content`
+
+## Conventions
+
+- One folder per component under `site/`.
+
+Evidence: `xp/src/main/resources/site/site.xml:1`
+
+## Integrations
+
+None found.
+
+Evidence: `xp/src/main/resources/site/site.xml:1`
+
+## Delivery
+
+Built from `xp/`.
+
+Evidence: `xp/src/main/resources/site/site.xml:1`
+
+## Invariants
+
+- Articles keep a title.
+
+Evidence: `com.example.mini:content-type:mini-article`
+
+## Open questions
+
+None.
+"""
+
+
+def write_agent_outputs(out: Path) -> None:
+    """The files the required `business` and `constitution` tasks write."""
+    (out / "business").mkdir(exist_ok=True)
+    (out / "business" / "BUSINESS.md").write_text(valid_business(), encoding="utf-8")
+    (out / "spec-kit" / "constitution").mkdir(parents=True, exist_ok=True)
+    (out / "spec-kit" / "constitution" / "project.md").write_text(valid_constitution(), encoding="utf-8")
+
+
 def valid_business() -> str:
     """A BUSINESS.md that passes `check` on the fixture sidecar."""
     return """# Business flow

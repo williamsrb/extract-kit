@@ -307,7 +307,7 @@
    "type": 3
   },
   "label": {
-   "text": "agent next\nrules.name, business",
+   "text": "agent next\nrules.name, business\nconstitution",
    "fontSize": 16,
    "fontFamily": 5
   }

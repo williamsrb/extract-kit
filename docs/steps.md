@@ -181,7 +181,8 @@ Each engine row has `confidence` (`high`, `medium`, `low`) and its signals
 as `path:line` plus the rule. A file signal is `high`, a dependency only is
 `medium`, and jQuery found only through `$(` usage is `low`. The scan skips
 `node_modules`, `vendor`, `dist`, `build`, `target`, `.extract`, `.git`,
-`graft`, `graphify-out` and `.serena`, and files over 1 MB. Skips are
+`graft`, `graphify-out` and `.serena`, `extract` once it holds a headless
+run, and files over 1 MB. Skips are
 listed under `coverage`.
 
 Per file it records, each with `line`: `inputs` (declared ones typed, the
@@ -469,7 +470,8 @@ A business rule whose sampled operands are always empty is `possiblyDead`.
 `name:`, `intent:` and `out-of-scope:` lines. The agent fills the first two
 and marks them `_(inferred)_`; an analyst ticks the box. A re-run carries
 all of it over by id, from the same sidecar or the newest sibling under
-`<source>/.extract/`, and lists ids that vanished under `Removed`.
+`<source>/.extract/` or `<source>/extract/`, and lists ids that vanished
+under `Removed`.
 
 **Writes.** `rules/view-rules.json` (`view-rules.schema.json`),
 `rules/RULES.md` (coverage line first, divergent groups next, then context,
@@ -484,7 +486,8 @@ Harvested: any `README.md`, `README`, `PRODUCT.md` or `DESIGN.md`, plus
 `.md` / `.txt` / `.adoc` under a top-level `docs/` or `documentation/`.
 
 Skipped folders: `.git`, `.extract`, `node_modules`, `graft`,
-`graphify-out`, `__pycache__`, `.gradle`, `build`.
+`graphify-out`, `__pycache__`, `.gradle`, `build`, and `extract` once it
+holds a headless run.
 
 **Skip.** With nothing to harvest it still writes the index and records a
 skip.
@@ -538,8 +541,9 @@ Without `map/bounded-contexts.json` it writes only `use-cases/README.md`.
 
 **Writes.**
 
-- as-is `spec-kit/constitution.md`
-- fragment `spec-kit/constitution/as-is.md`
+- as-is `spec-kit/constitution.md`: a title, the project part from
+  `spec-kit/constitution/project.md` (the `constitution` agent task) or a
+  note that it has not run, then a Governance section
 - `spec-kit/specs/<context>/spec.md` with one `FR-N` per surface
 
 Each FR has a heading, one sentence, `Acceptance:` bullets when any
@@ -676,24 +680,50 @@ under Open questions and adds no port advice.
 Actors, Capabilities, Business flow, Business rules by capability,
 Glossary, Integrations and Open questions. `promote` copies it to
 `BUSINESS.md`. `check` validates it when present (see
-[output](output.md#businessmd)).
+[output](output.md#businessmd)). Then it re-runs `step product.impeccable`,
+which fills PRODUCT.md's users, jobs and capabilities from it.
 
 **Skip.** `agent next` does not return the task while a required input is
 missing; it names the input and points at `status`.
 
+### constitution
+
+**Does.** Required. After `spec.kit`. Reads `business/BUSINESS.md`,
+`map/bounded-contexts.json`, `map/route-map.json`,
+`map/content-model.json`, `context/build-scope.json` and
+`rules/view-rules.json`, then the build files, descriptors, CI files and a
+sample of the code in the source. Writes the ground rules of the project as
+it is: stack with versions, architecture, conventions, integrations,
+delivery, and the invariants a change must preserve. It adds no principle
+for a future stack.
+
+**Writes.** `spec-kit/constitution/project.md` with the sections Product,
+Stack, Architecture, Conventions, Integrations, Delivery, Invariants and
+Open questions. Then it re-runs `step spec.kit`, which composes
+`spec-kit/constitution.md` from it. `check` validates it when present (see
+[output](output.md#constitution)).
+
+**Skip.** Like `business`, while a required input is missing.
+
 ### spec.enrich
 
 **Does.** Optional. After `spec.kit`. Rewrites the prose of a `spec.md` FR
-or a `use-cases/*.md` journey so it reads better. Every FR keeps its
-`Acceptance:` bullets and `Evidence:` line, and every added sentence ends
-with `_(inferred)_`.
+or a `use-cases/*.md` journey so it reads better: first the FRs with no
+extracted behavior, then those that are only a field list. Every FR keeps
+its `Acceptance:` bullets and `Evidence:` line, and every added sentence
+ends with `_(inferred)_`.
 
-**Writes.** `spec-kit/specs/` and `use-cases/`, prose only. `check` then
-fails an FR without an `Evidence:` line.
+**Writes.** `spec-kit/specs/` and `use-cases/`, prose only, then
+`reports/spec-enrich.md` last. `check` then fails an FR without an
+`Evidence:` line.
+
+**Done when.** `reports/spec-enrich.md` is newer than every `spec.md`, so a
+later `spec.kit` run makes it pending again.
 
 **Skip.** Never returned by `agent next`. Run it with
-`extractkit agent show spec.enrich --out <sidecar>`. Re-running `spec.kit`
-rewrites the specs, so enrich after the last run of that slot.
+`extractkit agent show spec.enrich --out <sidecar>`; `headless` runs it after
+the required tasks unless `--no-enrich`. Re-running `spec.kit` rewrites the
+specs, so enrich after the last run of that slot.
 
 ### spec.review
 

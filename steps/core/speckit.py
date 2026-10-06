@@ -1,4 +1,8 @@
-"""core.speckit — as-is constitution + per-context spec.md. No tasks by default."""
+"""core.speckit — as-is constitution + per-context spec.md. No tasks by default.
+
+The constitution's project part comes from the `constitution` agent task
+(`spec-kit/constitution/project.md`), so a re-run of this step keeps it.
+"""
 
 from __future__ import annotations
 
@@ -92,24 +96,30 @@ def _slug(context_id: str) -> str:
     return "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in context_id)
 
 
-CONSTITUTION = """# Constitution (as-is)
+PROJECT_CONSTITUTION = "spec-kit/constitution/project.md"
+NO_PROJECT_CONSTITUTION = """## Project
 
-This extract describes the **existing** product. It is not a destination-stack
-constitution and not an XP8 / React4XP port plan.
-
-## Principles
-
-1. Evidence over assumption. Every functional requirement cites a map id or an evidence ref.
-2. Source stays read-only. Dead code is a report, not a delete.
-3. Runtime beats static. Round 2 beats round 1. Contradictions stay listed.
-4. Production URLs are metadata. Do not verify them from this kit.
-5. `tasks.md` is off unless the operator passes `--tasks`.
-
-## Out of scope
-
-- Port plans, `DECISIONS.md`, `IMPLEMENTATION.md`
-- Rewriting the product onto another stack
+Not written yet. The `constitution` agent task writes the project's stack,
+architecture, conventions, integrations, delivery and invariants to
+`spec-kit/constitution/project.md`; re-run `spec.kit` afterwards.
 """
+GOVERNANCE = """## Governance
+
+This constitution describes the **existing** product as extracted from its
+source. It is not a destination-stack constitution and not a port plan.
+
+- Every requirement cites a map id, a rule id or a source `path:line`.
+- Where two copies of a rule disagree, both stay listed until an analyst decides.
+- What runs live outranks what the source suggests.
+"""
+
+
+def _constitution(ctx: object) -> str:
+    """The project fragment the `constitution` task wrote, under a title, then the governance."""
+    path: Path = ctx.rel(PROJECT_CONSTITUTION)  # type: ignore[attr-defined]
+    project = path.read_text(encoding="utf-8").strip() + "\n" if path.is_file() else NO_PROJECT_CONSTITUTION
+    name = Path(str(getattr(ctx, "source", "") or "project")).name or "project"
+    return f"# {name} constitution (as-is)\n\n{project}\n{GOVERNANCE}"
 
 
 def _spec_md(context: dict, index: dict[str, dict], rules: dict[str, list[dict]] | None = None) -> str:
@@ -166,7 +176,7 @@ class SpeckitStep:
     def plan(self, ctx: object) -> list[str]:
         n = len(_contexts(ctx))
         actions = [
-            "write spec-kit/constitution.md (as-is)",
+            "write spec-kit/constitution.md (as-is, from spec-kit/constitution/project.md when present)",
             f"write {n} spec-kit/specs/<context>/spec.md file(s)",
         ]
         if getattr(ctx, "tasks", False):
@@ -174,11 +184,7 @@ class SpeckitStep:
         return actions
 
     def run(self, ctx: object) -> None:
-        ctx.write_text("spec-kit/constitution.md", CONSTITUTION)  # type: ignore[attr-defined]
-        ctx.write_text(  # type: ignore[attr-defined]
-            "spec-kit/constitution/as-is.md",
-            "# As-is fragment\n\nSee the parent constitution.md.\n",
-        )
+        ctx.write_text("spec-kit/constitution.md", _constitution(ctx))  # type: ignore[attr-defined]
         index = _surfaces(ctx)
         rules = behavior.rules_by_component(ctx)
         contexts = _contexts(ctx)

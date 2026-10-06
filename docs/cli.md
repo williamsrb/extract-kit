@@ -22,7 +22,7 @@ your own command with that flag added.
 | `status [--source DIR] [--out DIR]` | Phase checklist (alias `next`) |
 | `resume --source DIR [--profile NAME]` | Continue from first incomplete slot |
 | `promote --source DIR [--out DIR] [--force]` | Copy Spec Kit + PRODUCT |
-| `headless --source DIR [--agent NAME] [--resources FILE] [--until STAGE] [--promote]` | Run the whole extract with no human, calling an agent CLI for the preflight and each agent task. The one command that starts an agent CLI; see [Headless](headless.md) |
+| `headless --source DIR [--agent NAME] [--resources FILE] [--until STAGE] [--promote] [--no-enrich]` | Run the whole extract with no human, calling an agent CLI for the preflight and each agent task. The one command that starts an agent CLI; see [Headless](headless.md) |
 <!-- markdownlint-enable MD013 -->
 
 ## Defaults
@@ -33,11 +33,11 @@ your own command with that flag added.
 | `deps` | `core` unless `--profile`. An optional tool that is absent prints `skipped`; one that is broken prints `BROKEN` but does not fail the exit code |
 | `doctor` | All profiles unless `--profile`. `--source` adds the deps of `--profile` (default `core`) and the readiness rows |
 | `run`, `step` | New sidecar unless `--out` names one. With `--out`, files are added or overwritten |
-| `status`, `resume`, `promote` | Latest sidecar under `<source>/.extract/` (by run id) unless `--out` |
+| `status`, `resume`, `promote` | Latest sidecar under `<source>/.extract/` or `<source>/extract/` (by run id) unless `--out` |
 | `run`, `step`, `resume`, `status` profile | `--profile`, else `MANIFEST.yaml` `source.profile`, else the stack detected from the checkout (see [Context](#context)). No marker, or markers for both stacks, is refused with a `fix:` that passes `--profile` |
 | `resume` | First slot that is not done, through the end or `--until` |
 | `check` | Reads the sidecar only |
-| `agent` | Latest sidecar under `<source>/.extract/` when `--source` is given; otherwise `--out` is required. `next` lists required tasks only; `show spec.enrich` or `show spec.review` runs an optional one |
+| `agent` | Latest sidecar under `<source>/.extract/` or `<source>/extract/` when `--source` is given; otherwise `--out` is required. `next` lists required tasks only; `show spec.enrich` or `show spec.review` runs an optional one |
 <!-- markdownlint-enable MD013 -->
 
 `resume` never starts at an optional slot (`inventory.baseline`,
@@ -422,3 +422,8 @@ Default `--out` is `<source>/.extract/<run-id>/`. `.extract/.gitignore`
 is `*`, written only when the sidecar sits under `<source>/.extract/`. With
 an `--out` elsewhere the run writes nothing into the source. The kit never
 edits the source `.gitignore` or `.git/`.
+
+`headless` writes `<source>/extract/<run-id>/` instead: a visible folder with
+no `.gitignore`, for a pipeline artifact. `status`, `resume`, `promote` and
+`agent` with `--source` take the newest run under either folder, and scans
+skip `<source>/extract/` once it holds a run (a folder with `MANIFEST.yaml`).

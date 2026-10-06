@@ -15,8 +15,9 @@ Run: `{run_id}`
   the kit would onboard and index the kit. If it refuses, stop and ask the
   operator to open the legacy checkout.
 - The source checkout is read-only. Every run writes only
-  `<source>/.extract/<run-id>/`. Only `promote` writes into the checkout, and
-  only when the operator asked for it.
+  `<source>/.extract/<run-id>/`, or `<source>/extract/<run-id>/` under
+  `extractkit headless`. Only `promote` writes into the checkout, and only
+  when the operator asked for it.
 - There is no dry run. Every command writes on its first call.
 - The profile is not yours to write. The only profile file an agent task
   edits is `<sidecar>/context/profile.yaml`, and only the key the task names.

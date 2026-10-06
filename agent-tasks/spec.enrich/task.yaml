@@ -8,5 +8,7 @@ reads:
 writes:
   - spec-kit/specs/
   - use-cases/
+  - reports/spec-enrich.md
+done_check: specs_enriched
 checks:
   - spec_fr

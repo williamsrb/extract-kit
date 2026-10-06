@@ -135,6 +135,19 @@ class StorageStateJsonTests(unittest.TestCase):
         cleanup(folder, ignore_errors=True)
         self.assertFalse(path.exists())
 
+    def test_a_ci_file_variable_path_is_read_for_its_contents(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            given = Path(raw) / "STATE"
+            given.write_text('{"cookies":[{"name":"s","value":"FROM-FILE"}]}', encoding="utf-8")
+            env = {"EXTRACTKIT_STORAGE_STATE_JSON": str(given)}
+            with mock.patch.object(envflags.atexit, "register") as register:
+                args, argv = self._parse([], env)
+                envflags.finish(args, argv, env)
+        path = Path(args.storage_state)
+        self.assertNotEqual(path, given)
+        self.assertEqual(json.loads(path.read_text())["cookies"][0]["value"], "FROM-FILE")
+        register.call_args.args[0](register.call_args.args[1], ignore_errors=True)
+
     def test_conflict_with_the_file_forms(self) -> None:
         env = {"EXTRACTKIT_STORAGE_STATE_JSON": "{}", "EXTRACTKIT_STORAGE_STATE": "/x.json"}
         args, raw = self._parse([], env)

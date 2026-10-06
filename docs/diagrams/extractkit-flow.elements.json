@@ -473,7 +473,7 @@
    }
   ],
   "label": {
-   "text": "extractkit run / headless\nwrites <source>/.extract/",
+   "text": "run writes <source>/.extract/\nheadless writes <source>/extract/",
    "fontSize": 16,
    "fontFamily": 5
   },
@@ -922,7 +922,7 @@
    "type": 3
   },
   "label": {
-   "text": "agent next\nrules.name, business",
+   "text": "agent next\nrules.name, business\nconstitution",
    "fontSize": 16,
    "fontFamily": 5
   }
@@ -1891,7 +1891,7 @@
    }
   ],
   "label": {
-   "text": "agent\nrules.name, business",
+   "text": "agent\nrules.name, business,\nconstitution, spec.enrich",
    "fontSize": 16,
    "fontFamily": 5
   },
@@ -3235,7 +3235,7 @@
    "type": 3
   },
   "label": {
-   "text": "overlay exclude + live_config\nrule names in rules/review.md\nbusiness/BUSINESS.md",
+   "text": "overlay exclude + live_config\nrule names in rules/review.md\nBUSINESS.md, constitution/project.md",
    "fontSize": 14,
    "fontFamily": 5
   },
@@ -4239,10 +4239,10 @@
  {
   "type": "rectangle",
   "id": "ln_biz",
-  "x": 1120,
-  "y": 4826,
-  "width": 210,
-  "height": 48,
+  "x": 1105,
+  "y": 4800,
+  "width": 240,
+  "height": 74,
   "backgroundColor": "#fff3bf",
   "fillStyle": "solid",
   "boundElements": [
@@ -4255,7 +4255,7 @@
    "type": 3
   },
   "label": {
-   "text": "business/BUSINESS.md",
+   "text": "business/BUSINESS.md\nconstitution/project.md",
    "fontSize": 16,
    "fontFamily": 5
   }

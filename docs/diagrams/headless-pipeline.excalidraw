@@ -395,7 +395,7 @@
       "y": 490,
       "width": 260,
       "height": 64,
-      "text": "agent\nrules.name, business",
+      "text": "agent\nrules.name, business,\nconstitution, spec.enrich",
       "fontSize": 16,
       "fontFamily": 5,
       "textAlign": "center",

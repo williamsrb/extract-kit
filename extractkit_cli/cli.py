@@ -369,6 +369,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Stop after this stage: " + ", ".join(headless.STAGES) + ".")
     hl.add_argument("--promote", action="store_true",
                     help="Also run promote at the end (never --force).")
+    hl.add_argument("--no-enrich", dest="no_enrich", action="store_true",
+                    help="Skip the optional spec.enrich task the agent stage runs after the required ones.")
     hl.add_argument("--max-fix-attempts", dest="max_fix_attempts", type=int, default=2, metavar="N",
                     help="Fix attempts per agent task after a failed check (default 2).")
     hl.add_argument("--task-timeout", dest="task_timeout", type=int, default=1800, metavar="SECONDS",

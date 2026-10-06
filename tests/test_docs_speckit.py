@@ -13,6 +13,7 @@ from tests.support import (
     porcelain,
     run,
     sidecar_run_dir,
+    write_agent_outputs,
 )
 
 DOCS_UNTIL = ("--from", "maps.merge", "--until", "spec.kit")
@@ -69,6 +70,31 @@ class DocsSpeckitTests(unittest.TestCase):
             self.assertEqual(porcelain(source), "")
             check = run("check", "--out", str(out))
             self.assertEqual(check.returncode, 0, check.stderr + check.stdout)
+
+    def test_constitution_and_product_take_the_agent_files_on_a_rerun(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            source = copy_fixture(Path(raw))
+            out = _docs_tree(source)
+            constitution = (out / "spec-kit" / "constitution.md").read_text()
+            self.assertIn("The `constitution` agent task writes", constitution)
+            self.assertIn("## Governance", constitution)
+            self.assertFalse((out / "spec-kit" / "constitution" / "as-is.md").exists())
+            product = (out / "product" / "PRODUCT.md").read_text()
+            self.assertIn("The `business` agent task writes", product)
+            self.assertIn("| part | 1 |", product)
+            write_agent_outputs(out)
+            for slot in ("spec.kit", "product.impeccable"):
+                result = run("step", slot, "--profile", "enonic", "--source", str(source), "--out", str(out))
+                self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            constitution = (out / "spec-kit" / "constitution.md").read_text()
+            self.assertTrue(constitution.startswith(f"# {source.name} constitution (as-is)\n\n## Product\n"))
+            self.assertIn("## Invariants", constitution)
+            self.assertNotIn("Not written yet", constitution)
+            product = (out / "product" / "PRODUCT.md").read_text()
+            self.assertIn("### Actors\n\n- Visitor: reads pages.", product)
+            self.assertIn("- Article publishing\n- Page rendering", product)
+            self.assertNotIn("Not known yet", product)
+            self.assertEqual(run("check", "--out", str(out)).returncode, 0)
 
     def test_spec_fr_without_cite_fails_check(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

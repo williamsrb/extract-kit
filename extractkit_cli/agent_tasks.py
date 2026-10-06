@@ -158,10 +158,20 @@ def live_config_written(out: Path) -> bool:
     return overlay is not None and "live_config" in overlay
 
 
+def specs_enriched(out: Path) -> bool:
+    """`reports/spec-enrich.md` exists and is newer than every spec, so no `spec.kit` run undid it."""
+    report = out / "reports" / "spec-enrich.md"
+    if not report.is_file():
+        return False
+    specs = list((out / "spec-kit" / "specs").rglob("spec.md")) if (out / "spec-kit" / "specs").is_dir() else []
+    return all(spec.stat().st_mtime <= report.stat().st_mtime for spec in specs)
+
+
 DONE_CHECKS = {
     "rules_named": rules_named,
     "exclude_decided": exclude_decided,
     "live_config_written": live_config_written,
+    "specs_enriched": specs_enriched,
 }
 
 

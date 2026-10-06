@@ -11,7 +11,7 @@
     "reads": { "type": "array", "items": { "type": "string", "minLength": 1 } },
     "writes": { "type": "array", "items": { "type": "string", "minLength": 1 } },
     "done": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-    "done_check": { "enum": ["rules_named", "exclude_decided", "live_config_written"] },
+    "done_check": { "enum": ["rules_named", "exclude_decided", "live_config_written", "specs_enriched"] },
     "rerun": { "type": "string", "minLength": 1 },
     "promote": {
       "type": "array",

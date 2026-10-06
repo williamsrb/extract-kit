@@ -10,7 +10,7 @@ from pathlib import Path
 
 import yaml
 
-from extractkit_cli import buildscope, scope
+from extractkit_cli import buildscope, outtree, scope
 from extractkit_cli.errors import ExtractkitError
 from tests.support import STATIC_UNTIL, as_profile, copy_fixture, run, sidecar_run_dir
 
@@ -45,6 +45,29 @@ class ScopeTests(unittest.TestCase):
                 _write(root / rel, "x")
             found = sorted(p.relative_to(root).as_posix() for p in scope.iter_files(root, ["proto"]))
         self.assertEqual(found, ["xp/a.js", "xp/proto/d.js"])
+
+    def test_iter_files_skips_the_headless_folder_only_once_it_holds_a_run(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            _write(root / "xp/a.js", "x")
+            _write(root / "extract/headless-preflight.log", "x")
+            _write(root / "extract/20260101T000000Z/map/m.json", "x")
+            _write(root / "xp/extract/b.js", "x")
+            before = sorted(p.relative_to(root).as_posix() for p in scope.iter_files(root))
+            _write(root / "extract/20260101T000000Z/MANIFEST.yaml", "x")
+            after = sorted(p.relative_to(root).as_posix() for p in scope.iter_files(root))
+        self.assertIn("extract/20260101T000000Z/map/m.json", before)
+        self.assertEqual(after, ["xp/a.js", "xp/extract/b.js"])
+
+    def test_latest_run_takes_the_newest_run_under_either_folder(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            _write(root / ".extract/20260101T000000Z/MANIFEST.yaml", "x")
+            _write(root / "extract/20260202T000000Z/MANIFEST.yaml", "x")
+            (root / "extract/20260303T000000Z").mkdir()
+            self.assertEqual(outtree.latest_run(root), root.resolve() / "extract/20260202T000000Z")
+            self.assertEqual(outtree.latest_run(root, outtree.EXTRACT_DIRNAME), root.resolve() / ".extract/20260101T000000Z")
+            self.assertIsNone(outtree.latest_run(root / "xp"))
 
 
 class ExcludeRunTests(unittest.TestCase):

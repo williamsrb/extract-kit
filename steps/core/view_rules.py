@@ -14,6 +14,7 @@ from pathlib import Path
 
 from extractkit_cli import schema
 from extractkit_cli.common import load_json
+from extractkit_cli.outtree import EXTRACT_DIRNAME, HEADLESS_DIRNAME
 from steps.core.behavior import walk_fields
 from steps.core.viewscan import expr as ex
 
@@ -346,7 +347,7 @@ def previous_review(ctx: object) -> dict[str, dict]:
         (p for p in out.parent.iterdir() if p.is_dir() and p != out and (p / "rules" / "review.md").is_file()),
         key=lambda p: p.name,
         reverse=True,
-    ) if out.parent.name == ".extract" and out.parent.is_dir() else []
+    ) if out.parent.name in (EXTRACT_DIRNAME, HEADLESS_DIRNAME) and out.parent.is_dir() else []
     return parse_review((siblings[0] / "rules" / "review.md").read_text(encoding="utf-8")) if siblings else {}
 
 

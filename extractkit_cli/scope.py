@@ -11,6 +11,7 @@ from collections.abc import Iterable, Iterator
 from pathlib import Path, PurePosixPath
 
 from .errors import ExtractkitError
+from .outtree import is_headless_root
 
 SKIP_DIRS = frozenset({
     "node_modules", "vendor", "dist", "build", "target", ".extract", ".git", "graft",
@@ -56,7 +57,7 @@ def iter_files(source: Path, exclude: Iterable[str] = ()) -> Iterator[Path]:
             if excluded and is_excluded(entry.relative_to(source).as_posix(), excluded):
                 continue
             if entry.is_dir():
-                if entry.name not in SKIP_DIRS:
+                if entry.name not in SKIP_DIRS and not is_headless_root(entry, source):
                     stack.append(entry)
             elif entry.is_file():
                 yield entry

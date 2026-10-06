@@ -66,7 +66,7 @@ class HeadlessCase(unittest.TestCase):
         return code, json.loads(buffer.getvalue())
 
     def sidecar(self) -> Path:
-        return max((self.source / ".extract").glob("2*"))
+        return max((self.source / "extract").glob("2*"))
 
     def lines(self) -> list[dict]:
         path = self.sidecar() / "reports" / "headless.jsonl"
@@ -126,6 +126,17 @@ class StageTests(HeadlessCase):
         manifest = yaml.safe_load((self.sidecar() / "MANIFEST.yaml").read_text())
         self.assertEqual(manifest["exclude"], ["prototype"])
         self.assertTrue((self.sidecar() / "inventory" / "static.json").is_file())
+
+    def test_the_sidecar_is_a_visible_folder_with_no_gitignore(self) -> None:
+        code, doc = self.headless("--until", "synthesis")
+        self.assertEqual(code, 0, doc)
+        self.assertEqual(self.sidecar().parent, self.source / "extract")
+        self.assertFalse((self.source / ".extract").exists())
+        self.assertEqual([p.name for p in (self.source / "extract").iterdir()], [self.sidecar().name])
+        scope = json.loads((self.sidecar() / "context" / "build-scope.json").read_text())
+        self.assertNotIn("extract", json.dumps(scope))
+        static = (self.sidecar() / "inventory" / "static.json").read_text()
+        self.assertNotIn("extract/", static)
 
     def test_progress_goes_to_stderr_and_stdout_stays_json(self) -> None:
         err = io.StringIO()
@@ -191,10 +202,11 @@ class StageTests(HeadlessCase):
         code, doc = self.headless("--until", "preflight", mode="noop")
         self.assertEqual(code, 1, doc)
         self.assertEqual(doc["error"]["code"], "readiness_missing")
-        kept = self.source / ".extract" / "headless-preflight-preflight-1.log"
+        kept = self.source / "extract" / "headless-preflight-preflight-1.log"
         self.assertTrue(kept.is_file())
         self.assertIn(str(kept), doc["error"]["fix"])
-        self.assertEqual([p for p in (self.source / ".extract").iterdir() if p.is_dir()], [])
+        self.assertEqual([p for p in (self.source / "extract").iterdir() if p.is_dir()], [])
+        self.assertFalse((self.source / "extract" / ".gitignore").exists())
 
     def test_a_hung_agent_is_killed_at_the_timeout(self) -> None:
         code, doc = self.headless("--task-timeout", "1", mode="sleep")
@@ -272,7 +284,7 @@ class LoopTests(unittest.TestCase):
             "promote": False, "max_fix_attempts": 2, "task_timeout": 5, "until": None,
             "agent_permissions": None, "allowed_tools": None, "branch": None, "xp_host": None,
             "guillotine": None, "project": None, "storage_state": None, "configenv": None,
-            "site_url": None, "cms_keys": None, "round2": None,
+            "site_url": None, "cms_keys": None, "round2": None, "no_enrich": False,
         }
         base.update(overrides)
         with mock.patch.object(headless, "agent_table", return_value=FAKE_TABLE):
@@ -308,6 +320,52 @@ class LoopTests(unittest.TestCase):
             self.assertRaises(headless.StageFailed),
         ):
             driver._loop("agent", only_context=False)
+
+    def test_the_agent_stage_runs_spec_enrich_after_the_required_tasks(self) -> None:
+        driver = self._driver()
+        with (
+            mock.patch.object(driver, "_loop", return_value="ok: ran business") as loop,
+            mock.patch.object(driver, "_kit", return_value={"state": "pending"}),
+            mock.patch.object(driver, "_run_task") as task,
+        ):
+            self.assertEqual(driver._agent_stage(), "ok: ran business, spec.enrich")
+        loop.assert_called_once_with("agent", only_context=False)
+        task.assert_called_once_with("agent", "spec.enrich")
+
+    def test_a_failed_spec_enrich_does_not_stop_the_agent_stage(self) -> None:
+        for failure in (
+            headless.StageFailed("agent_timeout", "claude ran over 5s on spec.enrich"),
+            headless.Blocked("task_blocked", "spec.enrich wrote a blocker"),
+        ):
+            driver = self._driver()
+            with (
+                mock.patch.object(driver, "_loop", return_value="ok: ran business"),
+                mock.patch.object(driver, "_kit", return_value={"state": "pending"}),
+                mock.patch.object(driver, "_run_task", side_effect=failure),
+            ):
+                message = driver._agent_stage()
+            self.assertEqual(message, f"ok: ran business; spec.enrich failed and was skipped: {failure}")
+
+    def test_a_failed_required_task_still_stops_the_agent_stage(self) -> None:
+        driver = self._driver()
+        failure = headless.StageFailed("agent_failed", "business is still pending")
+        with (
+            mock.patch.object(driver, "_loop", side_effect=failure),
+            mock.patch.object(driver, "_run_task") as task,
+            self.assertRaises(headless.StageFailed),
+        ):
+            driver._agent_stage()
+        task.assert_not_called()
+
+    def test_the_agent_stage_skips_spec_enrich_when_done_or_turned_off(self) -> None:
+        for driver, state in ((self._driver(), "done"), (self._driver(no_enrich=True), "pending")):
+            with (
+                mock.patch.object(driver, "_loop", return_value="ok (already done)"),
+                mock.patch.object(driver, "_kit", return_value={"state": state}),
+                mock.patch.object(driver, "_run_task") as task,
+            ):
+                self.assertEqual(driver._agent_stage(), "ok (already done)")
+            task.assert_not_called()
 
     def test_cms_flags_are_carried_only_online_and_never_include_allow_production(self) -> None:
         offline = self._driver(branch="draft", project="en")

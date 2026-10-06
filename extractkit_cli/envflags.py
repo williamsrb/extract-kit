@@ -10,7 +10,8 @@ default. The layer is written once and runs in two passes around argparse:
 2. `finish(args, raw)` runs after parsing. It drops env items from `append`
    options that raw argv also sets (argparse appends CLI values to the default
    list), refuses the forbidden variables, turns `EXTRACTKIT_STORAGE_STATE_JSON`
-   into a private temp file, and records where every option came from.
+   (the JSON, or the path a CI file variable gives) into a private temp file,
+   and records where every option came from.
 
 No command has its own env handling. `--allow-production` and `--force` have no
 env form: setting their variable is an error, never a silent no-op.
@@ -162,6 +163,9 @@ def _storage_state_json(args: Namespace, origins: dict[str, str], environ: Mappi
             f"set only one of {STORAGE_STATE_JSON}, EXTRACTKIT_STORAGE_STATE and --storage-state",
             code="bad_env",
         )
+    if not contents.lstrip().startswith("{") and Path(contents.strip()).is_file():
+        # A CI file-type variable holds the path of a file with the JSON, not the JSON.
+        contents = Path(contents.strip()).read_text(encoding="utf-8")
     folder = Path(tempfile.mkdtemp(prefix="extractkit-state-"))
     atexit.register(shutil.rmtree, folder, ignore_errors=True)
     path = folder / "storage-state.json"

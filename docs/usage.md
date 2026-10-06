@@ -132,6 +132,8 @@ guard are in [CLI](cli.md).
 The kit never edits the source `.gitignore` or `.git/`. A sidecar under
 `<source>/.extract/` is self-ignored: `.extract/.gitignore` contains `*`. With
 an `--out` outside the checkout a run writes nothing into the source.
+`extractkit headless` writes `<source>/extract/` instead, with no `.gitignore`,
+so a pipeline can publish it as an artifact; do not commit it.
 
 ## PHP
 

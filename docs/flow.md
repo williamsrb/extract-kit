@@ -43,12 +43,12 @@ these states. `status` marks a phase `optional, not captured` and prints
 the `step` command that would add it.
 
 In `complete` and `offline`, a pending required agent task (`context.exclude`,
-`context.live_config`, `rules.name`, `business`) makes the agent phase
-current. The `next` block then offers `agent next`, with `check` as the
-alternative line; `offline` shows its CMS alternative again once the required
-tasks are done. Two of those tasks are ready earlier. Once the static phase is
-done and `context.exclude` is undecided, the `next` block in `cms` and
-`other:<slot>` offers `agent show context.exclude` first, with the pipeline
+`context.live_config`, `rules.name`, `business`, `constitution`) makes the
+agent phase current. The `next` block then offers `agent next`, with `check`
+as the alternative line; `offline` shows its CMS alternative again once the
+required tasks are done. Two of those tasks are ready earlier. Once the
+static phase is done and `context.exclude` is undecided, the `next` block in
+`cms` and `other:<slot>` offers `agent show context.exclude` first, with the pipeline
 route as the alternative; `context.live_config` is ready after the CMS slot.
 
 `promote` is explicit. After a clean promote, `next` is `git status` in the
@@ -59,8 +59,11 @@ checkout. The guard is in [CLI](cli.md#promote-guard).
 `extractkit headless` walks the same phases with no human. It starts an agent
 CLI for the preflight and for each agent task, stops at the first failed
 stage, and ends with exit 0 (every stage passed), 1 (a stage failed) or 3 (a
-task is blocked and a person must look). The stages, the agent loop and
-the blocker protocol are in [Headless](headless.md#the-stages).
+task is blocked and a person must look). It writes the sidecar to
+`<source>/extract/<run-id>/`, a visible folder with no `.gitignore`, and runs
+the optional `spec.enrich` after the required tasks unless `--no-enrich`. The
+stages, the agent loop and the blocker protocol are in
+[Headless](headless.md#the-stages).
 
 ![Headless pipeline](diagrams/headless-pipeline.png)
 
@@ -93,7 +96,7 @@ the phase; it only makes the output thinner.
 | 4 | `cms` (optional phase) | A local or review XP; `--branch draft\|master`; `--storage-state` (a Playwright login) | `--guillotine`, `--xp-host`, `--project` (default `http://localhost:8080`, project `en`); `--cms-key` (default `/en`); `--configenv`; `--round2`; the overlay's `live_config`; `playwright-cli` and `--site-url` for `inventory.baseline` | **`inventory/runtime.json`**, `inventory/live-config-candidates.json`, `inventory/content-volume.{json,md}`, `x-production-endpoints` in `openapi.yaml`; `baseline/` (optional slot) |
 | 5 | `merge` | Phase 3 output | `inventory/runtime.json` (without it, surfaces stay `unverified-live`) | **`map/bounded-contexts.json`**, `inventory/merge-report.md`, **`rules/`**, `docs/harvest/` |
 | 6 | `synthesis` | Phase 5 output | `--tasks` (Spec Kit `tasks.md`) | **`spec-kit/`**, `product/PRODUCT.md`, `design/DESIGN.md`, `use-cases/`, `docs/technical/`, `docs/guide/`; `reports/xp8-compat.md` (optional slot) |
-| 7 | `agent` | An AI assistant that runs the task prompts; each task's inputs (below) | `spec.enrich`, `spec.review` | The overlay's **`exclude`** and **`live_config`**, **`rules/review.md`** names, **`business/BUSINESS.md`**; `reports/spec-review.md` (optional) |
+| 7 | `agent` | An AI assistant that runs the task prompts; each task's inputs (below) | `spec.enrich`, `spec.review` | The overlay's **`exclude`** and **`live_config`**, **`rules/review.md`** names, **`business/BUSINESS.md`**, **`spec-kit/constitution/project.md`**; `reports/spec-enrich.md`, `reports/spec-review.md` (optional) |
 | 8 | `check` | `--out` of a sidecar with phase 3 done (`MANIFEST.yaml`, the four `map/*-map.json` / `content-model.json` files, `inventory/static.json`, `integrations/openapi.yaml`) | Every later file is checked only when it exists | **No file.** Exit 0, or exit 1 with every problem listed |
 | 9 | `promote` | `--source` as a git work tree whose destinations git can restore | `--out` (default: latest sidecar); `--force` | **`<checkout>/.specify/memory/constitution.md`**, **`<checkout>/specs/<ctx>/spec.md`**, `PRODUCT.md`, `DESIGN.md`, `.impeccable/design.json`, `BUSINESS.md` |
 <!-- markdownlint-enable MD013 -->
@@ -109,8 +112,9 @@ earlier run).
 | `context.exclude` | Yes, while the build scope leaves folders undecided | `inventory.integrations` (phase 3) | `context/build-scope.json` | **`exclude`** in `context/profile.yaml` | `run --from static --until synthesis` (`--until inventory.integrations` without CMS flags) |
 | `context.live_config` | Yes, after a live harvest; done without one | `inventory.runtime` (phase 4) | `inventory/runtime.json`, `inventory/live-config-candidates.json`, `integrations/openapi.yaml` (the prompt also reads `site/site.xml` in the checkout; it does not gate the task) | **`live_config`** in `context/profile.yaml` | `step inventory.runtime` |
 | `rules.name` | Yes | `rules.view` (phase 5) | `rules/RULES.md`, `rules/review.md`, `rules/view-rules.json` | **names and intents** in `rules/review.md` | `run --from merge --until synthesis` |
-| `business` | Yes | `spec.kit` (phase 6) | `map/bounded-contexts.json`, `use-cases/`, `rules/RULES.md`, `rules/view-rules.json`, `map/content-model.json`, `map/route-map.json`, `product/PRODUCT.md` | **`business/BUSINESS.md`** | none |
-| `spec.enrich` | No | `spec.kit` | `spec-kit/specs/`, `use-cases/` | prose of `spec-kit/specs/` and `use-cases/` | none |
+| `business` | Yes | `spec.kit` (phase 6) | `map/bounded-contexts.json`, `use-cases/`, `rules/RULES.md`, `rules/view-rules.json`, `map/content-model.json`, `map/route-map.json`, `product/PRODUCT.md` | **`business/BUSINESS.md`** | `step product.impeccable` |
+| `constitution` | Yes | `spec.kit` | `business/BUSINESS.md`, `map/bounded-contexts.json`, `map/route-map.json`, `map/content-model.json`, `context/build-scope.json`, `rules/view-rules.json` | **`spec-kit/constitution/project.md`** | `step spec.kit` |
+| `spec.enrich` | No (`headless` runs it unless `--no-enrich`) | `spec.kit` | `spec-kit/specs/`, `use-cases/` | prose of `spec-kit/specs/` and `use-cases/`, then `reports/spec-enrich.md` | none |
 | `spec.review` | No | `spec.kit` | `spec-kit/specs/`, `rules/view-rules.json`, `map/bounded-contexts.json`; `business/BUSINESS.md` when present | **`reports/spec-review.md`** (never promoted) | none |
 <!-- markdownlint-enable MD013 -->
 
@@ -123,7 +127,8 @@ run without CMS reaches the same end state with every live surface
 ## Sidecar lineage
 
 The checkout is read-only until `promote`. Default `--out` is
-`<source>/.extract/<run-id>/`. Maps and OpenAPI stay in the sidecar.
+`<source>/.extract/<run-id>/`, or `<source>/extract/<run-id>/` under
+`headless`. Maps and OpenAPI stay in the sidecar.
 
 ![Sidecar lineage](diagrams/sidecar-lineage.png)
 

@@ -15,8 +15,9 @@ them.
   the kit would onboard and index the kit. If it refuses, stop and ask the
   operator to open the legacy checkout.
 - The source checkout is read-only. Every run writes only
-  `<source>/.extract/<run-id>/`. Only `promote` writes into the checkout, and
-  only when the operator asked for it.
+  `<source>/.extract/<run-id>/`, or `<source>/extract/<run-id>/` under
+  `extractkit headless`. Only `promote` writes into the checkout, and only
+  when the operator asked for it.
 - There is no dry run. Every command writes on its first call.
 - The profile is not yours to write. The only profile file an agent task
   edits is `<sidecar>/context/profile.yaml`, and only the key the task names.
@@ -145,8 +146,9 @@ skill runs this loop.
 | `context.exclude` | `exclude` in `context/profile.yaml` | the overlay has an `exclude` key; `[]` counts. It is already `[]` when the build scope has nothing to decide |
 | `context.live_config` | `live_config` in `context/profile.yaml` | the overlay has a `live_config` key, or there is no `inventory/live-config-candidates.json` (no live harvest) |
 | `rules.name` | `rules/review.md` (names and intents) | no business rule in `rules/view-rules.json` is still `extracted` |
-| `business` | `business/BUSINESS.md` | the file exists |
-| `spec.enrich` | `spec-kit/specs/`, `use-cases/` (prose only) | optional, never blocks |
+| `business` | `business/BUSINESS.md`, then re-runs `step product.impeccable` | the file exists |
+| `constitution` | `spec-kit/constitution/project.md`, then re-runs `step spec.kit` | the file exists |
+| `spec.enrich` | `spec-kit/specs/`, `use-cases/` (prose only), then `reports/spec-enrich.md` | optional, never blocks; done while the report is newer than every `spec.md` |
 | `spec.review` | `reports/spec-review.md` (findings only; edits no spec) | optional, never blocks |
 <!-- markdownlint-enable MD013 -->
 
@@ -170,8 +172,9 @@ extractkit check --out <sidecar>
 extractkit promote --source <legacy> --out <sidecar>
 ```
 
-`check` validates `business/BUSINESS.md` only when it exists. Promote only
-when the operator asks.
+`check` validates `business/BUSINESS.md` and
+`spec-kit/constitution/project.md` only when they exist. Promote only when the
+operator asks.
 
 ## Exit codes and `next`
 
@@ -223,6 +226,7 @@ when the operator asks.
 | `template … maps to no component surface` | A surface was removed from `map/component-map.json` | Re-run `maps.normalize`, never edit the map |
 | `component … is not spec-ready` | A `template` block lost a required key | Re-run `maps.normalize` |
 | `business/BUSINESS.md … does not resolve` | An `Evidence:` ref is not a source `path:line`, a map id, a context id or a rule id | Fix the ref in `business/BUSINESS.md`; do not edit the maps |
+| `spec-kit/constitution/project.md …` | A section is missing, has no `Evidence:` line, or cites a ref that does not resolve | Fix `spec-kit/constitution/project.md`, then re-run `step spec.kit`; never edit `spec-kit/constitution.md` |
 | `reports/spec-review.md …` | The report breaks its format: no `# Spec review` H1, a finding without `Spec:`, `Severity:`, `Fix in:` or `Evidence:`, a value outside its set, a `Spec:` path not in the sidecar, or an `Evidence:` ref that does not resolve | Fix the report; never edit the specs. Findings never fail `check` |
 | `run --from agent` refuses | The agent phase is a command | `extractkit agent next --out <sidecar>` |
 | `business rule VR-… is not cited` | A business rule is in no spec FR and not dropped | Re-run `spec.kit`; if the operator says the rule is dropped, set `out-of-scope: yes` in `rules/review.md` |

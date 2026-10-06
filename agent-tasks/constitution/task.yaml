@@ -1,0 +1,17 @@
+id: constitution
+title: Write the project constitution (stack, architecture, conventions, invariants)
+after: spec.kit
+reads:
+  - business/BUSINESS.md
+  - map/bounded-contexts.json
+  - map/route-map.json
+  - map/content-model.json
+  - context/build-scope.json
+  - rules/view-rules.json
+writes:
+  - spec-kit/constitution/project.md
+done:
+  - spec-kit/constitution/project.md
+rerun: step spec.kit
+checks:
+  - constitution

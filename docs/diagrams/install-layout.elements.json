@@ -435,7 +435,7 @@
    }
   ],
   "label": {
-   "text": "extractkit run / headless\nwrites <source>/.extract/",
+   "text": "run writes <source>/.extract/\nheadless writes <source>/extract/",
    "fontSize": 16,
    "fontFamily": 5
   },

@@ -14,6 +14,7 @@ from tests.support import (
     run,
     sidecar_run_dir,
     valid_business,
+    write_agent_outputs,
 )
 
 
@@ -65,8 +66,7 @@ class NextPromoteTests(unittest.TestCase):
             self.assertIn("→ 7 agent", done.stdout)
             self.assertIn("agent next --out", done.stdout)
             self.assertIn("or skip to check:", done.stdout)
-            (out / "business").mkdir()
-            (out / "business" / "BUSINESS.md").write_text(valid_business(), encoding="utf-8")
+            write_agent_outputs(out)
             back = run("next", "--source", str(source), "--out", str(out))
             self.assertIn("✓ 7 agent", back.stdout)
             self.assertIn("→ 8 check", back.stdout)

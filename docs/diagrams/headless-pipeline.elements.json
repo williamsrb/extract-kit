@@ -271,7 +271,7 @@
    }
   ],
   "label": {
-   "text": "agent\nrules.name, business",
+   "text": "agent\nrules.name, business,\nconstitution, spec.enrich",
    "fontSize": 16,
    "fontFamily": 5
   },

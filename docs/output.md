@@ -35,11 +35,11 @@ Canonical extract tree. Enonic details live only under `stackRef`.
   docs/technical/
   docs/guide/
   use-cases/<context>.md
-  business/BUSINESS.md            # optional; agent task `business`
+  business/BUSINESS.md            # agent task `business`
   integrations/openapi.yaml
   integrations/swagger-ui/        # read-only Swagger UI; Try it out disabled
-  spec-kit/constitution.md
-  spec-kit/constitution/          # optional fragments
+  spec-kit/constitution.md        # composed by spec.kit
+  spec-kit/constitution/project.md   # agent task `constitution`
   spec-kit/specs/<context>/spec.md
   spec-kit/specs/<context>/tasks.md   # only with --tasks
   hygiene/dead-code.md
@@ -130,6 +130,24 @@ Business rules by capability, Glossary, Integrations and Open questions.
 `Evidence:` ref resolves (a source `path:line`, a map id, a context id or a
 rule id), every capability cites a rule id or a surface id, and every
 `_(inferred)_` paragraph has an `Evidence:` line.
+
+## Constitution
+
+`spec-kit/constitution/project.md` is written by the `constitution` agent
+task. It has the H2 sections Product, Stack, Architecture, Conventions,
+Integrations, Delivery, Invariants and Open questions, under the same
+evidence contract as `BUSINESS.md`; every section but Open questions has an
+`Evidence:` line. `spec.kit` composes `spec-kit/constitution.md` from it: a
+title, the project sections (or a note that the task has not run), then a
+Governance section that marks the extract as as-is. A re-run of `spec.kit`
+keeps the project part.
+
+## PRODUCT.md
+
+`product/PRODUCT.md` is written by `product.impeccable`. Once
+`business/BUSINESS.md` exists it takes Users and jobs (Purpose and audience,
+Actors) and the capability outline from it; the `business` task re-runs the
+step. The surfaces from the maps are a count per kind and status.
 
 ## Spec review
 

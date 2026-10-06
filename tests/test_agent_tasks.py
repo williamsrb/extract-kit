@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import tempfile
@@ -11,7 +12,7 @@ from pathlib import Path
 
 from extractkit_cli import agent_tasks, check, manifest, schema
 from extractkit_cli.errors import ExtractkitError
-from tests.support import REPO, build_sidecar, run, valid_business
+from tests.support import REPO, build_sidecar, run, write_agent_outputs
 
 LLM = REPO / "docs" / "llm.md"
 RULE = "VR-0123456789"
@@ -38,7 +39,7 @@ class RegistryTests(unittest.TestCase):
         tasks = agent_tasks.load()
         self.assertEqual({t.id for t in tasks}, {
             "context.exclude", "context.live_config", "rules.name", "business",
-            "spec.enrich", "spec.review",
+            "constitution", "spec.enrich", "spec.review",
         })
         for task in tasks:
             with self.subTest(task=task.id):
@@ -51,7 +52,7 @@ class RegistryTests(unittest.TestCase):
         self.assertEqual(
             [t.id for t in agent_tasks.ordered(manifest.load("enonic"))],
             ["context.exclude", "context.live_config", "rules.name", "business",
-             "spec.enrich", "spec.review"],
+             "constitution", "spec.enrich", "spec.review"],
         )
 
     def test_context_tasks_sit_after_the_slots_they_wait_for(self) -> None:
@@ -125,8 +126,7 @@ class ContextTaskStateTests(unittest.TestCase):
         self._copy_dir = tempfile.TemporaryDirectory()
         self.out = Path(self._copy_dir.name) / "sidecar"
         shutil.copytree(self.template, self.out)
-        (self.out / "business").mkdir(exist_ok=True)
-        (self.out / "business" / "BUSINESS.md").write_text(valid_business(), encoding="utf-8")
+        write_agent_outputs(self.out)
 
     def tearDown(self) -> None:
         self._copy_dir.cleanup()
@@ -226,6 +226,20 @@ class DoneStateTests(unittest.TestCase):
         self.assertFalse(agent_tasks.is_done(self.by_id["spec.enrich"], self.out))
         self.assertNotIn("spec.enrich", [t.id for t in agent_tasks.pending(self.out)])
 
+    def test_spec_enrich_is_done_while_its_report_is_newer_than_every_spec(self) -> None:
+        task = self.by_id["spec.enrich"]
+        spec = self.out / "spec-kit" / "specs" / "content" / "spec.md"
+        spec.parent.mkdir(parents=True)
+        spec.write_text("# x\n", encoding="utf-8")
+        report = self.out / "reports" / "spec-enrich.md"
+        report.parent.mkdir()
+        report.write_text("# Spec enrich\n", encoding="utf-8")
+        os.utime(spec, (1000, 1000))
+        os.utime(report, (2000, 2000))
+        self.assertTrue(agent_tasks.is_done(task, self.out))
+        os.utime(spec, (3000, 3000))
+        self.assertFalse(agent_tasks.is_done(task, self.out))
+
     def test_spec_review_is_optional_and_never_pending(self) -> None:
         task = self.by_id["spec.review"]
         self.assertFalse(agent_tasks.is_done(task, self.out))
@@ -268,7 +282,7 @@ class AgentCommandTests(unittest.TestCase):
         rows = {t["id"]: t for t in payload["tasks"]}
         self.assertEqual(list(rows), [
             "context.exclude", "context.live_config", "rules.name", "business",
-            "spec.enrich", "spec.review",
+            "constitution", "spec.enrich", "spec.review",
         ])
         self.assertEqual(rows["context.exclude"]["state"], "done")
         self.assertEqual(rows["context.live_config"]["state"], "done")
@@ -304,7 +318,7 @@ class AgentCommandTests(unittest.TestCase):
     def test_show_unknown_task_names_the_available_ones(self) -> None:
         result = run("agent", "show", "nope", "--out", str(self.out))
         self.assertEqual(result.returncode, 1)
-        self.assertIn("rules.name, business, spec.enrich, spec.review", result.stderr)
+        self.assertIn("rules.name, business, constitution, spec.enrich, spec.review", result.stderr)
 
     def test_show_spec_review_renders_and_lists_the_missing_business_input(self) -> None:
         result = run("agent", "show", "spec.review", "--out", str(self.out))
@@ -323,9 +337,8 @@ class AgentCommandTests(unittest.TestCase):
         out = self._copy()
         first = json.loads(run("agent", "next", "--out", str(out), "--json").stdout)
         self.assertEqual(first["next"]["id"], "business")
-        self.assertEqual(first["pending"], ["business"])
-        (out / "business").mkdir()
-        (out / "business" / "BUSINESS.md").write_text(valid_business(), encoding="utf-8")
+        self.assertEqual(first["pending"], ["business", "constitution"])
+        write_agent_outputs(out)
         done = json.loads(run("agent", "next", "--out", str(out), "--json").stdout)
         self.assertEqual((done["next"], done["pending"], done["blocked"]), (None, [], []))
         text = run("agent", "next", "--out", str(out))
@@ -337,7 +350,10 @@ class AgentCommandTests(unittest.TestCase):
         (out / "map" / "route-map.json").unlink()
         payload = json.loads(run("agent", "next", "--out", str(out), "--json").stdout)
         self.assertIsNone(payload["next"])
-        self.assertEqual(payload["blocked"], [{"id": "business", "missing_reads": ["map/route-map.json"]}])
+        self.assertEqual(payload["blocked"], [
+            {"id": "business", "missing_reads": ["map/route-map.json"]},
+            {"id": "constitution", "missing_reads": ["business/BUSINESS.md", "map/route-map.json"]},
+        ])
         text = run("agent", "next", "--out", str(out))
         self.assertEqual(text.returncode, 0)
         self.assertIn("business is waiting on map/route-map.json", text.stdout)
@@ -345,7 +361,7 @@ class AgentCommandTests(unittest.TestCase):
     def test_status_shows_nine_phases_with_the_agent_phase_current(self) -> None:
         result = run("status", "--out", str(self.out))
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertRegex(result.stdout, r"→ 7 agent\s+pending business · skills: extract-agentic")
+        self.assertRegex(result.stdout, r"→ 7 agent\s+pending business, constitution · skills: extract-agentic")
         self.assertRegex(result.stdout, r"· 8 check")
         self.assertRegex(result.stdout, r"· 9 promote")
         self.assertIn("next  [7/9] Agent is next:", result.stdout)
@@ -353,8 +369,7 @@ class AgentCommandTests(unittest.TestCase):
 
     def test_status_returns_to_check_once_the_required_tasks_are_done(self) -> None:
         out = self._copy()
-        (out / "business").mkdir()
-        (out / "business" / "BUSINESS.md").write_text(valid_business(), encoding="utf-8")
+        write_agent_outputs(out)
         result = run("status", "--out", str(out))
         self.assertRegex(result.stdout, r"✓ 7 agent\s*\n")
         self.assertRegex(result.stdout, r"→ 8 check")

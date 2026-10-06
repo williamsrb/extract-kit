@@ -18,6 +18,7 @@ from tests.support import (
     run,
     sidecar_run_dir,
     valid_business,
+    valid_constitution,
 )
 
 
@@ -206,7 +207,45 @@ class BusinessCheckTests(unittest.TestCase):
         self.assertIn("section '## Open questions' has an `_(inferred)_` paragraph without", problems[0])
 
     def test_every_named_check_exists(self) -> None:
-        self.assertEqual(set(check.NAMED_CHECKS), {"context_grounded", "business", "spec_fr", "spec_review"})
+        self.assertEqual(set(check.NAMED_CHECKS), {"context_grounded", "business", "constitution", "spec_fr", "spec_review"})
+
+
+class ConstitutionCheckTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(cls._tmp.cleanup)
+        cls.source, cls.out = build_sidecar(Path(cls._tmp.name))
+        cls.file = cls.out / "spec-kit" / "constitution" / "project.md"
+
+    def tearDown(self) -> None:
+        self.file.unlink(missing_ok=True)
+
+    def _check(self, text: str) -> list[str]:
+        self.file.parent.mkdir(parents=True, exist_ok=True)
+        self.file.write_text(text, encoding="utf-8")
+        return [p for p in check.check_tree(self.out) if "constitution" in p]
+
+    def test_valid_file_passes(self) -> None:
+        self.assertEqual(self._check(valid_constitution()), [])
+
+    def test_missing_section_and_section_without_evidence_fail(self) -> None:
+        text = valid_constitution().replace("## Stack", "## Platform")
+        self.assertEqual(self._check(text), [
+            "spec-kit/constitution/project.md is missing the section '## Stack'",
+        ])
+        text = valid_constitution().replace(
+            "- One folder per component under `site/`.\n\nEvidence: `xp/src/main/resources/site/site.xml:1`",
+            "- One folder per component under `site/`.",
+        )
+        self.assertEqual(self._check(text), [
+            "spec-kit/constitution/project.md section '## Conventions' has no `Evidence:` line",
+        ])
+
+    def test_unresolved_ref_fails(self) -> None:
+        problems = self._check(valid_constitution().replace("`content`", "`no-such-context`"))
+        self.assertEqual(len(problems), 1, problems)
+        self.assertIn("`no-such-context` does not resolve", problems[0])
 
 
 VALID_FINDING = """### SR-1: FR-1 misreads the site descriptor

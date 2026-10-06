@@ -16,5 +16,6 @@ done:
 promote:
   - from: business/BUSINESS.md
     to: BUSINESS.md
+rerun: step product.impeccable
 checks:
   - business

@@ -11,19 +11,18 @@ phases and sidecar lineage. The README diagram (how it works) is separate.
 
 - [extractkit-flow.excalidraw](extractkit-flow.excalidraw)
 - [extractkit-flow.png](extractkit-flow.png)
-- Open: <https://excalidraw.com/#json=6-TLkVHFtcFsOdu2SnPAv,1OAU_2Y7QgzlPyzxMz5YLg>
-  (older version: three panels, no install or headless)
+- Open: <https://excalidraw.com/#json=godyjfyegTD-tHJ2ce9hx,sjA2-mke61vnSfixBn14KQ>
 
 ## Individual
 
 | Panel | Source | Preview | Open |
 | --- | --- | --- | --- |
-| How it works (README) | [how-it-works.excalidraw](how-it-works.excalidraw) | [how-it-works.png](how-it-works.png) | [excalidraw.com](https://excalidraw.com/#json=o9zG0zTSVg-NamGCX9Tz_,6FSR0oZx0VYtFEf3x-aB6g) (older) |
-| Install and where to run | [install-layout.excalidraw](install-layout.excalidraw) | [install-layout.png](install-layout.png) | not uploaded |
-| Operator path | [operator-path.excalidraw](operator-path.excalidraw) | [operator-path.png](operator-path.png) | [excalidraw.com](https://excalidraw.com/#json=qIn2T2V-OfcKpRX4tqu3H,V5haRMT4Ev5ye3eF-H_qCA) (older) |
-| Headless pipeline | [headless-pipeline.excalidraw](headless-pipeline.excalidraw) | [headless-pipeline.png](headless-pipeline.png) | not uploaded |
-| Phases | [phases.excalidraw](phases.excalidraw) | [phases.png](phases.png) | [excalidraw.com](https://excalidraw.com/#json=eRGwNtfQ5sY0UAYzBYS_V,HJNbLSp8UhIlst2aI_etRA) |
-| Sidecar lineage | [sidecar-lineage.excalidraw](sidecar-lineage.excalidraw) | [sidecar-lineage.png](sidecar-lineage.png) | [excalidraw.com](https://excalidraw.com/#json=UvvF83s1VV1I9kTmPCUF6,AxqM3oRh5s2dEBqi8WFOFg) |
+| How it works (README) | [how-it-works.excalidraw](how-it-works.excalidraw) | [how-it-works.png](how-it-works.png) | [excalidraw.com](https://excalidraw.com/#json=CgbajXnyzM7-CHPKY6VNP,FXaohl_SOOt34Qp99684Zw) |
+| Install and where to run | [install-layout.excalidraw](install-layout.excalidraw) | [install-layout.png](install-layout.png) | [excalidraw.com](https://excalidraw.com/#json=A54UdRnExYtH8yUY_5Gwr,xhsHN4ksTQgTkkteitFZyA) |
+| Operator path | [operator-path.excalidraw](operator-path.excalidraw) | [operator-path.png](operator-path.png) | [excalidraw.com](https://excalidraw.com/#json=jdPyvKFgw96D-qEDHCCNw,lYai_UblZcwkcVdencu5Nw) |
+| Headless pipeline | [headless-pipeline.excalidraw](headless-pipeline.excalidraw) | [headless-pipeline.png](headless-pipeline.png) | [excalidraw.com](https://excalidraw.com/#json=vU-66wik4PIZ3-kfIpMhB,xDjmNsADB7Ci3gMCB3eIvw) |
+| Phases | [phases.excalidraw](phases.excalidraw) | [phases.png](phases.png) | [excalidraw.com](https://excalidraw.com/#json=75q1UyfrmmlQ9hUQE092V,6IHLa5VQArfFq3jxwX9Auw) |
+| Sidecar lineage | [sidecar-lineage.excalidraw](sidecar-lineage.excalidraw) | [sidecar-lineage.png](sidecar-lineage.png) | [excalidraw.com](https://excalidraw.com/#json=UZgDhl2KG8Kkdha2bzID3,EduNWGcD_lwBxxiY3LAtNQ) |
 
 The local `.excalidraw` and `.png` files show the detached install, the
 kit-repo guard and the headless pipeline (2 Oct), on top of the nine-phase
@@ -31,8 +30,10 @@ pipeline: the `context` phase, the `context.exclude` and
 `context.live_config` AI steps in the operator path, the Phases panel as a
 grid of required input, optional input and expected output per phase, and
 the overlay `context/profile.yaml` with `live-config-candidates` in the
-lineage. The excalidraw.com links marked older open the previous version;
-the new panels have none. After a rebuild, re-export with
+lineage. Since 6 Oct they also show the `constitution` agent task, the
+`spec.enrich` run in the headless agent stage, and the headless sidecar under
+`<source>/extract/`. Every excalidraw.com link opens the 6 Oct version.
+After a rebuild, re-export with
 `excalidraw-cli export <file>.excalidraw` (that uploads the drawing) and
 replace the links.
 

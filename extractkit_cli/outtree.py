@@ -1,4 +1,9 @@
-"""Sidecar layout, MANIFEST.yaml writer, and the `.extract/.gitignore` contract."""
+"""Sidecar layout, MANIFEST.yaml writer, and the `.extract/.gitignore` contract.
+
+Interactive runs write `<source>/.extract/<run-id>/`, self-ignored. Headless
+runs write `<source>/extract/<run-id>/`: a visible folder with no `.gitignore`,
+so a pipeline can publish it as an artifact as is.
+"""
 
 from __future__ import annotations
 
@@ -12,21 +17,39 @@ from .errors import ExtractkitError
 from .sourceinfo import git_state
 
 EXTRACT_DIRNAME = ".extract"
+HEADLESS_DIRNAME = "extract"
 GITIGNORE_BODY = "*\n"
 
 
-def default_out(source: Path, run_id: str | None = None) -> Path:
-    return source.resolve() / EXTRACT_DIRNAME / (run_id or timestamp())
+def default_out(source: Path, run_id: str | None = None, dirname: str = EXTRACT_DIRNAME) -> Path:
+    return source.resolve() / dirname / (run_id or timestamp())
 
 
-def latest_run(source: Path) -> Path | None:
-    extract = source.resolve() / EXTRACT_DIRNAME
+def _runs(source: Path, dirname: str) -> list[Path]:
+    """Run folders under `<source>/<dirname>/`. A visible `extract/` only counts runs with a MANIFEST."""
+    extract = source.resolve() / dirname
     if not extract.is_dir():
-        return None
+        return []
     runs = [p for p in extract.iterdir() if p.is_dir()]
-    if not runs:
-        return None
-    return max(runs, key=lambda p: p.name)
+    if dirname == HEADLESS_DIRNAME:
+        runs = [p for p in runs if (p / "MANIFEST.yaml").is_file()]
+    return runs
+
+
+def latest_run(source: Path, dirname: str | None = None) -> Path | None:
+    """The newest run by run id, under one folder or under both `.extract/` and `extract/`."""
+    names = (dirname,) if dirname else (EXTRACT_DIRNAME, HEADLESS_DIRNAME)
+    runs = [run for name in names for run in _runs(source, name)]
+    return max(runs, key=lambda p: p.name) if runs else None
+
+
+def is_headless_root(path: Path, source: Path) -> bool:
+    """True for `<source>/extract/` when it holds headless runs, so scans skip it."""
+    return (
+        path.name == HEADLESS_DIRNAME
+        and path.parent.resolve() == source.resolve()
+        and bool(_runs(source, HEADLESS_DIRNAME))
+    )
 
 
 def out_inside_source(source: Path, out: Path) -> bool:

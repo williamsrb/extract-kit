@@ -61,8 +61,9 @@ docker run --rm \
   leanon/extractkit-ci:latest --source /work
 ```
 
-The run writes `.extract/` into the mounted checkout and prints one JSON
-document. Exit codes: `0` done, `1` failed, `3` a human is needed.
+The run writes `extract/` (a visible folder, no `.gitignore`) into the mounted
+checkout and prints one JSON document. Exit codes: `0` done, `1` failed, `3` a
+human is needed.
 
 ## In a pipeline
 
@@ -77,7 +78,7 @@ extract:
     name: extract_${PROJECT_SHORT_NAME}_artifacts
     when: always
     paths:
-      - .extract/
+      - extract/
       - extract-result.json
 ```
 

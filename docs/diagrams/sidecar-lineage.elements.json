@@ -403,10 +403,10 @@
  {
   "type": "rectangle",
   "id": "biz",
-  "x": 1020,
-  "y": 292,
-  "width": 210,
-  "height": 48,
+  "x": 1005,
+  "y": 266,
+  "width": 240,
+  "height": 74,
   "backgroundColor": "#fff3bf",
   "fillStyle": "solid",
   "boundElements": [
@@ -419,7 +419,7 @@
    "type": 3
   },
   "label": {
-   "text": "business/BUSINESS.md",
+   "text": "business/BUSINESS.md\nconstitution/project.md",
    "fontSize": 16,
    "fontFamily": 5
   }
