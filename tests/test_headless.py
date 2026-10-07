@@ -6,6 +6,7 @@ import contextlib
 import io
 import json
 import os
+import shutil
 import sys
 import tempfile
 import unittest
@@ -17,12 +18,15 @@ import yaml
 
 from extractkit_cli import cli, headless
 from tests.support import REPO, TEST_HOME, copy_fixture, run_checkout
+from tests.test_assets import resource, seven
+from tests.test_xp_login import PASSWORD, serve
 
 FAKE = REPO / "tests" / "fixtures" / "fake_agent.py"
 FAKE_TABLE = {
     "fake": {
         "argv": [sys.executable, str(FAKE)], "allowlist_args": [], "bypass_args": [],
         "allowed_tools": ["Read"], "preflight_tools": ["Read"],
+        "api_key_env": "FAKE_TOKEN", "conflicting_env": ["FAKE_CONFLICT"], "env_prefixes": ["FAKE_"],
     },
 }
 CI = "build:\n  script:\n    - cd xp && ./gradlew build\n"
@@ -103,13 +107,13 @@ class StageTests(HeadlessCase):
         code, doc = self.headless("--until", "agent:context")
         self.assertEqual(code, 0, doc)
         self.assertTrue(doc["ok"])
-        self.assertEqual([s["id"] for s in doc["stages"]], list(headless.STAGES[:5]))
+        self.assertEqual([s["id"] for s in doc["stages"]], list(headless.STAGES[:6]))
         self.assertTrue((self.source / ".serena" / "project.yml").is_file())
         self.assertTrue((self.source / "graphify-out" / "graph.json").is_file())
         self.assertEqual(self.overlay()["exclude"], ["prototype"])
         self.assertEqual(doc["sidecar"], str(self.sidecar()))
         stage_lines = [line for line in self.lines() if line["task"] is None]
-        self.assertEqual([line["stage"] for line in stage_lines], list(headless.STAGES[:5]))
+        self.assertEqual([line["stage"] for line in stage_lines], list(headless.STAGES[:6]))
         tasks = [line for line in self.lines() if line["task"]]
         self.assertEqual([(t["stage"], t["task"], t["attempt"]) for t in tasks],
                          [("preflight", "preflight", 1), ("agent:context", "context.exclude", 1)])
@@ -144,7 +148,7 @@ class StageTests(HeadlessCase):
             code, _ = self.headless("--until", "static")
         self.assertEqual(code, 0)
         text = err.getvalue()
-        for expected in ("[1/4] install ...", "[4/4] static ok", "step 1/", "done in"):
+        for expected in ("[1/5] install ...", "[5/5] static ok", "step 1/", "done in"):
             self.assertIn(expected, text)
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
@@ -260,6 +264,117 @@ class StageTests(HeadlessCase):
         config = {row["name"]: row for row in doc["config"]}
         self.assertEqual(config["--agent"]["origin"], "file")
         self.assertEqual(config["--task-timeout"]["value"], 7)
+
+
+class AssetsStageTests(HeadlessCase):
+    """The `assets` stage reads attachments by content and never fails the run."""
+
+    TOKEN = "tok-SECRET-value"
+
+    def assets(self, **files: str) -> Path:
+        folder = self.source.parent / "assets"
+        folder.mkdir(exist_ok=True)
+        for name, text in files.items():
+            (folder / name).write_text(text, encoding="utf-8")
+        return folder
+
+    def prepare_readiness(self) -> None:
+        (self.source / ".serena" / "memories").mkdir(parents=True)
+        (self.source / ".serena" / "project.yml").write_text("p: 1\n", encoding="utf-8")
+        (self.source / ".serena" / "memories" / "o.md").write_text("# o\n", encoding="utf-8")
+        (self.source / "graphify-out").mkdir()
+        (self.source / "graphify-out" / "graph.json").write_text("{}\n", encoding="utf-8")
+
+    def stage(self, doc: dict, name: str) -> dict:
+        return next(s for s in doc["stages"] if s["id"] == name)
+
+    def test_the_credential_reaches_only_the_agent_and_the_cms_gets_a_login(self) -> None:
+        server = serve("/admin/_/idprovider/system")
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        url = f"http://127.0.0.1:{server.server_address[1]}"
+        folder = self.assets(
+            **{"one.yaml": resource("agent_api_key", token=self.TOKEN, agent="fake"),
+               "two.bin": resource("cms_url", url=url, login="su", password=PASSWORD)},
+        )
+        leaks = {"FAKE_CONFLICT": "x", "OP_SERVICE_ACCOUNT_TOKEN": "optok", "MY_PASSWORD": "pw", "EXTRACTKIT_X": "y"}
+        err = io.StringIO()
+        env = {**leaks, "FAKE_AGENT_REPORT_ENV": "FAKE_TOKEN," + ",".join(leaks)}
+        with mock.patch.dict(os.environ, env), contextlib.redirect_stderr(err):
+            code, doc = self.headless(
+                "--until", "doctor", "--assets-dir", str(folder),
+                "--assets-password-env", "MY_PASSWORD", "--xp-host", url, "--branch", "draft",
+            )
+        self.assertEqual(code, 0, doc)
+        stage = self.stage(doc, "assets")
+        self.assertEqual(stage["status"], "ok")
+        self.assertIn("logged in to 127.0.0.1", stage["message"])
+        seen = json.loads((self.source / "fake-env.json").read_text())
+        self.assertEqual(seen["FAKE_TOKEN"], self.TOKEN)
+        self.assertEqual({k: v for k, v in seen.items() if k != "FAKE_TOKEN"}, dict.fromkeys(leaks))
+        for text in (json.dumps(doc), err.getvalue()):
+            self.assertNotIn(self.TOKEN, text)
+            self.assertNotIn(PASSWORD, text)
+
+    @unittest.skipUnless(shutil.which("7z"), "7z is not installed")
+    def test_a_password_protected_archive_opens_with_a_password_from_the_environment(self) -> None:
+        folder = self.assets()
+        seven(folder / "locked.7z", "t.yaml", resource("agent_api_key", token=self.TOKEN, agent="fake"), password="pw1")
+        with mock.patch.dict(os.environ, {"MY_PW": "pw1", "FAKE_AGENT_REPORT_ENV": "FAKE_TOKEN"}):
+            code, doc = self.headless("--until", "agent:context", "--assets-dir", str(folder), "--assets-password-env", "MY_PW")
+        self.assertEqual(code, 0, doc)
+        self.assertEqual(json.loads((self.source / "fake-env.json").read_text())["FAKE_TOKEN"], self.TOKEN)
+
+    def test_a_missing_credential_skips_the_agent_stages_and_the_run_still_checks(self) -> None:
+        self.prepare_readiness()
+        folder = self.assets(**{"junk.txt": self.TOKEN, "other.yaml": resource("something_else")})
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code, doc = self.headless("--until", "check", "--assets-dir", str(folder), "-q")
+        self.assertEqual(code, 0, doc)
+        statuses = {s["id"]: s["status"] for s in doc["stages"]}
+        for name in ("agent:context", "agent:live_config", "agent"):
+            self.assertEqual(statuses[name], "skipped", name)
+        for name in ("assets", "preflight", "doctor", "static", "synthesis", "check"):
+            self.assertEqual(statuses[name], "ok", name)
+        self.assertEqual(doc["summary"]["agent_runs"], 0)
+        self.assertIn("junk.txt: ignored", err.getvalue())
+        self.assertIn("no credential for agent fake", err.getvalue())
+        self.assertNotIn(self.TOKEN, err.getvalue() + json.dumps(doc))
+
+    def test_an_unprepared_checkout_without_a_credential_stops_at_doctor_with_the_cause_printed(self) -> None:
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code, doc = self.headless("--until", "check", "--assets-dir", str(self.assets()))
+        self.assertEqual(code, 1)
+        self.assertEqual(doc["error"]["code"], "readiness_missing")
+        self.assertIn("Serena onboarding and the Graphify index stay unprepared", err.getvalue())
+        self.assertIn("no credential for agent fake", err.getvalue())
+
+    def test_the_job_secrets_never_reach_the_agent_unless_named(self) -> None:
+        leaks = {"CI_JOB_TOKEN": "job-secret", "FAKE_AGENT_REPORT_ENV": "CI_JOB_TOKEN,NAMED_EXTRA,FAKE_AGENT_REPORT_ENV",
+                 "NAMED_EXTRA": "named"}
+        with mock.patch.dict(os.environ, leaks):
+            code, doc = self.headless("--until", "preflight", "--agent-env", "NAMED_EXTRA")
+        self.assertEqual(code, 0, doc)
+        seen = json.loads((self.source / "fake-env.json").read_text())
+        self.assertIsNone(seen["CI_JOB_TOKEN"])
+        self.assertEqual(seen["NAMED_EXTRA"], "named")
+
+    def test_an_unexpected_failure_while_reading_is_a_problem_and_the_stage_still_passes(self) -> None:
+        folder = self.assets(**{"a.yaml": resource("something_else")})
+        with mock.patch.object(headless.assets, "collect", side_effect=RuntimeError("boom")):
+            code, doc = self.headless("--until", "assets", "--assets-dir", str(folder))
+        self.assertEqual(code, 0, doc)
+        self.assertIn("could not be processed (RuntimeError)", self.stage(doc, "assets")["message"])
+
+    def test_an_explicit_storage_state_is_not_replaced_by_a_login(self) -> None:
+        state = self.source.parent / "state.json"
+        state.write_text(json.dumps({"cookies": [], "origins": []}), encoding="utf-8")
+        folder = self.assets(**{"c.yaml": resource("cms_url", url="http://127.0.0.1:9", login="a", password="b")})
+        code, doc = self.headless("--until", "assets", "--assets-dir", str(folder), "--storage-state", str(state), "--xp-host", "http://127.0.0.1:9")
+        self.assertEqual(code, 0, doc)
+        self.assertIn("not used", self.stage(doc, "assets")["message"])
 
 
 class RefusalTests(unittest.TestCase):
@@ -412,6 +527,36 @@ class LoopTests(unittest.TestCase):
                 self.assertEqual(allowlist[0], binary)
                 self.assertNotEqual(allowlist, bypass)
                 self.assertFalse([a for a in allowlist + bypass if "{" in a])
+
+    def test_claude_may_never_lift_the_kit_guards_in_either_mode(self) -> None:
+        driver = headless.Headless(Namespace(
+            source="/tmp", agent="claude", agent_permissions=None, allowed_tools=None,
+            task_timeout=5, max_fix_attempts=2, storage_state=None))
+        for permissions in ("allowlist", "bypass"):
+            driver.s.permissions = permissions
+            argv = driver._argv(driver.s.allowed_tools)
+            denied = argv[argv.index("--disallowedTools") + 1]
+            with self.subTest(permissions=permissions):
+                for pattern in ("Bash(extractkit * --force*)", "Bash(extractkit * --allow-production*)", "Bash(extractkit headless*)"):
+                    self.assertIn(pattern, denied)
+
+    def test_the_agent_process_sees_only_what_it_needs_of_the_job_environment(self) -> None:
+        job = {
+            "PATH": "/bin", "HOME": "/home/x", "LC_ALL": "C", "HTTPS_PROXY": "http://p", "ANTHROPIC_BASE_URL": "u",
+            "CI_JOB_TOKEN": "job-secret", "CI_DOCKER_TOKEN": "hub-secret", "AWS_SECRET_ACCESS_KEY": "aws-secret",
+            "MY_EXTRA": "extra", "EXTRACTKIT_X": "y",
+        }
+        driver = headless.Headless(Namespace(
+            source="/tmp", agent="claude", agent_permissions=None, allowed_tools=None, task_timeout=5,
+            max_fix_attempts=2, storage_state=None, agent_env=["MY_EXTRA"]))
+        with mock.patch.dict(os.environ, job, clear=True):
+            seen = driver._env(agent=True, restrict=True)
+            everything = driver._env()
+        self.assertEqual(
+            sorted(k for k in seen if k != "PATH"),
+            ["ANTHROPIC_BASE_URL", "HOME", "HTTPS_PROXY", "LC_ALL", "MY_EXTRA"],
+        )
+        self.assertIn("CI_JOB_TOKEN", everything)
 
     def test_the_offline_rerun_is_split_around_the_cms_phase(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

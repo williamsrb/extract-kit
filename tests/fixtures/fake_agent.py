@@ -3,10 +3,12 @@
 
 FAKE_AGENT_MODE: `ok` (default) does the work; `block` writes a blocker file;
 `noop` exits 0 without writing anything; `sleep` hangs; `crash` exits 2.
+FAKE_AGENT_REPORT_ENV: comma-separated variable names; their values go to `fake-env.json`.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -18,6 +20,10 @@ import yaml
 mode = os.environ.get("FAKE_AGENT_MODE", "ok")
 prompt = sys.stdin.read()
 cwd = Path.cwd()
+
+if os.environ.get("FAKE_AGENT_REPORT_ENV"):
+    names = os.environ["FAKE_AGENT_REPORT_ENV"].split(",")
+    (cwd / "fake-env.json").write_text(json.dumps({n: os.environ.get(n) for n in names}), encoding="utf-8")
 
 if mode == "sleep":
     time.sleep(60)

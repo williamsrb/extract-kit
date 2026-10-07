@@ -29,6 +29,9 @@ Run: `{run_id}`
   preflight builds the graft index and has the agent CLI run Serena
   onboarding and the Graphify index.
 - Production CMS hosts are refused. Use a local or review XP only.
+- Credentials are the operator's. Never read, print or log the files that hold
+  them (the agent token, the XP login, the job environment); `extractkit assets`
+  lists their types and file names only.
 - The kit extracts and scores. It never infers. Anything you add beyond an
   extracted fact is marked `_(inferred)_` and keeps an `Evidence:` line.
 - Migration means a mapped, spec-ready component structure. It does not

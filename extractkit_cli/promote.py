@@ -51,6 +51,13 @@ def cmd_promote(args: Namespace) -> int:
             f"nothing to promote from {out}",
             "run extractkit through spec.kit, then promote that sidecar",
         )
+    through = [dest.relative_to(source).as_posix() for _src, dest in copies if _through_symlink(source, dest)]
+    if through:
+        raise ExtractkitError(
+            f"promote would write through a symlink: {', '.join(through)}",
+            "replace the link with a real file or folder; --force does not allow this",
+            code="promote_refused",
+        )
     if not getattr(args, "force", False):
         blocked = _blocked(source, [dest for _src, dest in copies])
         if blocked:
@@ -79,6 +86,16 @@ def cmd_promote(args: Namespace) -> int:
     _result.note_run(source=source, sidecar=out, wrote=plan.entries)
     guide.emit(body, guide.render_next(suggestion, style))
     return 0
+
+
+def _through_symlink(source: Path, dest: Path) -> bool:
+    """True when `dest`, or a folder above it inside the source, is a symlink."""
+    here = source
+    for part in dest.relative_to(source).parts:
+        here = here / part
+        if here.is_symlink():
+            return True
+    return False
 
 
 def _blocked(source: Path, dests: list[Path]) -> list[tuple[Path, str]]:

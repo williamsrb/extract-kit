@@ -18,7 +18,7 @@
       "id": "s",
       "x": 40,
       "y": 54,
-      "text": "No human. Yellow = agent CLI process, checked by the kit. Purple = needs an XP and a storage state; skipped otherwise.",
+      "text": "No human. Yellow = agent CLI process, checked by the kit. Purple = needs an XP and a storage state (a flag, or the assets stage); skipped otherwise.",
       "fontSize": 16,
       "strokeColor": "#5f6368",
       "fontFamily": 5
@@ -63,12 +63,12 @@
     },
     {
       "type": "rectangle",
-      "id": "pre",
+      "id": "assets",
       "x": 390,
       "y": 120,
       "width": 280,
       "height": 84,
-      "backgroundColor": "#fff3bf",
+      "backgroundColor": "#d3f9d8",
       "fillStyle": "solid",
       "boundElements": [
         {
@@ -77,6 +77,49 @@
         },
         {
           "id": "ar2",
+          "type": "arrow"
+        },
+        {
+          "id": "assets_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "assets_label",
+      "x": 400,
+      "y": 130,
+      "width": 260,
+      "height": 64,
+      "text": "assets (optional)\nreads the attachments",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "assets"
+    },
+    {
+      "type": "rectangle",
+      "id": "pre",
+      "x": 740,
+      "y": 120,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "ar2",
+          "type": "arrow"
+        },
+        {
+          "id": "ar3",
           "type": "arrow"
         },
         {
@@ -92,7 +135,7 @@
     {
       "type": "text",
       "id": "pre_label",
-      "x": 400,
+      "x": 750,
       "y": 130,
       "width": 260,
       "height": 64,
@@ -106,7 +149,7 @@
     {
       "type": "rectangle",
       "id": "doc",
-      "x": 740,
+      "x": 1090,
       "y": 120,
       "width": 280,
       "height": 84,
@@ -114,11 +157,11 @@
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "ar2",
+          "id": "ar3",
           "type": "arrow"
         },
         {
-          "id": "ar3",
+          "id": "ar10",
           "type": "arrow"
         },
         {
@@ -134,7 +177,7 @@
     {
       "type": "text",
       "id": "doc_label",
-      "x": 750,
+      "x": 1100,
       "y": 130,
       "width": 260,
       "height": 64,
@@ -148,19 +191,19 @@
     {
       "type": "rectangle",
       "id": "sta",
-      "x": 1090,
-      "y": 120,
+      "x": 40,
+      "y": 300,
       "width": 280,
       "height": 84,
       "backgroundColor": "#d3f9d8",
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "ar3",
+          "id": "ar4",
           "type": "arrow"
         },
         {
-          "id": "ar9",
+          "id": "ar10",
           "type": "arrow"
         },
         {
@@ -176,8 +219,8 @@
     {
       "type": "text",
       "id": "sta_label",
-      "x": 1100,
-      "y": 130,
+      "x": 50,
+      "y": 310,
       "width": 260,
       "height": 64,
       "text": "static\nrun --until static",
@@ -190,7 +233,7 @@
     {
       "type": "rectangle",
       "id": "ctx",
-      "x": 40,
+      "x": 390,
       "y": 300,
       "width": 280,
       "height": 84,
@@ -202,7 +245,7 @@
           "type": "arrow"
         },
         {
-          "id": "ar9",
+          "id": "ar5",
           "type": "arrow"
         },
         {
@@ -218,7 +261,7 @@
     {
       "type": "text",
       "id": "ctx_label",
-      "x": 50,
+      "x": 400,
       "y": 310,
       "width": 260,
       "height": 64,
@@ -232,7 +275,7 @@
     {
       "type": "rectangle",
       "id": "cms",
-      "x": 390,
+      "x": 740,
       "y": 300,
       "width": 280,
       "height": 84,
@@ -240,11 +283,11 @@
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "ar4",
+          "id": "ar5",
           "type": "arrow"
         },
         {
-          "id": "ar5",
+          "id": "ar6",
           "type": "arrow"
         },
         {
@@ -261,7 +304,7 @@
     {
       "type": "text",
       "id": "cms_label",
-      "x": 400,
+      "x": 750,
       "y": 310,
       "width": 260,
       "height": 64,
@@ -275,7 +318,7 @@
     {
       "type": "rectangle",
       "id": "lc",
-      "x": 740,
+      "x": 1090,
       "y": 300,
       "width": 280,
       "height": 84,
@@ -283,11 +326,11 @@
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "ar5",
+          "id": "ar6",
           "type": "arrow"
         },
         {
-          "id": "ar6",
+          "id": "ar11",
           "type": "arrow"
         },
         {
@@ -303,7 +346,7 @@
     {
       "type": "text",
       "id": "lc_label",
-      "x": 750,
+      "x": 1100,
       "y": 310,
       "width": 260,
       "height": 64,
@@ -317,19 +360,19 @@
     {
       "type": "rectangle",
       "id": "syn",
-      "x": 1090,
-      "y": 300,
+      "x": 40,
+      "y": 480,
       "width": 280,
       "height": 84,
       "backgroundColor": "#d3f9d8",
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "ar6",
+          "id": "ar7",
           "type": "arrow"
         },
         {
-          "id": "ar10",
+          "id": "ar11",
           "type": "arrow"
         },
         {
@@ -345,8 +388,8 @@
     {
       "type": "text",
       "id": "syn_label",
-      "x": 1100,
-      "y": 310,
+      "x": 50,
+      "y": 490,
       "width": 260,
       "height": 64,
       "text": "synthesis\nmerge + synthesis",
@@ -359,7 +402,7 @@
     {
       "type": "rectangle",
       "id": "agt",
-      "x": 40,
+      "x": 390,
       "y": 480,
       "width": 280,
       "height": 84,
@@ -371,7 +414,7 @@
           "type": "arrow"
         },
         {
-          "id": "ar10",
+          "id": "ar8",
           "type": "arrow"
         },
         {
@@ -391,7 +434,7 @@
     {
       "type": "text",
       "id": "agt_label",
-      "x": 50,
+      "x": 400,
       "y": 490,
       "width": 260,
       "height": 64,
@@ -405,7 +448,7 @@
     {
       "type": "rectangle",
       "id": "chk",
-      "x": 390,
+      "x": 740,
       "y": 480,
       "width": 280,
       "height": 84,
@@ -413,11 +456,11 @@
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "ar7",
+          "id": "ar8",
           "type": "arrow"
         },
         {
-          "id": "ar8",
+          "id": "ar9",
           "type": "arrow"
         },
         {
@@ -433,7 +476,7 @@
     {
       "type": "text",
       "id": "chk_label",
-      "x": 400,
+      "x": 750,
       "y": 490,
       "width": 260,
       "height": 64,
@@ -447,7 +490,7 @@
     {
       "type": "rectangle",
       "id": "pro",
-      "x": 740,
+      "x": 1090,
       "y": 480,
       "width": 280,
       "height": 84,
@@ -455,11 +498,11 @@
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "ar8",
+          "id": "ar9",
           "type": "arrow"
         },
         {
-          "id": "ar11",
+          "id": "ar14",
           "type": "arrow"
         },
         {
@@ -476,7 +519,7 @@
     {
       "type": "text",
       "id": "pro_label",
-      "x": 750,
+      "x": 1100,
       "y": 490,
       "width": 260,
       "height": 64,
@@ -490,6 +533,7 @@
     {
       "type": "arrow",
       "id": "ar1",
+      "endArrowhead": "arrow",
       "x": 320,
       "y": 162,
       "width": 70,
@@ -504,7 +548,6 @@
           0
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "install",
         "fixedPoint": [
@@ -513,7 +556,7 @@
         ]
       },
       "endBinding": {
-        "elementId": "pre",
+        "elementId": "assets",
         "fixedPoint": [
           0,
           0.5
@@ -524,6 +567,7 @@
     {
       "type": "arrow",
       "id": "ar2",
+      "endArrowhead": "arrow",
       "x": 670,
       "y": 162,
       "width": 70,
@@ -538,7 +582,40 @@
           0
         ]
       ],
+      "startBinding": {
+        "elementId": "assets",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "pre",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ar3",
       "endArrowhead": "arrow",
+      "x": 1020,
+      "y": 162,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
       "startBinding": {
         "elementId": "pre",
         "fixedPoint": [
@@ -557,41 +634,8 @@
     },
     {
       "type": "arrow",
-      "id": "ar3",
-      "x": 1020,
-      "y": 162,
-      "width": 70,
-      "height": 0,
-      "points": [
-        [
-          0,
-          0
-        ],
-        [
-          70,
-          0
-        ]
-      ],
-      "endArrowhead": "arrow",
-      "startBinding": {
-        "elementId": "doc",
-        "fixedPoint": [
-          1,
-          0.5
-        ]
-      },
-      "endBinding": {
-        "elementId": "sta",
-        "fixedPoint": [
-          0,
-          0.5
-        ]
-      },
-      "roughness": 2
-    },
-    {
-      "type": "arrow",
       "id": "ar4",
+      "endArrowhead": "arrow",
       "x": 320,
       "y": 342,
       "width": 70,
@@ -606,7 +650,40 @@
           0
         ]
       ],
+      "startBinding": {
+        "elementId": "sta",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "ctx",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ar5",
       "endArrowhead": "arrow",
+      "x": 670,
+      "y": 342,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
       "startBinding": {
         "elementId": "ctx",
         "fixedPoint": [
@@ -625,8 +702,9 @@
     },
     {
       "type": "arrow",
-      "id": "ar5",
-      "x": 670,
+      "id": "ar6",
+      "endArrowhead": "arrow",
+      "x": 1020,
       "y": 342,
       "width": 70,
       "height": 0,
@@ -640,7 +718,6 @@
           0
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "cms",
         "fixedPoint": [
@@ -659,41 +736,8 @@
     },
     {
       "type": "arrow",
-      "id": "ar6",
-      "x": 1020,
-      "y": 342,
-      "width": 70,
-      "height": 0,
-      "points": [
-        [
-          0,
-          0
-        ],
-        [
-          70,
-          0
-        ]
-      ],
-      "endArrowhead": "arrow",
-      "startBinding": {
-        "elementId": "lc",
-        "fixedPoint": [
-          1,
-          0.5
-        ]
-      },
-      "endBinding": {
-        "elementId": "syn",
-        "fixedPoint": [
-          0,
-          0.5
-        ]
-      },
-      "roughness": 2
-    },
-    {
-      "type": "arrow",
       "id": "ar7",
+      "endArrowhead": "arrow",
       "x": 320,
       "y": 522,
       "width": 70,
@@ -708,7 +752,40 @@
           0
         ]
       ],
+      "startBinding": {
+        "elementId": "syn",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "agt",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "ar8",
       "endArrowhead": "arrow",
+      "x": 670,
+      "y": 522,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
       "startBinding": {
         "elementId": "agt",
         "fixedPoint": [
@@ -727,8 +804,9 @@
     },
     {
       "type": "arrow",
-      "id": "ar8",
-      "x": 670,
+      "id": "ar9",
+      "endArrowhead": "arrow",
+      "x": 1020,
       "y": 522,
       "width": 70,
       "height": 0,
@@ -742,7 +820,6 @@
           0
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "chk",
         "fixedPoint": [
@@ -761,7 +838,8 @@
     },
     {
       "type": "arrow",
-      "id": "ar9",
+      "id": "ar10",
+      "endArrowhead": "arrow",
       "x": 1230,
       "y": 204,
       "width": 1050,
@@ -784,16 +862,15 @@
           96
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
-        "elementId": "sta",
+        "elementId": "doc",
         "fixedPoint": [
           0.5,
           1
         ]
       },
       "endBinding": {
-        "elementId": "ctx",
+        "elementId": "sta",
         "fixedPoint": [
           0.5,
           0
@@ -803,7 +880,8 @@
     },
     {
       "type": "arrow",
-      "id": "ar10",
+      "id": "ar11",
+      "endArrowhead": "arrow",
       "x": 1230,
       "y": 384,
       "width": 1050,
@@ -826,16 +904,15 @@
           96
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
-        "elementId": "syn",
+        "elementId": "lc",
         "fixedPoint": [
           0.5,
           1
         ]
       },
       "endBinding": {
-        "elementId": "agt",
+        "elementId": "syn",
         "fixedPoint": [
           0.5,
           0
@@ -847,14 +924,14 @@
       "type": "ellipse",
       "id": "ok",
       "x": 1090,
-      "y": 480,
+      "y": 660,
       "width": 280,
       "height": 84,
       "backgroundColor": "#d0ebff",
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "ar11",
+          "id": "ar14",
           "type": "arrow"
         },
         {
@@ -871,7 +948,7 @@
       "type": "text",
       "id": "ok_label",
       "x": 1100,
-      "y": 490,
+      "y": 670,
       "width": 260,
       "height": 64,
       "text": "exit 0\nevery stage passed",
@@ -883,34 +960,34 @@
     },
     {
       "type": "arrow",
-      "id": "ar11",
-      "x": 1020,
-      "y": 522,
-      "width": 70,
-      "height": 0,
+      "id": "ar14",
+      "endArrowhead": "arrow",
+      "x": 1230,
+      "y": 564,
+      "width": 0,
+      "height": 96,
       "points": [
         [
           0,
           0
         ],
         [
-          70,
-          0
+          0,
+          96
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "pro",
         "fixedPoint": [
-          1,
-          0.5
+          0.5,
+          1
         ]
       },
       "endBinding": {
         "elementId": "ok",
         "fixedPoint": [
-          0,
-          0.5
+          0.5,
+          0
         ]
       },
       "roughness": 2
@@ -919,7 +996,7 @@
       "type": "rectangle",
       "id": "loop",
       "x": 40,
-      "y": 680,
+      "y": 660,
       "width": 630,
       "height": 150,
       "backgroundColor": "#fff3bf",
@@ -948,7 +1025,7 @@
       "type": "text",
       "id": "loop_label",
       "x": 50,
-      "y": 690,
+      "y": 670,
       "width": 610,
       "height": 130,
       "text": "agent loop (every yellow stage)\nagent next --json, one fresh agent process per task\nthen the task rerun, then check\nfix attempts up to --max-fix-attempts, default 2",
@@ -961,10 +1038,11 @@
     {
       "type": "arrow",
       "id": "ar12",
-      "x": 180,
+      "endArrowhead": "arrow",
+      "x": 530,
       "y": 564,
       "width": 175,
-      "height": 116,
+      "height": 96,
       "points": [
         [
           0,
@@ -972,18 +1050,17 @@
         ],
         [
           0,
-          76
+          48
         ],
         [
-          175,
-          76
+          -175,
+          48
         ],
         [
-          175,
-          116
+          -175,
+          96
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "agt",
         "fixedPoint": [
@@ -1005,7 +1082,7 @@
       "type": "rectangle",
       "id": "blk",
       "x": 740,
-      "y": 680,
+      "y": 660,
       "width": 280,
       "height": 150,
       "backgroundColor": "#ffe8cc",
@@ -1029,7 +1106,7 @@
       "type": "text",
       "id": "blk_label",
       "x": 750,
-      "y": 690,
+      "y": 670,
       "width": 260,
       "height": 130,
       "text": "exit 3, blocked\nreports/blockers/<task>.md\na person must look",
@@ -1043,29 +1120,29 @@
       "type": "rectangle",
       "id": "bad",
       "x": 1090,
-      "y": 680,
+      "y": 780,
       "width": 280,
-      "height": 150,
+      "height": 110,
       "backgroundColor": "#ffe3e3",
       "fillStyle": "solid",
+      "roundness": {
+        "type": 3
+      },
       "boundElements": [
         {
           "id": "bad_label",
           "type": "text"
         }
       ],
-      "roundness": {
-        "type": 3
-      },
       "roughness": 2
     },
     {
       "type": "text",
       "id": "bad_label",
       "x": 1100,
-      "y": 690,
+      "y": 790,
       "width": 260,
-      "height": 130,
+      "height": 90,
       "text": "exit 1, any stage failed\nerror.code and fix\nin the JSON result",
       "fontSize": 16,
       "fontFamily": 5,
@@ -1076,8 +1153,9 @@
     {
       "type": "arrow",
       "id": "ar13",
+      "endArrowhead": "arrow",
       "x": 670,
-      "y": 755,
+      "y": 735,
       "width": 70,
       "height": 0,
       "points": [
@@ -1090,7 +1168,6 @@
           0
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "loop",
         "fixedPoint": [
@@ -1112,7 +1189,7 @@
       "type": "text",
       "id": "l1",
       "x": 679,
-      "y": 722,
+      "y": 702,
       "text": "blocker",
       "fontSize": 14,
       "strokeColor": "#c92a2a",
@@ -1122,8 +1199,8 @@
       "type": "text",
       "id": "l3",
       "x": 40,
-      "y": 850,
-      "text": "Re-running on the same source resumes the latest sidecar. Finished stages report \"already done\" and start no agent.",
+      "y": 910,
+      "text": "Re-running on the same source resumes the latest sidecar. Finished stages report \"already done\" and start no agent.\nA missing attachment skips only the stages that need it (cms, the yellow ones); assets never fails the run.",
       "fontSize": 14,
       "strokeColor": "#5f6368",
       "fontFamily": 5

@@ -21,8 +21,20 @@ HEADLESS_DIRNAME = "extract"
 GITIGNORE_BODY = "*\n"
 
 
+def assert_output_root(root: Path) -> None:
+    """Refuse an output folder that is a symlink: the sidecar would land outside the source tree."""
+    if root.is_symlink():
+        raise ExtractkitError(
+            f"{root} is a symlink, so the sidecar would be written to {root.resolve()}, outside the source",
+            "remove the link, or pass --out with a folder you mean to write to",
+            code="unsafe_output",
+        )
+
+
 def default_out(source: Path, run_id: str | None = None, dirname: str = EXTRACT_DIRNAME) -> Path:
-    return source.resolve() / dirname / (run_id or timestamp())
+    root = source.resolve() / dirname
+    assert_output_root(root)
+    return root / (run_id or timestamp())
 
 
 def _runs(source: Path, dirname: str) -> list[Path]:

@@ -61,7 +61,9 @@ CLI for the preflight and for each agent task, stops at the first failed
 stage, and ends with exit 0 (every stage passed), 1 (a stage failed) or 3 (a
 task is blocked and a person must look). It writes the sidecar to
 `<source>/extract/<run-id>/`, a visible folder with no `.gitignore`, and runs
-the optional `spec.enrich` after the required tasks unless `--no-enrich`. The
+the optional `spec.enrich` after the required tasks unless `--no-enrich`. Its
+`assets` stage reads the attachments (the agent token, an XP login) and never
+fails the run: a missing one skips the stages that need it. The
 stages, the agent loop and the blocker protocol are in
 [Headless](headless.md#the-stages).
 

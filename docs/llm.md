@@ -29,6 +29,9 @@ them.
   preflight builds the graft index and has the agent CLI run Serena
   onboarding and the Graphify index.
 - Production CMS hosts are refused. Use a local or review XP only.
+- Credentials are the operator's. Never read, print or log the files that hold
+  them (the agent token, the XP login, the job environment); `extractkit assets`
+  lists their types and file names only.
 - The kit extracts and scores. It never infers. Anything you add beyond an
   extracted fact is marked `_(inferred)_` and keeps an `Evidence:` line.
 - Migration means a mapped, spec-ready component structure. It does not
@@ -202,10 +205,17 @@ operator asks.
 | `extractkit on PATH` MISSING | `~/.local/bin` is not on PATH | Report the printed `export PATH=` line; editing shell profiles is the operator's call |
 | `install`, `launcher …` or `skill …` BROKEN | A symlink there points elsewhere, a file or folder the install did not create is in the way, or the installed copy is from another commit | Report the fix. `install --force` only on the operator's word; a real file or folder is the operator's to move. For a commit mismatch the operator runs `./extractkit install` from a kit checkout |
 | `kit_workspace` (exit 1) | The working folder, `--source` or `--out` is inside the kit repo or the installed kit | `cd` into the legacy checkout and run `extractkit` there. Do not work around it |
-| `readiness_missing` | `headless` preflight ran the agent and Serena onboarding or the Graphify index is still missing | The agent CLI needs the Serena MCP and the graphify skill on this runner; fix that and re-run |
+| `readiness_missing` | `headless` preflight ran the agent and Serena onboarding or the Graphify index is still missing, or the preflight was skipped because no agent credential was found (see the `attachments:` lines) | The agent CLI needs the Serena MCP and the graphify skill on this runner; fix that and re-run |
 | `resource_unreachable` | A resource in the resources file does not answer: XP host, Guillotine, storage state, agent CLI or API key variable | The row names the key to fix; re-run `doctor --source --resources` |
 | `bad_env`, `env_forbidden` | An `EXTRACTKIT_*` value is not valid, two forms of the storage state are set, or `EXTRACTKIT_ALLOW_PRODUCTION` / `EXTRACTKIT_FORCE` is set | Fix or unset the variable. Those two variables never work |
-| `source_not_writable` | `headless` cannot write `<source>/.extract/` as the current user, typically a container running as uid 1000 on a checkout cloned as root | Report it; the operator mounts the checkout writable, runs the container with `--user`, or uses the `root` image tag. Do not change permissions yourself |
+| `source_not_writable` | `headless` cannot write `<source>/extract/` as the current user, typically a container running as uid 1000 on a checkout cloned as root | Report it; the operator mounts the checkout writable, runs the container with `--user`, or uses the `root` image tag. Do not change permissions yourself |
+| `no_source` | `--source` is missing or is not a folder | Pass the legacy checkout; an agent never guesses it |
+| `no_stack_marker`, `multiple_stacks` | `context` found no stack marker, or markers for more than one stack | Pass `--profile enonic` (or `php`) as the printed `fix_command` says |
+| `missing_branch` | The CMS phase runs without `--branch draft\|master` | Pass `--branch`, or run the offline route |
+| `promote_refused` | `promote` would overwrite a file git cannot restore (untracked, ignored or modified), or would write through a symlink | Report it; `--force` only on the operator's word, and it never allows a symlink |
+| `redirect_refused` | The XP answered with a redirect to another host, or a URL that is not http(s) | Point `--xp-host`, `--guillotine` or `--site-url` at the final host; do not follow it by hand |
+| `unsafe_output` | `<source>/.extract` or `<source>/extract` is a symlink, so the sidecar would land outside the source | Report it; the operator removes the link |
+| `kit_failed` | A `headless` child command exited without a JSON result | Read the message it carries; it names the command and its last stderr lines |
 | `task_blocked` (exit 3) | An agent wrote `<sidecar>/reports/blockers/<id>.md`, or `check` still failed after the fix attempts | A person reads the blocker, fixes the input, and re-runs headless |
 | `task_inputs_missing` | In the final `agent` stage a task waits on a file no earlier stage wrote | A pipeline failure, not a question: run the phases that write it |
 | `agent_timeout`, `agent_failed`, `unknown_agent` | The agent CLI ran past `--task-timeout`, exited non-zero, or is not in the `agents:` block | See `reports/headless/*.log`; check the CLI login or API key |

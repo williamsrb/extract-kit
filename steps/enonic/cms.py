@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 from urllib import error as urlerror
 from urllib import request as urlrequest
+from urllib.parse import urlsplit
 
 from extractkit_cli import cms_target, schema, scope
 from extractkit_cli.common import load_json
@@ -225,6 +226,45 @@ def _escape_key(key: str) -> str:
     return key.replace("\\", "\\\\").replace('"', '\\"')
 
 
+class _SameHostRedirects(urlrequest.HTTPRedirectHandler):
+    """Follow a redirect only on the same host, and never from https to http.
+
+    The admin cookie is sent by hand, so urllib would copy it to whatever host a
+    redirect names, and the production guard only ever saw the first URL.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        old, new = urlsplit(req.full_url), urlsplit(newurl)
+        if (old.hostname or "").lower() != (new.hostname or "").lower() or (old.scheme == "https" and new.scheme != "https"):
+            raise ExtractkitError(
+                f"{old.hostname} redirected to {new.scheme}://{new.hostname}; the request was not followed",
+                "point --xp-host, --guillotine or --site-url at the final host: the session cookie "
+                "and the production check apply to the host you name",
+                code="redirect_refused",
+            )
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _opener() -> urlrequest.OpenerDirector:
+    """http and https only, so a `file:` URL cannot be opened, with the same-host redirect rule."""
+    opener = urlrequest.OpenerDirector()
+    for handler in (
+        urlrequest.HTTPHandler(), urlrequest.HTTPSHandler(), urlrequest.HTTPDefaultErrorHandler(),
+        _SameHostRedirects(), urlrequest.HTTPErrorProcessor(),
+    ):
+        opener.add_handler(handler)
+    return opener
+
+
+def _open(req: urlrequest.Request, timeout: float):
+    if urlsplit(req.full_url).scheme not in ("http", "https"):
+        raise ExtractkitError(
+            f"{req.full_url.split(':', 1)[0]}: URLs are not supported",
+            "use an http or https URL for the XP host", code="redirect_refused",
+        )
+    return _opener().open(req, timeout=timeout)
+
+
 def post_graphql(
     url: str,
     query: str,
@@ -238,7 +278,7 @@ def post_graphql(
     if cookie_header:
         req.add_header("Cookie", cookie_header)
     try:
-        with urlrequest.urlopen(req, timeout=timeout) as resp:
+        with _open(req, timeout) as resp:
             raw = resp.read().decode("utf-8")
     except urlerror.HTTPError as exc:
         if exc.code in (401, 403):
@@ -291,7 +331,7 @@ def http_get(
     if cookie_header:
         req.add_header("Cookie", cookie_header)
     try:
-        with urlrequest.urlopen(req, timeout=timeout) as resp:
+        with _open(req, timeout) as resp:
             return resp.status, resp.read()
     except urlerror.HTTPError as exc:
         if exc.code in (401, 403):

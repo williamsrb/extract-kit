@@ -82,6 +82,9 @@ extract:
       - extract-result.json
 ```
 
-The job needs the selected agent's credential in its environment. The image
+The job needs the selected agent's credential, either in its environment or as
+an attachment (`EXTRACTKIT_OP_VAULT` and `EXTRACTKIT_OP_ITEM`; see
+[Headless](https://git.seeds.no/williams/99x-extract-kit/-/blob/docker/docs/headless.md#attachments)).
+The image
 needs no `entrypoint: [""]`: flags run `extractkit headless --json`, and any
 other command (`sh`, `git`) runs unchanged.

@@ -46,6 +46,8 @@ printf '%s\n' "$table" | docker run --rm -i "$image" sh -c '/filter-by-name.sh "
 check "vault id lookup without match" "1" "$code"
 # 6c. 7z writes a password-protected archive and reads it back to stdout, as the pipeline job does
 check "7zip round trip" "dummy-ok" "$(docker run --rm "$image" sh -c 'cd "$(mktemp -d)" && echo "k: dummy-ok" > k.yaml && 7z a -mhe=on -ppass k.yaml.7z k.yaml > /dev/null && 7z x -so -ppass k.yaml.7z' 2>&1 || true)"
+# 6d. `extractkit assets` reads attachments by content: a yaml resource of any name, a bad file reported, exit 0
+check "assets command" "agent_api_key" "$(docker run --rm "$image" sh -c 'd=$(mktemp -d) && printf "resource:\n  type: agent_api_key\n  data:\n    token: x\n    agent: claude\n" > "$d/any-name.bin" && echo junk > "$d/bad.txt" && cd "$d" && extractkit assets --assets-dir "$d" && echo assets-exit-$?' 2>&1 || true)"
 # 7. an arbitrary command and its exit code survive the wrapper
 code=0
 docker run --rm "$image" sh -c 'exit 7' > /dev/null 2>&1 || code=$?

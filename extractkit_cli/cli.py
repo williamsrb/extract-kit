@@ -13,6 +13,7 @@ from collections.abc import Callable
 
 from . import (
     agent_tasks,
+    assets,
     check,
     context,
     deps,
@@ -152,6 +153,35 @@ def _add_resources_flag(parser: argparse.ArgumentParser) -> None:
         "--resources", metavar="FILE",
         help="Resources YAML (xp, auth, agent): fills options not set by a flag or EXTRACTKIT_* "
              "variable. See docs/headless.md.",
+    )
+
+
+def _whole_number(minimum: int) -> Callable[[str], int]:
+    def parse(raw: str) -> int:
+        try:
+            value = int(raw)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"{raw!r} is not a whole number") from None
+        if value < minimum:
+            raise argparse.ArgumentTypeError(f"{value} is below the minimum of {minimum}")
+        return value
+    return parse
+
+
+def _add_assets_flags(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--assets-dir", dest="assets_dir", metavar="DIR",
+        help="Folder of attachments, or one file such as a CI file variable (7z, zip, yaml, json), "
+             "read by content, not by name.",
+    )
+    parser.add_argument("--op-vault", dest="op_vault", metavar="NAME",
+                        help="1Password vault holding the item whose attachments are downloaded.")
+    parser.add_argument("--op-item", dest="op_item", metavar="NAME",
+                        help="1Password item whose attachments are downloaded (needs --op-vault).")
+    parser.add_argument(
+        "--assets-password-env", dest="assets_password_env", action="append", metavar="VAR",
+        help="Name of an environment variable holding an archive password (repeatable). "
+             "Optional: a file that needs none is read as is.",
     )
 
 
@@ -350,16 +380,34 @@ def build_parser() -> argparse.ArgumentParser:
     _add_json_flag(promo)
     promo.set_defaults(func=promote.cmd_promote)
 
+    asts = flat(
+        "assets",
+        "Read the attachments a pipeline supplies and say what they hold; optionally log in to the XP and write a storage state.",
+    )
+    _add_assets_flags(asts)
+    asts.add_argument("--agent", metavar="NAME",
+                      help="Agent CLI whose credential is wanted (default: claude).")
+    asts.add_argument("--xp-host", dest="xp_host", metavar="URL",
+                      help="Log in only with the cms_url resource for this host.")
+    asts.add_argument("--storage-state-out", dest="storage_state_out", metavar="FILE",
+                      help="Log in with the cms_url resource and write the Playwright storage state here (mode 0600).")
+    _add_json_flag(asts)
+    asts.set_defaults(func=assets.cmd_assets)
+
     hl = flat(
         "headless",
         "Run the whole extract with no human: calls an agent CLI for the preflight and each agent task.",
     )
     hl.add_argument("--source", required=True, metavar="DIR", help="Legacy checkout (read-only).")
+    _add_assets_flags(hl)
     _add_profile_flag(hl)
     hl.add_argument("--agent", metavar="NAME",
                     help="Agent CLI from the agents: block of extractkit.yaml (default: claude).")
     hl.add_argument("--agent-permissions", dest="agent_permissions", choices=("allowlist", "bypass"),
                     metavar="MODE", help="allowlist (default) or bypass. Bypass is the operator's call.")
+    hl.add_argument("--agent-env", dest="agent_env", action="append", metavar="NAME",
+                    help="Extra environment variable the agent process may see (repeatable). By default it gets "
+                         "only the base list and its agents: entry's env_prefixes.")
     hl.add_argument("--allowed-tools", dest="allowed_tools", action="append", metavar="TOOL",
                     help="Tool allowlist for the agent (repeatable). Replaces the agents: default.")
     _add_resources_flag(hl)
@@ -371,9 +419,9 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Also run promote at the end (never --force).")
     hl.add_argument("--no-enrich", dest="no_enrich", action="store_true",
                     help="Skip the optional spec.enrich task the agent stage runs after the required ones.")
-    hl.add_argument("--max-fix-attempts", dest="max_fix_attempts", type=int, default=2, metavar="N",
+    hl.add_argument("--max-fix-attempts", dest="max_fix_attempts", type=_whole_number(0), default=2, metavar="N",
                     help="Fix attempts per agent task after a failed check (default 2).")
-    hl.add_argument("--task-timeout", dest="task_timeout", type=int, default=1800, metavar="SECONDS",
+    hl.add_argument("--task-timeout", dest="task_timeout", type=_whole_number(1), default=1800, metavar="SECONDS",
                     help="Kill an agent process after this long (default 1800).")
     hl.add_argument("-q", "--quiet", action="store_true", help="No progress lines on stderr.")
     _add_json_flag(hl)

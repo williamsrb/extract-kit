@@ -291,7 +291,10 @@ or cookie-less storage-state is refused when this step starts.
 
 ### Transport
 
-HTTP with cookies from the Playwright storage-state file.
+HTTP with cookies from the Playwright storage-state file. Only `http` and
+`https` URLs are opened. A redirect is followed only on the same host and never
+from https to http; any other redirect is refused (`redirect_refused`), because
+the cookie and the production check belong to the host you named.
 
 ### Survey
 

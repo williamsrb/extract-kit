@@ -2,11 +2,15 @@
 
 This is the only module that starts an agent CLI process. Every other command
 never calls a model. Headless runs the documented procedure (`docs/llm.md`) as
-eleven stages, each one a call to `extractkit` as a subprocess with `--json`, so
+twelve stages, each one a call to `extractkit` as a subprocess with `--json`, so
 it uses the same contract an external agent uses and does not depend on PATH:
 
-    install > preflight > doctor > static > agent:context > cms >
+    install > assets > preflight > doctor > static > agent:context > cms >
     agent:live_config > synthesis > agent > check > promote (only --promote)
+
+The `assets` stage reads the attachments a pipeline supplies (`assets.py`) and
+never fails the run: a missing or unreadable attachment is printed, and the
+stages that needed it are skipped.
 
 Preflight builds the graft index directly and asks the agent CLI for Serena
 onboarding and the Graphify index. An agent task runs in a fresh agent process
@@ -42,6 +46,7 @@ from pathlib import Path
 
 from . import (
     agent_tasks,
+    assets,
     context,
     guide,
     install,
@@ -56,7 +61,7 @@ from .common import REPO_ROOT, load_kit_identity
 from .errors import ExtractkitError
 
 STAGES = (
-    "install", "preflight", "doctor", "static", "agent:context", "cms",
+    "install", "assets", "preflight", "doctor", "static", "agent:context", "cms",
     "agent:live_config", "synthesis", "agent", "check", "promote",
 )
 HEADLESS_DIR = REPO_ROOT / "headless"
@@ -71,6 +76,16 @@ CMS_VALUES = (
     ("--configenv", "configenv"), ("--site-url", "site_url"),
 )
 CMS_LISTS = (("--cms-key", "cms_keys"), ("--round2", "round2"))
+# What opens the vault never reaches a child process.
+VAULT_TOKEN_PREFIX = "OP_SERVICE_ACCOUNT_TOKEN"
+NO_AGENT_CREDENTIAL = "skipped: no agent credential (see the assets stage)"
+# The agent process sees these and what its `agents:` entry names, not the rest of the job environment.
+AGENT_ENV_NAMES = frozenset({
+    "PATH", "HOME", "USER", "LOGNAME", "SHELL", "LANG", "LANGUAGE", "TERM", "COLORTERM", "NO_COLOR", "TMPDIR", "TZ",
+    "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "no_proxy", "all_proxy",
+    "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE",
+})
+AGENT_ENV_PREFIXES = ("LC_", "XDG_", "NODE_", "SSL_", "PLAYWRIGHT_")
 
 
 class StageFailed(Exception):
@@ -226,11 +241,15 @@ class Headless:
                 "or run the container as the checkout's owner (docker run --user)",
                 code="source_not_writable",
             )
+        outtree.assert_output_root(self.source / outtree.HEADLESS_DIRNAME)
         self.out: Path | None = None
         self.log = RunLog(self.source)
         self.records: list[StageRecord] = []
         self._number = ""
         self.usage: list[dict] = []
+        self.agent_env: dict[str, str] = {}
+        self.drop_env: list[str] = []
+        self.agent_ready = True
         self.s = self._settings()
 
     # -- settings ---------------------------------------------------------------
@@ -259,23 +278,43 @@ class Headless:
 
     # -- calling extractkit -----------------------------------------------------
 
-    def _env(self) -> dict[str, str]:
-        """No EXTRACTKIT_* reaches a child: headless passes every setting as a flag."""
-        env = {k: v for k, v in os.environ.items() if not k.startswith("EXTRACTKIT_")}
+    def _env(self, *, agent: bool = False, restrict: bool = False) -> dict[str, str]:
+        """No EXTRACTKIT_* reaches a child: headless passes every setting as a flag.
+
+        Neither does what opens the vault or the archives. Only an `agent` child gets the credential.
+        An agent process (`restrict`) gets only what `_agent_sees` allows, so a CI job's other secrets stay out.
+        """
+        passwords = set(getattr(self.args, "assets_password_env", None) or [])
+        env = {
+            k: v for k, v in os.environ.items()
+            if not k.startswith(("EXTRACTKIT_", VAULT_TOKEN_PREFIX)) and k not in passwords
+        }
+        if restrict:
+            env = {k: v for k, v in env.items() if self._agent_sees(k)}
+        if agent:
+            for name in self.drop_env:
+                env.pop(name, None)
+            env.update(self.agent_env)
         launcher = install.launcher_path().parent
         env["PATH"] = f"{launcher}{os.pathsep}{env.get('PATH', '')}"
         return env
+
+    def _agent_sees(self, name: str) -> bool:
+        entry = self.s.entry
+        prefixes = (*AGENT_ENV_PREFIXES, *(entry.get("env_prefixes") or []))
+        extra = set(getattr(self.args, "agent_env", None) or [])
+        return name in AGENT_ENV_NAMES or name in extra or name == entry.get("api_key_env") or name.startswith(prefixes)
 
     def _say(self, text: str, *, indent: int = 0) -> None:
         if not getattr(self.args, "quiet", False):
             live.say(text, indent=indent, force=True)
 
-    def _kit(self, *argv: str, allow_fail: bool = False) -> dict:
+    def _kit(self, *argv: str, allow_fail: bool = False, agent: bool = False) -> dict:
         progress_flag = ["--progress"] if argv[0] in PROGRESS_COMMANDS else []
         command = [sys.executable, str(REPO_ROOT / "extractkit"), *argv, *progress_flag, "--json"]
         child = subprocess.Popen(
             command, cwd=self.source, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            text=True, env=self._env(),
+            text=True, env=self._env(agent=agent),
         )
         errors: list[str] = []
         pump = threading.Thread(target=self._forward, args=(child.stderr, errors), daemon=True)
@@ -363,7 +402,10 @@ class Headless:
     def _argv(self, tools: list[str]) -> list[str]:
         entry = self.s.entry
         extra = entry.get("bypass_args" if self.s.permissions == "bypass" else "allowlist_args") or []
-        values = {"allowed_tools": ",".join(tools), "source": str(self.source)}
+        values = {
+            "allowed_tools": ",".join(tools), "denied_tools": ",".join(entry.get("denied_tools") or []),
+            "source": str(self.source),
+        }
         argv = [*(entry.get("argv") or []), *extra]
         return [self._fill(token, values) for token in argv]
 
@@ -381,7 +423,7 @@ class Headless:
         try:
             with log.open("w", encoding="utf-8") as handle:
                 child = subprocess.Popen(
-                    argv, stdin=subprocess.PIPE, cwd=self.source, env=self._env(), text=True,
+                    argv, stdin=subprocess.PIPE, cwd=self.source, env=self._env(agent=True, restrict=True), text=True,
                     stdout=handle, stderr=subprocess.STDOUT,
                 )
                 self._wait(child, prompt, log, task, start)
@@ -436,7 +478,7 @@ class Headless:
     def run(self) -> int:
         until = getattr(self.args, "until", None)
         stages = {
-            "install": self._install, "preflight": self._preflight, "doctor": self._doctor,
+            "install": self._install, "assets": self._assets, "preflight": self._preflight, "doctor": self._doctor,
             "static": self._static, "cms": self._cms_stage, "synthesis": self._synthesis,
             "agent:context": lambda: self._loop("agent:context", only_context=True),
             "agent:live_config": lambda: self._loop("agent:live_config", only_context=True),
@@ -477,6 +519,44 @@ class Headless:
         self._kit("install")
         return "ok"
 
+    def _assets(self) -> str:
+        """Read the attachments. Never fails: what is missing is printed and its stages are skipped."""
+        args = self.args
+        directory, vault, item = (getattr(args, name, None) for name in ("assets_dir", "op_vault", "op_item"))
+        if not (directory or vault or item):
+            return "skipped: no attachments source (--assets-dir, or --op-vault and --op-item)"
+        xp_host = getattr(args, "xp_host", None)
+        try:
+            with tempfile.TemporaryDirectory(prefix="extractkit-assets-") as work:
+                bundle = assets.collect(
+                    directory=directory, op_vault=vault, op_item=item,
+                    passwords=assets.password_values(getattr(args, "assets_password_env", None)),
+                    workdir=Path(work), environ=os.environ,
+                )
+                outcome = assets.resolve(
+                    bundle, agent=self.s.agent, entry=self.s.entry, xp_host=xp_host,
+                    want_state=not self.s.online and bool(xp_host), state_dir=assets.private_dir("extractkit-state-"),
+                )
+        except Exception as exc:  # noqa: BLE001 - the stage must not stop the run, whatever a file or a tool did
+            bundle, outcome = assets.Bundle(), assets.Outcome(problems=[f"attachments could not be processed ({type(exc).__name__})"])
+        self.agent_env, self.drop_env = outcome.agent_env, outcome.drop_env
+        if outcome.storage_state:
+            args.storage_state = str(outcome.storage_state)
+            self.s.online = True
+        var = self.s.entry.get("api_key_env")
+        if var and var not in self.agent_env and not os.environ.get(var):
+            self.agent_ready = False
+            outcome.problems.append(
+                f"no credential for agent {self.s.agent}: no usable {assets.TYPE_AGENT} and {var} is not set, "
+                "so the agent stages are skipped"
+            )
+        for problem in outcome.problems:
+            live.say(f"attachments: {problem}", indent=1, force=True)
+        found = f"{len(bundle.resources)} resource(s) in {bundle.files} file(s)"
+        used = "; ".join(outcome.notes)
+        shown = "; ".join(outcome.problems[:3]) + (f"; and {len(outcome.problems) - 3} more" if len(outcome.problems) > 3 else "")
+        return f"ok: {found}" + (f"; {used}" if used else "") + (f"; {len(outcome.problems)} problem(s): {shown}" if outcome.problems else "")
+
     def _preflight(self) -> str:
         notes: list[str] = []
         if not (self.source / "graft").is_dir() and shutil.which("graft"):
@@ -492,6 +572,8 @@ class Headless:
         missing = [r for r in readiness.check_source(self.source) if r.failed]
         if not missing:
             return "ok (already done)" if not notes else "ok: " + ", ".join(notes)
+        if not self.agent_ready:
+            return f"{NO_AGENT_CREDENTIAL}; Serena onboarding and the Graphify index stay unprepared"
         prompt = render_prompt(HEADLESS_DIR / "preflight.md", source=str(self.source))
         log = self._agent("preflight", "preflight", 1, prompt, self.s.preflight_tools)
         still = [r for r in readiness.check_source(self.source) if r.failed]
@@ -509,7 +591,7 @@ class Headless:
             flags += ["--resources", str(resources)]
         if self.s.online:
             flags += ["--storage-state", str(self.args.storage_state)]
-        self._kit("doctor", *flags)
+        self._kit("doctor", *flags, agent=True)
         return "ok"
 
     def _static(self) -> str:
@@ -555,6 +637,8 @@ class Headless:
     # -- the agent loop ---------------------------------------------------------
 
     def _loop(self, stage: str, *, only_context: bool) -> str:
+        if not self.agent_ready:
+            return NO_AGENT_CREDENTIAL
         ran: list[str] = []
         while True:
             doc = self._kit("agent", "next", *self._out_flag())
@@ -579,6 +663,8 @@ class Headless:
 
     def _agent_stage(self) -> str:
         """The required tasks, then `spec.enrich` unless `--no-enrich`. A failed enrich does not stop the run."""
+        if not self.agent_ready:
+            return NO_AGENT_CREDENTIAL
         message = self._loop("agent", only_context=False)
         if getattr(self.args, "no_enrich", False):
             return message

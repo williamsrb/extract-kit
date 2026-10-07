@@ -22,6 +22,7 @@ your own command with that flag added.
 | `status [--source DIR] [--out DIR]` | Phase checklist (alias `next`) |
 | `resume --source DIR [--profile NAME]` | Continue from first incomplete slot |
 | `promote --source DIR [--out DIR] [--force]` | Copy Spec Kit + PRODUCT |
+| `assets [--assets-dir PATH] [--op-vault NAME --op-item NAME] [--storage-state-out FILE]` | Read the attachments a pipeline supplies by content (7z, zip, yaml, json) and say what they hold, without printing a secret. With `--storage-state-out`, log in to the XP with the `cms_url` resource and write a Playwright storage state. Bad or missing files are printed and never fail it; see [Headless](headless.md#attachments) |
 | `headless --source DIR [--agent NAME] [--resources FILE] [--until STAGE] [--promote] [--no-enrich]` | Run the whole extract with no human, calling an agent CLI for the preflight and each agent task. The one command that starts an agent CLI; see [Headless](headless.md) |
 <!-- markdownlint-enable MD013 -->
 
@@ -64,7 +65,7 @@ Bare `extractkit` and any `--help` print help and exit 0.
 ## JSON output and environment variables
 
 `--json` is accepted by `install`, `deps`, `doctor`, `context`, `run`, `step`,
-`resume`, `status`, `check`, `promote`, `headless` and `agent list|show|next`.
+`resume`, `status`, `check`, `promote`, `headless`, `assets` and `agent list|show|next`.
 It prints one JSON document on stdout and nothing else, errors included
 (`ok: false`, `error.code`, `error.message`, `error.fix`, `error.fix_command`);
 exit codes do not change. The envelope is `schemas/result.schema.json`:

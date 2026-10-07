@@ -1932,7 +1932,7 @@
       "x": 80,
       "y": 2146,
       "width": 1450,
-      "height": 988,
+      "height": 1068,
       "backgroundColor": "#f8f9fa",
       "strokeColor": "#dee2e6",
       "fillStyle": "solid",
@@ -1957,7 +1957,7 @@
       "id": "hl_sub",
       "x": 116,
       "y": 2216,
-      "text": "The whole extract with no human: eleven stages, an agent CLI for yellow ones, exit 0, 1 or 3.",
+      "text": "The whole extract with no human: twelve stages, an agent CLI for yellow ones, exit 0, 1 or 3.",
       "fontSize": 17,
       "strokeColor": "#5f6368",
       "fontFamily": 5
@@ -2024,12 +2024,12 @@
     },
     {
       "type": "rectangle",
-      "id": "hl_pre",
+      "id": "hl_assets",
       "x": 490,
       "y": 2314,
       "width": 280,
       "height": 84,
-      "backgroundColor": "#fff3bf",
+      "backgroundColor": "#d3f9d8",
       "fillStyle": "solid",
       "boundElements": [
         {
@@ -2038,6 +2038,49 @@
         },
         {
           "id": "hl_ar2",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_assets_label",
+          "type": "text"
+        }
+      ],
+      "roundness": {
+        "type": 3
+      },
+      "strokeStyle": "dashed",
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "hl_assets_label",
+      "x": 500,
+      "y": 2324,
+      "width": 260,
+      "height": 64,
+      "text": "assets (optional)\nreads the attachments",
+      "fontSize": 16,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "hl_assets"
+    },
+    {
+      "type": "rectangle",
+      "id": "hl_pre",
+      "x": 840,
+      "y": 2314,
+      "width": 280,
+      "height": 84,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "boundElements": [
+        {
+          "id": "hl_ar2",
+          "type": "arrow"
+        },
+        {
+          "id": "hl_ar3",
           "type": "arrow"
         },
         {
@@ -2053,7 +2096,7 @@
     {
       "type": "text",
       "id": "hl_pre_label",
-      "x": 500,
+      "x": 850,
       "y": 2324,
       "width": 260,
       "height": 64,
@@ -2067,7 +2110,7 @@
     {
       "type": "rectangle",
       "id": "hl_doc",
-      "x": 840,
+      "x": 1190,
       "y": 2314,
       "width": 280,
       "height": 84,
@@ -2075,11 +2118,11 @@
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "hl_ar2",
+          "id": "hl_ar3",
           "type": "arrow"
         },
         {
-          "id": "hl_ar3",
+          "id": "hl_ar10",
           "type": "arrow"
         },
         {
@@ -2095,7 +2138,7 @@
     {
       "type": "text",
       "id": "hl_doc_label",
-      "x": 850,
+      "x": 1200,
       "y": 2324,
       "width": 260,
       "height": 64,
@@ -2109,19 +2152,19 @@
     {
       "type": "rectangle",
       "id": "hl_sta",
-      "x": 1190,
-      "y": 2314,
+      "x": 140,
+      "y": 2494,
       "width": 280,
       "height": 84,
       "backgroundColor": "#d3f9d8",
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "hl_ar3",
+          "id": "hl_ar4",
           "type": "arrow"
         },
         {
-          "id": "hl_ar9",
+          "id": "hl_ar10",
           "type": "arrow"
         },
         {
@@ -2137,8 +2180,8 @@
     {
       "type": "text",
       "id": "hl_sta_label",
-      "x": 1200,
-      "y": 2324,
+      "x": 150,
+      "y": 2504,
       "width": 260,
       "height": 64,
       "text": "static\nrun --until static",
@@ -2151,7 +2194,7 @@
     {
       "type": "rectangle",
       "id": "hl_ctx",
-      "x": 140,
+      "x": 490,
       "y": 2494,
       "width": 280,
       "height": 84,
@@ -2163,7 +2206,7 @@
           "type": "arrow"
         },
         {
-          "id": "hl_ar9",
+          "id": "hl_ar5",
           "type": "arrow"
         },
         {
@@ -2179,7 +2222,7 @@
     {
       "type": "text",
       "id": "hl_ctx_label",
-      "x": 150,
+      "x": 500,
       "y": 2504,
       "width": 260,
       "height": 64,
@@ -2193,7 +2236,7 @@
     {
       "type": "rectangle",
       "id": "hl_cms",
-      "x": 490,
+      "x": 840,
       "y": 2494,
       "width": 280,
       "height": 84,
@@ -2201,11 +2244,11 @@
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "hl_ar4",
+          "id": "hl_ar5",
           "type": "arrow"
         },
         {
-          "id": "hl_ar5",
+          "id": "hl_ar6",
           "type": "arrow"
         },
         {
@@ -2222,7 +2265,7 @@
     {
       "type": "text",
       "id": "hl_cms_label",
-      "x": 500,
+      "x": 850,
       "y": 2504,
       "width": 260,
       "height": 64,
@@ -2236,7 +2279,7 @@
     {
       "type": "rectangle",
       "id": "hl_lc",
-      "x": 840,
+      "x": 1190,
       "y": 2494,
       "width": 280,
       "height": 84,
@@ -2244,11 +2287,11 @@
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "hl_ar5",
+          "id": "hl_ar6",
           "type": "arrow"
         },
         {
-          "id": "hl_ar6",
+          "id": "hl_ar11",
           "type": "arrow"
         },
         {
@@ -2264,7 +2307,7 @@
     {
       "type": "text",
       "id": "hl_lc_label",
-      "x": 850,
+      "x": 1200,
       "y": 2504,
       "width": 260,
       "height": 64,
@@ -2278,19 +2321,19 @@
     {
       "type": "rectangle",
       "id": "hl_syn",
-      "x": 1190,
-      "y": 2494,
+      "x": 140,
+      "y": 2674,
       "width": 280,
       "height": 84,
       "backgroundColor": "#d3f9d8",
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "hl_ar6",
+          "id": "hl_ar7",
           "type": "arrow"
         },
         {
-          "id": "hl_ar10",
+          "id": "hl_ar11",
           "type": "arrow"
         },
         {
@@ -2306,8 +2349,8 @@
     {
       "type": "text",
       "id": "hl_syn_label",
-      "x": 1200,
-      "y": 2504,
+      "x": 150,
+      "y": 2684,
       "width": 260,
       "height": 64,
       "text": "synthesis\nmerge + synthesis",
@@ -2320,7 +2363,7 @@
     {
       "type": "rectangle",
       "id": "hl_agt",
-      "x": 140,
+      "x": 490,
       "y": 2674,
       "width": 280,
       "height": 84,
@@ -2332,7 +2375,7 @@
           "type": "arrow"
         },
         {
-          "id": "hl_ar10",
+          "id": "hl_ar8",
           "type": "arrow"
         },
         {
@@ -2352,7 +2395,7 @@
     {
       "type": "text",
       "id": "hl_agt_label",
-      "x": 150,
+      "x": 500,
       "y": 2684,
       "width": 260,
       "height": 64,
@@ -2366,7 +2409,7 @@
     {
       "type": "rectangle",
       "id": "hl_chk",
-      "x": 490,
+      "x": 840,
       "y": 2674,
       "width": 280,
       "height": 84,
@@ -2374,11 +2417,11 @@
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "hl_ar7",
+          "id": "hl_ar8",
           "type": "arrow"
         },
         {
-          "id": "hl_ar8",
+          "id": "hl_ar9",
           "type": "arrow"
         },
         {
@@ -2394,7 +2437,7 @@
     {
       "type": "text",
       "id": "hl_chk_label",
-      "x": 500,
+      "x": 850,
       "y": 2684,
       "width": 260,
       "height": 64,
@@ -2408,7 +2451,7 @@
     {
       "type": "rectangle",
       "id": "hl_pro",
-      "x": 840,
+      "x": 1190,
       "y": 2674,
       "width": 280,
       "height": 84,
@@ -2416,11 +2459,11 @@
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "hl_ar8",
+          "id": "hl_ar9",
           "type": "arrow"
         },
         {
-          "id": "hl_ar11",
+          "id": "hl_ar14",
           "type": "arrow"
         },
         {
@@ -2437,7 +2480,7 @@
     {
       "type": "text",
       "id": "hl_pro_label",
-      "x": 850,
+      "x": 1200,
       "y": 2684,
       "width": 260,
       "height": 64,
@@ -2451,6 +2494,7 @@
     {
       "type": "arrow",
       "id": "hl_ar1",
+      "endArrowhead": "arrow",
       "x": 420,
       "y": 2356,
       "width": 70,
@@ -2465,7 +2509,6 @@
           0
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "hl_install",
         "fixedPoint": [
@@ -2474,7 +2517,7 @@
         ]
       },
       "endBinding": {
-        "elementId": "hl_pre",
+        "elementId": "hl_assets",
         "fixedPoint": [
           0,
           0.5
@@ -2485,6 +2528,7 @@
     {
       "type": "arrow",
       "id": "hl_ar2",
+      "endArrowhead": "arrow",
       "x": 770,
       "y": 2356,
       "width": 70,
@@ -2499,7 +2543,40 @@
           0
         ]
       ],
+      "startBinding": {
+        "elementId": "hl_assets",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_pre",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar3",
       "endArrowhead": "arrow",
+      "x": 1120,
+      "y": 2356,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
       "startBinding": {
         "elementId": "hl_pre",
         "fixedPoint": [
@@ -2518,41 +2595,8 @@
     },
     {
       "type": "arrow",
-      "id": "hl_ar3",
-      "x": 1120,
-      "y": 2356,
-      "width": 70,
-      "height": 0,
-      "points": [
-        [
-          0,
-          0
-        ],
-        [
-          70,
-          0
-        ]
-      ],
-      "endArrowhead": "arrow",
-      "startBinding": {
-        "elementId": "hl_doc",
-        "fixedPoint": [
-          1,
-          0.5
-        ]
-      },
-      "endBinding": {
-        "elementId": "hl_sta",
-        "fixedPoint": [
-          0,
-          0.5
-        ]
-      },
-      "roughness": 2
-    },
-    {
-      "type": "arrow",
       "id": "hl_ar4",
+      "endArrowhead": "arrow",
       "x": 420,
       "y": 2536,
       "width": 70,
@@ -2567,7 +2611,40 @@
           0
         ]
       ],
+      "startBinding": {
+        "elementId": "hl_sta",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_ctx",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar5",
       "endArrowhead": "arrow",
+      "x": 770,
+      "y": 2536,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
       "startBinding": {
         "elementId": "hl_ctx",
         "fixedPoint": [
@@ -2586,8 +2663,9 @@
     },
     {
       "type": "arrow",
-      "id": "hl_ar5",
-      "x": 770,
+      "id": "hl_ar6",
+      "endArrowhead": "arrow",
+      "x": 1120,
       "y": 2536,
       "width": 70,
       "height": 0,
@@ -2601,7 +2679,6 @@
           0
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "hl_cms",
         "fixedPoint": [
@@ -2620,41 +2697,8 @@
     },
     {
       "type": "arrow",
-      "id": "hl_ar6",
-      "x": 1120,
-      "y": 2536,
-      "width": 70,
-      "height": 0,
-      "points": [
-        [
-          0,
-          0
-        ],
-        [
-          70,
-          0
-        ]
-      ],
-      "endArrowhead": "arrow",
-      "startBinding": {
-        "elementId": "hl_lc",
-        "fixedPoint": [
-          1,
-          0.5
-        ]
-      },
-      "endBinding": {
-        "elementId": "hl_syn",
-        "fixedPoint": [
-          0,
-          0.5
-        ]
-      },
-      "roughness": 2
-    },
-    {
-      "type": "arrow",
       "id": "hl_ar7",
+      "endArrowhead": "arrow",
       "x": 420,
       "y": 2716,
       "width": 70,
@@ -2669,7 +2713,40 @@
           0
         ]
       ],
+      "startBinding": {
+        "elementId": "hl_syn",
+        "fixedPoint": [
+          1,
+          0.5
+        ]
+      },
+      "endBinding": {
+        "elementId": "hl_agt",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "arrow",
+      "id": "hl_ar8",
       "endArrowhead": "arrow",
+      "x": 770,
+      "y": 2716,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
       "startBinding": {
         "elementId": "hl_agt",
         "fixedPoint": [
@@ -2688,8 +2765,9 @@
     },
     {
       "type": "arrow",
-      "id": "hl_ar8",
-      "x": 770,
+      "id": "hl_ar9",
+      "endArrowhead": "arrow",
+      "x": 1120,
       "y": 2716,
       "width": 70,
       "height": 0,
@@ -2703,7 +2781,6 @@
           0
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "hl_chk",
         "fixedPoint": [
@@ -2722,7 +2799,8 @@
     },
     {
       "type": "arrow",
-      "id": "hl_ar9",
+      "id": "hl_ar10",
+      "endArrowhead": "arrow",
       "x": 1330,
       "y": 2398,
       "width": 1050,
@@ -2745,16 +2823,15 @@
           96
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
-        "elementId": "hl_sta",
+        "elementId": "hl_doc",
         "fixedPoint": [
           0.5,
           1
         ]
       },
       "endBinding": {
-        "elementId": "hl_ctx",
+        "elementId": "hl_sta",
         "fixedPoint": [
           0.5,
           0
@@ -2764,7 +2841,8 @@
     },
     {
       "type": "arrow",
-      "id": "hl_ar10",
+      "id": "hl_ar11",
+      "endArrowhead": "arrow",
       "x": 1330,
       "y": 2578,
       "width": 1050,
@@ -2787,16 +2865,15 @@
           96
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
-        "elementId": "hl_syn",
+        "elementId": "hl_lc",
         "fixedPoint": [
           0.5,
           1
         ]
       },
       "endBinding": {
-        "elementId": "hl_agt",
+        "elementId": "hl_syn",
         "fixedPoint": [
           0.5,
           0
@@ -2808,14 +2885,14 @@
       "type": "ellipse",
       "id": "hl_ok",
       "x": 1190,
-      "y": 2674,
+      "y": 2854,
       "width": 280,
       "height": 84,
       "backgroundColor": "#d0ebff",
       "fillStyle": "solid",
       "boundElements": [
         {
-          "id": "hl_ar11",
+          "id": "hl_ar14",
           "type": "arrow"
         },
         {
@@ -2832,7 +2909,7 @@
       "type": "text",
       "id": "hl_ok_label",
       "x": 1200,
-      "y": 2684,
+      "y": 2864,
       "width": 260,
       "height": 64,
       "text": "exit 0\nevery stage passed",
@@ -2844,34 +2921,34 @@
     },
     {
       "type": "arrow",
-      "id": "hl_ar11",
-      "x": 1120,
-      "y": 2716,
-      "width": 70,
-      "height": 0,
+      "id": "hl_ar14",
+      "endArrowhead": "arrow",
+      "x": 1330,
+      "y": 2758,
+      "width": 0,
+      "height": 96,
       "points": [
         [
           0,
           0
         ],
         [
-          70,
-          0
+          0,
+          96
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "hl_pro",
         "fixedPoint": [
-          1,
-          0.5
+          0.5,
+          1
         ]
       },
       "endBinding": {
         "elementId": "hl_ok",
         "fixedPoint": [
-          0,
-          0.5
+          0.5,
+          0
         ]
       },
       "roughness": 2
@@ -2880,7 +2957,7 @@
       "type": "rectangle",
       "id": "hl_loop",
       "x": 140,
-      "y": 2874,
+      "y": 2854,
       "width": 630,
       "height": 150,
       "backgroundColor": "#fff3bf",
@@ -2909,7 +2986,7 @@
       "type": "text",
       "id": "hl_loop_label",
       "x": 150,
-      "y": 2884,
+      "y": 2864,
       "width": 610,
       "height": 130,
       "text": "agent loop (every yellow stage)\nagent next --json, one fresh agent process per task\nthen the task rerun, then check\nfix attempts up to --max-fix-attempts, default 2",
@@ -2922,10 +2999,11 @@
     {
       "type": "arrow",
       "id": "hl_ar12",
-      "x": 280,
+      "endArrowhead": "arrow",
+      "x": 630,
       "y": 2758,
       "width": 175,
-      "height": 116,
+      "height": 96,
       "points": [
         [
           0,
@@ -2933,18 +3011,17 @@
         ],
         [
           0,
-          76
+          48
         ],
         [
-          175,
-          76
+          -175,
+          48
         ],
         [
-          175,
-          116
+          -175,
+          96
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "hl_agt",
         "fixedPoint": [
@@ -2966,7 +3043,7 @@
       "type": "rectangle",
       "id": "hl_blk",
       "x": 840,
-      "y": 2874,
+      "y": 2854,
       "width": 280,
       "height": 150,
       "backgroundColor": "#ffe8cc",
@@ -2990,7 +3067,7 @@
       "type": "text",
       "id": "hl_blk_label",
       "x": 850,
-      "y": 2884,
+      "y": 2864,
       "width": 260,
       "height": 130,
       "text": "exit 3, blocked\nreports/blockers/<task>.md\na person must look",
@@ -3004,29 +3081,29 @@
       "type": "rectangle",
       "id": "hl_bad",
       "x": 1190,
-      "y": 2874,
+      "y": 2974,
       "width": 280,
-      "height": 150,
+      "height": 110,
       "backgroundColor": "#ffe3e3",
       "fillStyle": "solid",
+      "roundness": {
+        "type": 3
+      },
       "boundElements": [
         {
           "id": "hl_bad_label",
           "type": "text"
         }
       ],
-      "roundness": {
-        "type": 3
-      },
       "roughness": 2
     },
     {
       "type": "text",
       "id": "hl_bad_label",
       "x": 1200,
-      "y": 2884,
+      "y": 2984,
       "width": 260,
-      "height": 130,
+      "height": 90,
       "text": "exit 1, any stage failed\nerror.code and fix\nin the JSON result",
       "fontSize": 16,
       "fontFamily": 5,
@@ -3037,8 +3114,9 @@
     {
       "type": "arrow",
       "id": "hl_ar13",
+      "endArrowhead": "arrow",
       "x": 770,
-      "y": 2949,
+      "y": 2929,
       "width": 70,
       "height": 0,
       "points": [
@@ -3051,7 +3129,6 @@
           0
         ]
       ],
-      "endArrowhead": "arrow",
       "startBinding": {
         "elementId": "hl_loop",
         "fixedPoint": [
@@ -3073,27 +3150,29 @@
       "type": "text",
       "id": "hl_l1",
       "x": 779,
-      "y": 2916,
+      "y": 2896,
       "text": "blocker",
       "fontSize": 14,
       "strokeColor": "#c92a2a",
-      "fontFamily": 5
+      "fontFamily": 5,
+      "boundElements": []
     },
     {
       "type": "text",
       "id": "hl_l3",
       "x": 140,
-      "y": 3044,
-      "text": "Re-running on the same source resumes the latest sidecar. Finished stages report \"already done\" and start no agent.",
+      "y": 3104,
+      "text": "Re-running on the same source resumes the latest sidecar. Finished stages report \"already done\" and start no agent.\nA missing attachment skips only the stages that need it (cms, the yellow ones); assets never fails the run.",
       "fontSize": 14,
       "strokeColor": "#5f6368",
-      "fontFamily": 5
+      "fontFamily": 5,
+      "boundElements": []
     },
     {
       "type": "rectangle",
       "id": "ph_bg",
       "x": 80,
-      "y": 3254,
+      "y": 3334,
       "width": 1450,
       "height": 1112,
       "backgroundColor": "#f8f9fa",
@@ -3109,7 +3188,7 @@
       "type": "text",
       "id": "ph_title",
       "x": 114,
-      "y": 3280,
+      "y": 3360,
       "text": "Phases: inputs and outputs",
       "fontSize": 30,
       "strokeColor": "#1e1e1e",
@@ -3119,7 +3198,7 @@
       "type": "text",
       "id": "ph_sub",
       "x": 116,
-      "y": 3324,
+      "y": 3404,
       "text": "Required input, optional input and the expected output of each phase. 1, 2, 7, 8 and 9 are commands.",
       "fontSize": 17,
       "strokeColor": "#5f6368",
@@ -3129,7 +3208,7 @@
       "type": "arrow",
       "id": "ph_div",
       "x": 114,
-      "y": 3366,
+      "y": 3446,
       "width": 1382,
       "height": 0,
       "points": [
@@ -3151,7 +3230,7 @@
       "type": "text",
       "id": "ph_h_phase",
       "x": 144,
-      "y": 3402,
+      "y": 3482,
       "text": "Phase",
       "fontSize": 18,
       "strokeColor": "#1e1e1e",
@@ -3161,7 +3240,7 @@
       "type": "text",
       "id": "ph_h_required",
       "x": 374,
-      "y": 3402,
+      "y": 3482,
       "text": "Required input",
       "fontSize": 18,
       "strokeColor": "#1e1e1e",
@@ -3171,7 +3250,7 @@
       "type": "text",
       "id": "ph_h_optional",
       "x": 734,
-      "y": 3402,
+      "y": 3482,
       "text": "Optional input",
       "fontSize": 18,
       "strokeColor": "#1e1e1e",
@@ -3181,7 +3260,7 @@
       "type": "text",
       "id": "ph_h_output",
       "x": 1094,
-      "y": 3402,
+      "y": 3482,
       "text": "Output",
       "fontSize": 18,
       "strokeColor": "#1971c2",
@@ -3191,7 +3270,7 @@
       "type": "rectangle",
       "id": "ph_p1",
       "x": 140,
-      "y": 3437,
+      "y": 3517,
       "width": 200,
       "height": 78,
       "backgroundColor": "#fff3bf",
@@ -3215,7 +3294,7 @@
       "type": "text",
       "id": "ph_p1_label",
       "x": 150,
-      "y": 3447,
+      "y": 3527,
       "width": 180,
       "height": 58,
       "text": "1 preflight",
@@ -3229,7 +3308,7 @@
       "type": "rectangle",
       "id": "ph_r1",
       "x": 370,
-      "y": 3437,
+      "y": 3517,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -3249,7 +3328,7 @@
       "type": "text",
       "id": "ph_r1_label",
       "x": 380,
-      "y": 3447,
+      "y": 3527,
       "width": 310,
       "height": 58,
       "text": "Python 3.12, PyYAML, jsonschema\n--source: Serena onboarding\nand a Graphify index",
@@ -3263,7 +3342,7 @@
       "type": "rectangle",
       "id": "ph_o1",
       "x": 730,
-      "y": 3437,
+      "y": 3517,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -3285,7 +3364,7 @@
       "type": "text",
       "id": "ph_o1_label",
       "x": 740,
-      "y": 3447,
+      "y": 3527,
       "width": 310,
       "height": 58,
       "text": "graft index (warning only)\n--profile (deps to probe)",
@@ -3300,7 +3379,7 @@
       "type": "rectangle",
       "id": "ph_x1",
       "x": 1090,
-      "y": 3437,
+      "y": 3517,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -3322,7 +3401,7 @@
       "type": "text",
       "id": "ph_x1_label",
       "x": 1100,
-      "y": 3447,
+      "y": 3527,
       "width": 350,
       "height": 58,
       "text": "No sidecar. Install links,\nstack and build-scope report",
@@ -3337,7 +3416,7 @@
       "type": "rectangle",
       "id": "ph_p2",
       "x": 140,
-      "y": 3529,
+      "y": 3609,
       "width": 200,
       "height": 78,
       "backgroundColor": "#fff3bf",
@@ -3365,7 +3444,7 @@
       "type": "text",
       "id": "ph_p2_label",
       "x": 150,
-      "y": 3539,
+      "y": 3619,
       "width": 180,
       "height": 58,
       "text": "2 context",
@@ -3379,7 +3458,7 @@
       "type": "rectangle",
       "id": "ph_r2",
       "x": 370,
-      "y": 3529,
+      "y": 3609,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -3399,7 +3478,7 @@
       "type": "text",
       "id": "ph_r2_label",
       "x": 380,
-      "y": 3539,
+      "y": 3619,
       "width": 310,
       "height": 58,
       "text": "--source with one stack marker\n(application.xml or site.xml,\nor a root composer.json)",
@@ -3413,7 +3492,7 @@
       "type": "rectangle",
       "id": "ph_o2",
       "x": 730,
-      "y": 3529,
+      "y": 3609,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -3435,7 +3514,7 @@
       "type": "text",
       "id": "ph_o2_label",
       "x": 740,
-      "y": 3539,
+      "y": 3619,
       "width": 310,
       "height": 58,
       "text": "--profile (skips detection)\n--exclude\n<checkout>/.extractkit/profile.yaml",
@@ -3450,7 +3529,7 @@
       "type": "rectangle",
       "id": "ph_x2",
       "x": 1090,
-      "y": 3529,
+      "y": 3609,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -3472,7 +3551,7 @@
       "type": "text",
       "id": "ph_x2_label",
       "x": 1100,
-      "y": 3539,
+      "y": 3619,
       "width": 350,
       "height": 58,
       "text": "context/build-scope.json\ncontext/profile.yaml (overlay)",
@@ -3487,7 +3566,7 @@
       "type": "rectangle",
       "id": "ph_p3",
       "x": 140,
-      "y": 3621,
+      "y": 3701,
       "width": 200,
       "height": 78,
       "backgroundColor": "#d3f9d8",
@@ -3515,7 +3594,7 @@
       "type": "text",
       "id": "ph_p3_label",
       "x": 150,
-      "y": 3631,
+      "y": 3711,
       "width": 180,
       "height": 58,
       "text": "3 static",
@@ -3529,7 +3608,7 @@
       "type": "rectangle",
       "id": "ph_r3",
       "x": 370,
-      "y": 3621,
+      "y": 3701,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -3549,7 +3628,7 @@
       "type": "text",
       "id": "ph_r3_label",
       "x": 380,
-      "y": 3631,
+      "y": 3711,
       "width": 310,
       "height": 58,
       "text": "--source\nthe context overlay\n(run writes it when missing)",
@@ -3563,7 +3642,7 @@
       "type": "rectangle",
       "id": "ph_o3",
       "x": 730,
-      "y": 3621,
+      "y": 3701,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -3585,7 +3664,7 @@
       "type": "text",
       "id": "ph_o3_label",
       "x": 740,
-      "y": 3631,
+      "y": 3711,
       "width": 310,
       "height": 58,
       "text": "graft/, graphify-out/\n--exclude\nthe context.exclude decision",
@@ -3600,7 +3679,7 @@
       "type": "rectangle",
       "id": "ph_x3",
       "x": 1090,
-      "y": 3621,
+      "y": 3701,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -3622,7 +3701,7 @@
       "type": "text",
       "id": "ph_x3_label",
       "x": 1100,
-      "y": 3631,
+      "y": 3711,
       "width": 350,
       "height": 58,
       "text": "inventory/static.json, controllers,\ntemplates; map/*.json\nintegrations/openapi.yaml",
@@ -3637,7 +3716,7 @@
       "type": "rectangle",
       "id": "ph_p4",
       "x": 140,
-      "y": 3713,
+      "y": 3793,
       "width": 200,
       "height": 78,
       "backgroundColor": "#e5dbff",
@@ -3666,7 +3745,7 @@
       "type": "text",
       "id": "ph_p4_label",
       "x": 150,
-      "y": 3723,
+      "y": 3803,
       "width": 180,
       "height": 58,
       "text": "4 cms\n(optional phase)",
@@ -3680,7 +3759,7 @@
       "type": "rectangle",
       "id": "ph_r4",
       "x": 370,
-      "y": 3713,
+      "y": 3793,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -3700,7 +3779,7 @@
       "type": "text",
       "id": "ph_r4_label",
       "x": 380,
-      "y": 3723,
+      "y": 3803,
       "width": 310,
       "height": 58,
       "text": "a local or review XP\n--branch draft|master\n--storage-state (a login)",
@@ -3714,7 +3793,7 @@
       "type": "rectangle",
       "id": "ph_o4",
       "x": 730,
-      "y": 3713,
+      "y": 3793,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -3736,7 +3815,7 @@
       "type": "text",
       "id": "ph_o4_label",
       "x": 740,
-      "y": 3723,
+      "y": 3803,
       "width": 310,
       "height": 58,
       "text": "--guillotine, --xp-host, --project\n--cms-key (default /en), --configenv\nbaseline: playwright-cli",
@@ -3751,7 +3830,7 @@
       "type": "rectangle",
       "id": "ph_x4",
       "x": 1090,
-      "y": 3713,
+      "y": 3793,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -3773,7 +3852,7 @@
       "type": "text",
       "id": "ph_x4_label",
       "x": 1100,
-      "y": 3723,
+      "y": 3803,
       "width": 350,
       "height": 58,
       "text": "inventory/runtime.json\nlive-config-candidates.json\ncontent-volume; baseline/ (opt.)",
@@ -3788,7 +3867,7 @@
       "type": "rectangle",
       "id": "ph_p5",
       "x": 140,
-      "y": 3805,
+      "y": 3885,
       "width": 200,
       "height": 78,
       "backgroundColor": "#d3f9d8",
@@ -3816,7 +3895,7 @@
       "type": "text",
       "id": "ph_p5_label",
       "x": 150,
-      "y": 3815,
+      "y": 3895,
       "width": 180,
       "height": 58,
       "text": "5 merge",
@@ -3830,7 +3909,7 @@
       "type": "rectangle",
       "id": "ph_r5",
       "x": 370,
-      "y": 3805,
+      "y": 3885,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -3850,7 +3929,7 @@
       "type": "text",
       "id": "ph_r5_label",
       "x": 380,
-      "y": 3815,
+      "y": 3895,
       "width": 310,
       "height": 58,
       "text": "static output",
@@ -3864,7 +3943,7 @@
       "type": "rectangle",
       "id": "ph_o5",
       "x": 730,
-      "y": 3805,
+      "y": 3885,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -3886,7 +3965,7 @@
       "type": "text",
       "id": "ph_o5_label",
       "x": 740,
-      "y": 3815,
+      "y": 3895,
       "width": 310,
       "height": 58,
       "text": "runtime.json (without it, live\nsurfaces stay unverified-live)",
@@ -3901,7 +3980,7 @@
       "type": "rectangle",
       "id": "ph_x5",
       "x": 1090,
-      "y": 3805,
+      "y": 3885,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -3923,7 +4002,7 @@
       "type": "text",
       "id": "ph_x5_label",
       "x": 1100,
-      "y": 3815,
+      "y": 3895,
       "width": 350,
       "height": 58,
       "text": "map/bounded-contexts.json\nrules/, merge-report.md\ndocs/harvest/",
@@ -3938,7 +4017,7 @@
       "type": "rectangle",
       "id": "ph_p6",
       "x": 140,
-      "y": 3897,
+      "y": 3977,
       "width": 200,
       "height": 78,
       "backgroundColor": "#d3f9d8",
@@ -3966,7 +4045,7 @@
       "type": "text",
       "id": "ph_p6_label",
       "x": 150,
-      "y": 3907,
+      "y": 3987,
       "width": 180,
       "height": 58,
       "text": "6 synthesis",
@@ -3980,7 +4059,7 @@
       "type": "rectangle",
       "id": "ph_r6",
       "x": 370,
-      "y": 3897,
+      "y": 3977,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -4000,7 +4079,7 @@
       "type": "text",
       "id": "ph_r6_label",
       "x": 380,
-      "y": 3907,
+      "y": 3987,
       "width": 310,
       "height": 58,
       "text": "merge output",
@@ -4014,7 +4093,7 @@
       "type": "rectangle",
       "id": "ph_o6",
       "x": 730,
-      "y": 3897,
+      "y": 3977,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -4036,7 +4115,7 @@
       "type": "text",
       "id": "ph_o6_label",
       "x": 740,
-      "y": 3907,
+      "y": 3987,
       "width": 310,
       "height": 58,
       "text": "--tasks (Spec Kit tasks.md)",
@@ -4051,7 +4130,7 @@
       "type": "rectangle",
       "id": "ph_x6",
       "x": 1090,
-      "y": 3897,
+      "y": 3977,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -4073,7 +4152,7 @@
       "type": "text",
       "id": "ph_x6_label",
       "x": 1100,
-      "y": 3907,
+      "y": 3987,
       "width": 350,
       "height": 58,
       "text": "spec-kit/, PRODUCT.md, DESIGN.md\nuse-cases/, docs/technical, guide\nxp8-compat.md (optional slot)",
@@ -4088,7 +4167,7 @@
       "type": "rectangle",
       "id": "ph_p7",
       "x": 140,
-      "y": 3989,
+      "y": 4069,
       "width": 200,
       "height": 78,
       "backgroundColor": "#fff3bf",
@@ -4116,7 +4195,7 @@
       "type": "text",
       "id": "ph_p7_label",
       "x": 150,
-      "y": 3999,
+      "y": 4079,
       "width": 180,
       "height": 58,
       "text": "7 agent",
@@ -4130,7 +4209,7 @@
       "type": "rectangle",
       "id": "ph_r7",
       "x": 370,
-      "y": 3989,
+      "y": 4069,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -4150,7 +4229,7 @@
       "type": "text",
       "id": "ph_r7_label",
       "x": 380,
-      "y": 3999,
+      "y": 4079,
       "width": 310,
       "height": 58,
       "text": "an AI assistant runs the prompts\neach task's reads (agent list)",
@@ -4164,7 +4243,7 @@
       "type": "rectangle",
       "id": "ph_o7",
       "x": 730,
-      "y": 3989,
+      "y": 4069,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -4186,7 +4265,7 @@
       "type": "text",
       "id": "ph_o7_label",
       "x": 740,
-      "y": 3999,
+      "y": 4079,
       "width": 310,
       "height": 58,
       "text": "spec.enrich, spec.review",
@@ -4201,7 +4280,7 @@
       "type": "rectangle",
       "id": "ph_x7",
       "x": 1090,
-      "y": 3989,
+      "y": 4069,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -4223,7 +4302,7 @@
       "type": "text",
       "id": "ph_x7_label",
       "x": 1100,
-      "y": 3999,
+      "y": 4079,
       "width": 350,
       "height": 58,
       "text": "overlay exclude + live_config\nrule names in rules/review.md\nBUSINESS.md, constitution/project.md",
@@ -4238,7 +4317,7 @@
       "type": "rectangle",
       "id": "ph_p8",
       "x": 140,
-      "y": 4081,
+      "y": 4161,
       "width": 200,
       "height": 78,
       "backgroundColor": "#fff3bf",
@@ -4266,7 +4345,7 @@
       "type": "text",
       "id": "ph_p8_label",
       "x": 150,
-      "y": 4091,
+      "y": 4171,
       "width": 180,
       "height": 58,
       "text": "8 check",
@@ -4280,7 +4359,7 @@
       "type": "rectangle",
       "id": "ph_r8",
       "x": 370,
-      "y": 4081,
+      "y": 4161,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -4300,7 +4379,7 @@
       "type": "text",
       "id": "ph_r8_label",
       "x": 380,
-      "y": 4091,
+      "y": 4171,
       "width": 310,
       "height": 58,
       "text": "--out with phase 3 done",
@@ -4314,7 +4393,7 @@
       "type": "rectangle",
       "id": "ph_o8",
       "x": 730,
-      "y": 4081,
+      "y": 4161,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -4336,7 +4415,7 @@
       "type": "text",
       "id": "ph_o8_label",
       "x": 740,
-      "y": 4091,
+      "y": 4171,
       "width": 310,
       "height": 58,
       "text": "later files are checked\nonly when present",
@@ -4351,7 +4430,7 @@
       "type": "rectangle",
       "id": "ph_x8",
       "x": 1090,
-      "y": 4081,
+      "y": 4161,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -4373,7 +4452,7 @@
       "type": "text",
       "id": "ph_x8_label",
       "x": 1100,
-      "y": 4091,
+      "y": 4171,
       "width": 350,
       "height": 58,
       "text": "No file. Exit 0, or exit 1\nwith every problem listed",
@@ -4388,7 +4467,7 @@
       "type": "rectangle",
       "id": "ph_p9",
       "x": 140,
-      "y": 4173,
+      "y": 4253,
       "width": 200,
       "height": 78,
       "backgroundColor": "#fff3bf",
@@ -4412,7 +4491,7 @@
       "type": "text",
       "id": "ph_p9_label",
       "x": 150,
-      "y": 4183,
+      "y": 4263,
       "width": 180,
       "height": 58,
       "text": "9 promote",
@@ -4426,7 +4505,7 @@
       "type": "rectangle",
       "id": "ph_r9",
       "x": 370,
-      "y": 4173,
+      "y": 4253,
       "width": 330,
       "height": 78,
       "backgroundColor": "#ffffff",
@@ -4446,7 +4525,7 @@
       "type": "text",
       "id": "ph_r9_label",
       "x": 380,
-      "y": 4183,
+      "y": 4263,
       "width": 310,
       "height": 58,
       "text": "--source as a git work tree\ndestinations git can restore",
@@ -4460,7 +4539,7 @@
       "type": "rectangle",
       "id": "ph_o9",
       "x": 730,
-      "y": 4173,
+      "y": 4253,
       "width": 330,
       "height": 78,
       "backgroundColor": "#f8f9fa",
@@ -4482,7 +4561,7 @@
       "type": "text",
       "id": "ph_o9_label",
       "x": 740,
-      "y": 4183,
+      "y": 4263,
       "width": 310,
       "height": 58,
       "text": "--out (default: latest)\n--force",
@@ -4497,7 +4576,7 @@
       "type": "rectangle",
       "id": "ph_x9",
       "x": 1090,
-      "y": 4173,
+      "y": 4253,
       "width": 370,
       "height": 78,
       "backgroundColor": "#d0ebff",
@@ -4519,7 +4598,7 @@
       "type": "text",
       "id": "ph_x9_label",
       "x": 1100,
-      "y": 4183,
+      "y": 4263,
       "width": 350,
       "height": 58,
       "text": "<checkout>: constitution, specs/,\nPRODUCT, DESIGN, BUSINESS.md",
@@ -4534,7 +4613,7 @@
       "type": "rectangle",
       "id": "ph_l0",
       "x": 140,
-      "y": 4275,
+      "y": 4355,
       "width": 28,
       "height": 22,
       "backgroundColor": "#fff3bf",
@@ -4549,7 +4628,7 @@
       "type": "text",
       "id": "ph_lt0",
       "x": 178,
-      "y": 4276,
+      "y": 4356,
       "text": "command or AI step",
       "fontSize": 15,
       "strokeColor": "#5f6368",
@@ -4559,7 +4638,7 @@
       "type": "rectangle",
       "id": "ph_l1",
       "x": 362,
-      "y": 4275,
+      "y": 4355,
       "width": 28,
       "height": 22,
       "backgroundColor": "#d3f9d8",
@@ -4574,7 +4653,7 @@
       "type": "text",
       "id": "ph_lt1",
       "x": 400,
-      "y": 4276,
+      "y": 4356,
       "text": "pipeline slots",
       "fontSize": 15,
       "strokeColor": "#5f6368",
@@ -4584,7 +4663,7 @@
       "type": "rectangle",
       "id": "ph_l2",
       "x": 548,
-      "y": 4275,
+      "y": 4355,
       "width": 28,
       "height": 22,
       "backgroundColor": "#e5dbff",
@@ -4600,7 +4679,7 @@
       "type": "text",
       "id": "ph_lt2",
       "x": 586,
-      "y": 4276,
+      "y": 4356,
       "text": "needs a live test site",
       "fontSize": 15,
       "strokeColor": "#5f6368",
@@ -4610,7 +4689,7 @@
       "type": "rectangle",
       "id": "ph_l3",
       "x": 806,
-      "y": 4275,
+      "y": 4355,
       "width": 28,
       "height": 22,
       "backgroundColor": "#f8f9fa",
@@ -4627,7 +4706,7 @@
       "type": "text",
       "id": "ph_lt3",
       "x": 844,
-      "y": 4276,
+      "y": 4356,
       "text": "optional input",
       "fontSize": 15,
       "strokeColor": "#5f6368",
@@ -4637,7 +4716,7 @@
       "type": "rectangle",
       "id": "ph_l4",
       "x": 992,
-      "y": 4275,
+      "y": 4355,
       "width": 28,
       "height": 22,
       "backgroundColor": "#d0ebff",
@@ -4653,7 +4732,7 @@
       "type": "text",
       "id": "ph_lt4",
       "x": 1030,
-      "y": 4276,
+      "y": 4356,
       "text": "expected output",
       "fontSize": 15,
       "strokeColor": "#5f6368",
@@ -4663,7 +4742,7 @@
       "type": "arrow",
       "id": "ph_a1",
       "x": 240,
-      "y": 3515,
+      "y": 3595,
       "width": 0,
       "height": 14,
       "points": [
@@ -4697,7 +4776,7 @@
       "type": "arrow",
       "id": "ph_a2",
       "x": 240,
-      "y": 3607,
+      "y": 3687,
       "width": 0,
       "height": 14,
       "points": [
@@ -4731,7 +4810,7 @@
       "type": "arrow",
       "id": "ph_a3",
       "x": 240,
-      "y": 3699,
+      "y": 3779,
       "width": 0,
       "height": 14,
       "points": [
@@ -4765,7 +4844,7 @@
       "type": "arrow",
       "id": "ph_a4",
       "x": 240,
-      "y": 3791,
+      "y": 3871,
       "width": 0,
       "height": 14,
       "points": [
@@ -4799,7 +4878,7 @@
       "type": "arrow",
       "id": "ph_a5",
       "x": 240,
-      "y": 3883,
+      "y": 3963,
       "width": 0,
       "height": 14,
       "points": [
@@ -4833,7 +4912,7 @@
       "type": "arrow",
       "id": "ph_a6",
       "x": 240,
-      "y": 3975,
+      "y": 4055,
       "width": 0,
       "height": 14,
       "points": [
@@ -4867,7 +4946,7 @@
       "type": "arrow",
       "id": "ph_a7",
       "x": 240,
-      "y": 4067,
+      "y": 4147,
       "width": 0,
       "height": 14,
       "points": [
@@ -4901,7 +4980,7 @@
       "type": "arrow",
       "id": "ph_a8",
       "x": 240,
-      "y": 4159,
+      "y": 4239,
       "width": 0,
       "height": 14,
       "points": [
@@ -4935,7 +5014,7 @@
       "type": "rectangle",
       "id": "ln_bg",
       "x": 80,
-      "y": 4486,
+      "y": 4566,
       "width": 1450,
       "height": 916,
       "backgroundColor": "#f8f9fa",
@@ -4951,7 +5030,7 @@
       "type": "text",
       "id": "ln_title",
       "x": 114,
-      "y": 4512,
+      "y": 4592,
       "text": "Sidecar lineage",
       "fontSize": 30,
       "strokeColor": "#1e1e1e",
@@ -4961,7 +5040,7 @@
       "type": "text",
       "id": "ln_sub",
       "x": 116,
-      "y": 4556,
+      "y": 4636,
       "text": "Checkout is read-only until promote. Yellow = AI step. Purple = CMS only. Grey dashed = optional, never promoted.",
       "fontSize": 17,
       "strokeColor": "#5f6368",
@@ -4971,7 +5050,7 @@
       "type": "arrow",
       "id": "ln_div",
       "x": 114,
-      "y": 4598,
+      "y": 4678,
       "width": 1382,
       "height": 0,
       "points": [
@@ -4993,7 +5072,7 @@
       "type": "text",
       "id": "ln_s2",
       "x": 140,
-      "y": 4610,
+      "y": 4690,
       "text": "Purple = CMS only. Grey dashed = optional, never promoted.",
       "fontSize": 16,
       "strokeColor": "#5f6368",
@@ -5003,7 +5082,7 @@
       "type": "rectangle",
       "id": "ln_ctx",
       "x": 140,
-      "y": 4714,
+      "y": 4794,
       "width": 210,
       "height": 90,
       "backgroundColor": "#fff3bf",
@@ -5035,7 +5114,7 @@
       "type": "text",
       "id": "ln_ctx_label",
       "x": 150,
-      "y": 4724,
+      "y": 4804,
       "width": 190,
       "height": 70,
       "text": "context/profile.yaml\n+ build-scope.json",
@@ -5049,7 +5128,7 @@
       "type": "ellipse",
       "id": "ln_src",
       "x": 140,
-      "y": 4904,
+      "y": 4984,
       "width": 210,
       "height": 90,
       "backgroundColor": "#d0ebff",
@@ -5085,7 +5164,7 @@
       "type": "text",
       "id": "ln_src_label",
       "x": 150,
-      "y": 4914,
+      "y": 4994,
       "width": 190,
       "height": 70,
       "text": "legacy checkout",
@@ -5099,7 +5178,7 @@
       "type": "rectangle",
       "id": "ln_oas",
       "x": 440,
-      "y": 4714,
+      "y": 4794,
       "width": 220,
       "height": 76,
       "backgroundColor": "#e6fcf5",
@@ -5127,7 +5206,7 @@
       "type": "text",
       "id": "ln_oas_label",
       "x": 450,
-      "y": 4724,
+      "y": 4804,
       "width": 200,
       "height": 56,
       "text": "openapi.yaml",
@@ -5141,7 +5220,7 @@
       "type": "rectangle",
       "id": "ln_maps",
       "x": 440,
-      "y": 4911,
+      "y": 4991,
       "width": 220,
       "height": 76,
       "backgroundColor": "#e6fcf5",
@@ -5173,7 +5252,7 @@
       "type": "text",
       "id": "ln_maps_label",
       "x": 450,
-      "y": 4921,
+      "y": 5001,
       "width": 200,
       "height": 56,
       "text": "map/*.json",
@@ -5187,7 +5266,7 @@
       "type": "rectangle",
       "id": "ln_inv",
       "x": 440,
-      "y": 5104,
+      "y": 5184,
       "width": 220,
       "height": 110,
       "backgroundColor": "#e6fcf5",
@@ -5223,7 +5302,7 @@
       "type": "text",
       "id": "ln_inv_label",
       "x": 450,
-      "y": 5114,
+      "y": 5194,
       "width": 200,
       "height": 90,
       "text": "static.json\ncontrollers.json\ntemplates.json",
@@ -5237,7 +5316,7 @@
       "type": "rectangle",
       "id": "ln_rt",
       "x": 780,
-      "y": 4714,
+      "y": 4794,
       "width": 270,
       "height": 76,
       "backgroundColor": "#e5dbff",
@@ -5269,7 +5348,7 @@
       "type": "text",
       "id": "ln_rt_label",
       "x": 790,
-      "y": 4724,
+      "y": 4804,
       "width": 250,
       "height": 56,
       "text": "runtime.json\n+ live-config-candidates",
@@ -5283,7 +5362,7 @@
       "type": "rectangle",
       "id": "ln_base",
       "x": 1120,
-      "y": 4714,
+      "y": 4794,
       "width": 210,
       "height": 76,
       "backgroundColor": "#e9ecef",
@@ -5308,7 +5387,7 @@
       "type": "text",
       "id": "ln_base_label",
       "x": 1130,
-      "y": 4724,
+      "y": 4804,
       "width": 190,
       "height": 56,
       "text": "baseline/",
@@ -5322,7 +5401,7 @@
       "type": "rectangle",
       "id": "ln_syn",
       "x": 800,
-      "y": 4904,
+      "y": 4984,
       "width": 230,
       "height": 90,
       "backgroundColor": "#d3f9d8",
@@ -5366,7 +5445,7 @@
       "type": "text",
       "id": "ln_syn_label",
       "x": 810,
-      "y": 4914,
+      "y": 4994,
       "width": 210,
       "height": 70,
       "text": "merge + spec-kit",
@@ -5380,7 +5459,7 @@
       "type": "rectangle",
       "id": "ln_dest",
       "x": 1120,
-      "y": 4904,
+      "y": 4984,
       "width": 210,
       "height": 90,
       "backgroundColor": "#d3f9d8",
@@ -5408,7 +5487,7 @@
       "type": "text",
       "id": "ln_dest_label",
       "x": 1130,
-      "y": 4914,
+      "y": 4994,
       "width": 190,
       "height": 70,
       "text": "promoted files",
@@ -5422,7 +5501,7 @@
       "type": "rectangle",
       "id": "ln_comp",
       "x": 800,
-      "y": 5234,
+      "y": 5314,
       "width": 230,
       "height": 76,
       "backgroundColor": "#e9ecef",
@@ -5447,7 +5526,7 @@
       "type": "text",
       "id": "ln_comp_label",
       "x": 810,
-      "y": 5244,
+      "y": 5324,
       "width": 210,
       "height": 56,
       "text": "reports/xp8-compat.md",
@@ -5461,7 +5540,7 @@
       "type": "rectangle",
       "id": "ln_spec",
       "x": 800,
-      "y": 5114,
+      "y": 5194,
       "width": 230,
       "height": 64,
       "backgroundColor": "#e9ecef",
@@ -5486,7 +5565,7 @@
       "type": "text",
       "id": "ln_spec_label",
       "x": 810,
-      "y": 5124,
+      "y": 5204,
       "width": 210,
       "height": 44,
       "text": "reports/spec-review.md",
@@ -5500,7 +5579,7 @@
       "type": "rectangle",
       "id": "ln_rules",
       "x": 1100,
-      "y": 5094,
+      "y": 5174,
       "width": 230,
       "height": 120,
       "backgroundColor": "#e6fcf5",
@@ -5524,7 +5603,7 @@
       "type": "text",
       "id": "ln_rules_label",
       "x": 1110,
-      "y": 5104,
+      "y": 5184,
       "width": 210,
       "height": 100,
       "text": "rules/\nview-rules.json\nRULES.md, literals.md\nreview.md",
@@ -5538,7 +5617,7 @@
       "type": "rectangle",
       "id": "ln_biz",
       "x": 1105,
-      "y": 4800,
+      "y": 4880,
       "width": 240,
       "height": 74,
       "backgroundColor": "#fff3bf",
@@ -5562,7 +5641,7 @@
       "type": "text",
       "id": "ln_biz_label",
       "x": 1115,
-      "y": 4810,
+      "y": 4890,
       "width": 220,
       "height": 54,
       "text": "business/BUSINESS.md\nconstitution/project.md",
@@ -5576,7 +5655,7 @@
       "type": "arrow",
       "id": "ln_a0",
       "x": 245,
-      "y": 4904,
+      "y": 4984,
       "width": 0,
       "height": 100,
       "points": [
@@ -5610,7 +5689,7 @@
       "type": "arrow",
       "id": "ln_ax",
       "x": 350,
-      "y": 4759,
+      "y": 4839,
       "width": 90,
       "height": 7,
       "points": [
@@ -5644,7 +5723,7 @@
       "type": "arrow",
       "id": "ln_ay",
       "x": 245,
-      "y": 4714,
+      "y": 4794,
       "width": 670,
       "height": 40,
       "points": [
@@ -5687,7 +5766,7 @@
       "type": "arrow",
       "id": "ln_a1",
       "x": 350,
-      "y": 4949,
+      "y": 5029,
       "width": 200,
       "height": 159,
       "points": [
@@ -5721,7 +5800,7 @@
       "type": "arrow",
       "id": "ln_a2",
       "x": 350,
-      "y": 4949,
+      "y": 5029,
       "width": 90,
       "height": 0,
       "points": [
@@ -5755,7 +5834,7 @@
       "type": "arrow",
       "id": "ln_a3",
       "x": 245,
-      "y": 4994,
+      "y": 5074,
       "width": 195,
       "height": 165,
       "points": [
@@ -5793,7 +5872,7 @@
       "type": "arrow",
       "id": "ln_a4",
       "x": 550,
-      "y": 5104,
+      "y": 5184,
       "width": 0,
       "height": 117,
       "points": [
@@ -5827,7 +5906,7 @@
       "type": "arrow",
       "id": "ln_a5",
       "x": 660,
-      "y": 4949,
+      "y": 5029,
       "width": 140,
       "height": 0,
       "points": [
@@ -5861,7 +5940,7 @@
       "type": "arrow",
       "id": "ln_a6",
       "x": 915,
-      "y": 4790,
+      "y": 4870,
       "width": 0,
       "height": 114,
       "points": [
@@ -5896,7 +5975,7 @@
       "type": "arrow",
       "id": "ln_a7",
       "x": 1030,
-      "y": 4949,
+      "y": 5029,
       "width": 90,
       "height": 0,
       "points": [
@@ -5930,7 +6009,7 @@
       "type": "arrow",
       "id": "ln_a8",
       "x": 1050,
-      "y": 4752,
+      "y": 4832,
       "width": 70,
       "height": 0,
       "points": [
@@ -5965,7 +6044,7 @@
       "type": "arrow",
       "id": "ln_a9",
       "x": 550,
-      "y": 5214,
+      "y": 5294,
       "width": 250,
       "height": 58,
       "points": [
@@ -6004,7 +6083,7 @@
       "type": "arrow",
       "id": "ln_a10",
       "x": 660,
-      "y": 5159,
+      "y": 5239,
       "width": 140,
       "height": 183,
       "points": [
@@ -6046,7 +6125,7 @@
       "type": "arrow",
       "id": "ln_a11",
       "x": 1030,
-      "y": 4980.5,
+      "y": 5060.5,
       "width": 70,
       "height": 173.5,
       "points": [
@@ -6088,7 +6167,7 @@
       "type": "arrow",
       "id": "ln_a12",
       "x": 1225,
-      "y": 4874,
+      "y": 4954,
       "width": 0,
       "height": 30,
       "points": [
@@ -6122,7 +6201,7 @@
       "type": "arrow",
       "id": "ln_a13",
       "x": 915,
-      "y": 4994,
+      "y": 5074,
       "width": 0,
       "height": 120,
       "points": [
@@ -6157,7 +6236,7 @@
       "type": "text",
       "id": "ln_lx",
       "x": 362,
-      "y": 4730,
+      "y": 4810,
       "text": "exclude",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -6167,7 +6246,7 @@
       "type": "text",
       "id": "ln_ly",
       "x": 430,
-      "y": 4652,
+      "y": 4732,
       "text": "live_config rules (AI step, from the candidates)",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -6177,7 +6256,7 @@
       "type": "text",
       "id": "ln_l0",
       "x": 255,
-      "y": 4844,
+      "y": 4924,
       "text": "context phase",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -6187,7 +6266,7 @@
       "type": "text",
       "id": "ln_l4",
       "x": 562,
-      "y": 5026,
+      "y": 5106,
       "text": "surfaces + behavior\n+ views",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -6197,7 +6276,7 @@
       "type": "text",
       "id": "ln_l5",
       "x": 672,
-      "y": 4926,
+      "y": 5006,
       "text": "project-map",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -6207,7 +6286,7 @@
       "type": "text",
       "id": "ln_l6",
       "x": 927,
-      "y": 4838,
+      "y": 4918,
       "text": "live / dead / unobserved",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -6217,7 +6296,7 @@
       "type": "text",
       "id": "ln_l7",
       "x": 1050,
-      "y": 4926,
+      "y": 5006,
       "text": "promote",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -6227,7 +6306,7 @@
       "type": "text",
       "id": "ln_l8",
       "x": 1058,
-      "y": 4692,
+      "y": 4772,
       "text": "page paths",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -6237,7 +6316,7 @@
       "type": "text",
       "id": "ln_l9",
       "x": 620,
-      "y": 5248,
+      "y": 5328,
       "text": "XP8 report",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -6247,7 +6326,7 @@
       "type": "text",
       "id": "ln_l10",
       "x": 752,
-      "y": 5064,
+      "y": 5144,
       "text": "templates.json",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -6257,7 +6336,7 @@
       "type": "text",
       "id": "ln_l11",
       "x": 1075,
-      "y": 5012,
+      "y": 5092,
       "text": "writes rules; spec.kit,\ncheck read them",
       "fontSize": 14,
       "strokeColor": "#5f6368",
@@ -6267,7 +6346,7 @@
       "type": "text",
       "id": "ln_l13",
       "x": 925,
-      "y": 5039,
+      "y": 5119,
       "text": "AI review",
       "fontSize": 14,
       "strokeColor": "#5f6368",

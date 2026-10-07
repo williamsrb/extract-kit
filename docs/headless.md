@@ -17,19 +17,19 @@ no resource type for either.
 | --- | --- | --- | --- |
 | Legacy checkout | The folder to extract. Mounted or checked out; the run writes `extract/` there | `--source` / `EXTRACTKIT_SOURCE` | `doctor --source` |
 | XP instance (optional) | A local or review XP with the app and a content dump. Production hosts are refused. Without it the run is offline and skips the CMS phase | `xp:` in the resources file, or the CMS flags | `xp host`, `guillotine` rows |
-| Auth (needed for the XP) | A Playwright storage state for that XP | `auth.storage_state`, `--storage-state`, or `EXTRACTKIT_STORAGE_STATE_JSON` (the file contents, or the path a CI file variable gives) | `storage state` row |
-| Agent | An agent CLI that is logged in or has an API key | `agent:` in the resources file, `--agent` | `agent cli`, `agent api key` rows |
+| Auth (needed for the XP) | A Playwright storage state for that XP | `auth.storage_state`, `--storage-state`, or `EXTRACTKIT_STORAGE_STATE_JSON` (the file contents, or the path a CI file variable gives); or a `cms_url` [attachment](#attachments), which headless logs in with | `storage state` row |
+| Agent | An agent CLI that is logged in or has an API key | `agent:` in the resources file, `--agent`; the key as an `agent_api_key` [attachment](#attachments) | `agent cli`, `agent api key` rows |
 <!-- markdownlint-enable MD013 -->
 
-Headless needs a storage state to run the CMS phase. With none resolved the
-`cms` stage is `skipped` and the run continues offline: merge, synthesis, the
-agent tasks and check.
+Headless needs a storage state to run the CMS phase. With none resolved (or a
+login that fails) the `cms` stage is `skipped` and the run continues offline:
+merge, synthesis, the agent tasks and check.
 
 The default container image ([`docker/Dockerfile`](../docker/Dockerfile))
 bundles the tools: Python 3.12 with `pyyaml` and `jsonschema`, git, Node with graft,
 Graphify, Serena, Playwright with Chromium, PHP with Composer, the `claude`,
 `codex` and `cursor-agent` CLIs, and for the
-[agent credentials](#agent-credentials) the 1Password CLI (`op`), 7-Zip and
+[attachments](#attachments) the 1Password CLI (`op`), 7-Zip and
 `/filter-by-name.sh`. The Compose example starts it, with an optional
 `enonic/xp` service that is only useful when you also supply the
 application and a content dump. [Building and reusing the
@@ -105,7 +105,9 @@ contents appear nowhere in stdout, the JSONL log or `MANIFEST.yaml`, and the
 `config` section shows `<redacted>`.
 
 Headless starts `extractkit` and the agent without any `EXTRACTKIT_*`
-variable. It passes every setting as a flag, so a variable meant for headless
+variable, and without the 1Password token and the archive passwords (see
+[Attachments](#attachments)). It passes every setting as a flag, so a
+variable meant for headless
 (`EXTRACTKIT_UNTIL` takes a stage id there) cannot leak into a child command.
 
 <!-- markdownlint-disable MD013 -->
@@ -116,22 +118,25 @@ variable. It passes every setting as a flag, so a variable meant for headless
 | `EXTRACTKIT_PROFILE` | `--profile` | `context`, `deps`, `doctor`, `headless`, `resume`, `run`, `status`, `step` |
 | `EXTRACTKIT_FROM`, `EXTRACTKIT_UNTIL` | `--from`, `--until` | `run`, `resume` (`--until`); `headless` takes a stage id |
 | `EXTRACTKIT_EXCLUDE` | `--exclude` | `context`, `headless`, `resume`, `run`, `step` |
-| `EXTRACTKIT_BRANCH`, `EXTRACTKIT_XP_HOST`, `EXTRACTKIT_GUILLOTINE`, `EXTRACTKIT_PROJECT` | CMS options | `headless`, `resume`, `run`, `step` |
+| `EXTRACTKIT_BRANCH`, `EXTRACTKIT_XP_HOST`, `EXTRACTKIT_GUILLOTINE`, `EXTRACTKIT_PROJECT` | CMS options | `headless`, `resume`, `run`, `step` (`EXTRACTKIT_XP_HOST` also `assets`) |
 | `EXTRACTKIT_STORAGE_STATE` | `--storage-state` | `doctor`, `headless`, `resume`, `run`, `step` |
 | `EXTRACTKIT_CMS_KEY`, `EXTRACTKIT_ROUND2`, `EXTRACTKIT_CONFIGENV`, `EXTRACTKIT_SITE_URL` | CMS options | `headless`, `resume`, `run`, `step` |
 | `EXTRACTKIT_TASKS` | `--tasks` | `resume`, `run`, `step` |
 | `EXTRACTKIT_RESOURCES` | `--resources` | `doctor`, `headless`, `resume`, `run`, `step` |
 | `EXTRACTKIT_JSON`, `EXTRACTKIT_VERBOSE`, `EXTRACTKIT_QUIET` | `--json`, `-v`, `-q` | most commands |
-| `EXTRACTKIT_AGENT`, `EXTRACTKIT_AGENT_PERMISSIONS`, `EXTRACTKIT_ALLOWED_TOOLS` | `--agent`, `--agent-permissions`, `--allowed-tools` | `headless` |
-| `EXTRACTKIT_MAX_FIX_ATTEMPTS`, `EXTRACTKIT_TASK_TIMEOUT` | `--max-fix-attempts`, `--task-timeout` | `headless` |
+| `EXTRACTKIT_PROGRESS` | `--progress` | `resume`, `run`, `step` |
+| `EXTRACTKIT_AGENT`, `EXTRACTKIT_AGENT_PERMISSIONS`, `EXTRACTKIT_ALLOWED_TOOLS`, `EXTRACTKIT_AGENT_ENV` | `--agent`, `--agent-permissions`, `--allowed-tools`, `--agent-env` | `headless` (`EXTRACTKIT_AGENT` also `assets`) |
+| `EXTRACTKIT_MAX_FIX_ATTEMPTS`, `EXTRACTKIT_TASK_TIMEOUT` | `--max-fix-attempts` (0 or more), `--task-timeout` (1 or more) | `headless` |
 | `EXTRACTKIT_PROMOTE` | `--promote` | `headless` |
 | `EXTRACTKIT_NO_ENRICH` | `--no-enrich` | `headless` |
+| `EXTRACTKIT_ASSETS_DIR`, `EXTRACTKIT_OP_VAULT`, `EXTRACTKIT_OP_ITEM`, `EXTRACTKIT_ASSETS_PASSWORD_ENV` | `--assets-dir`, `--op-vault`, `--op-item`, `--assets-password-env` | `assets`, `headless` |
+| `EXTRACTKIT_STORAGE_STATE_OUT` | `--storage-state-out` | `assets` |
 | `EXTRACTKIT_STORAGE_STATE_JSON` | storage-state contents | commands with `--storage-state` |
 <!-- markdownlint-enable MD013 -->
 
 ## The stages
 
-`headless` runs eleven stages in order and stops at the first failure. The
+`headless` runs twelve stages in order and stops at the first failure. The
 same ids are the values of `--until`, the `stage` field of the JSONL log and
 the entries of `stages[]` in the result.
 
@@ -141,6 +146,7 @@ the entries of `stages[]` in the result.
 | Stage | Does |
 | --- | --- |
 | `install` | `extractkit install --json` (a check when run from the installed copy) |
+| `assets` | Reads the [attachments](#attachments) when a source is given (`skipped` otherwise). Never fails: what is missing or unreadable is printed, and the stages that needed it are `skipped` |
 | `preflight` | Builds the graft index if `graft/` is missing. When Serena onboarding or the Graphify index is missing, starts one agent process with `headless/preflight.md`, then re-checks readiness (`readiness_missing`) |
 | `doctor` | `doctor --source` with `--resources` |
 | `static` | `run --until static --out <source>/extract/<run-id>` |
@@ -217,8 +223,21 @@ run `extractkit`, and the preflight may run `graphify` and use the Serena MCP.
 Override it with `agent.allowed_tools` or `--allowed-tools`. Setting
 `agent.permissions: bypass` (or `EXTRACTKIT_AGENT_PERMISSIONS=bypass`) skips
 the allowlist; it is the operator's call and never a kit default. Prefer to
-run a bypass only inside the container. The agent inherits the environment
-(minus `EXTRACTKIT_*`) so its API key reaches it. Its output goes to
+run a bypass only inside the container. Whatever the mode, `claude` is denied
+the flags that lift the kit's own guards (`denied_tools` in `extractkit.yaml`:
+any `extractkit ... --force`, any `--allow-production`, and a nested
+`extractkit headless`), because the agent reads legacy source that could carry
+instructions. Codex and Cursor have no per-command deny list; their sandbox is
+the limit.
+
+The agent process does not get the job's environment. It gets a base list
+(`PATH`, `HOME`, `USER`, locale, `TMPDIR`, proxies and certificate variables,
+`XDG_*`, `NODE_*`, `SSL_*`, `PLAYWRIGHT_*`), the variables that start with the
+`env_prefixes` of its `agents:` entry (`ANTHROPIC_` and `CLAUDE_` for `claude`,
+`OPENAI_` and `CODEX_` for `codex`, `CURSOR_` for `cursor`), its credential
+and whatever `--agent-env NAME` names (repeatable). `CI_JOB_TOKEN` and the
+job's other variables stay out. Add what a provider needs, for example AWS
+variables for Bedrock, with `--agent-env`. Its output goes to
 `<sidecar>/reports/headless/<stage>-<task>-<attempt>.log`; a run that stops
 before the sidecar exists (a failed preflight) keeps them as
 `<source>/extract/headless-<stage>-<task>-<attempt>.log`, inside the `extract/`
@@ -252,11 +271,11 @@ stdout stays clean for `--json`; progress goes to stderr, one line per event
 with a time stamp, so a CI log shows the run moving:
 
 ```text
-10:02:11 [4/11] static ...
+10:02:11 [5/12] static ...
 10:02:11   step 1/6 map.code ...
 10:02:14   step 1/6 map.code done in 3s, 4 action(s) recorded
-10:02:40 [4/11] static ok in 29s: ok
-10:02:40 [5/11] agent:context ...
+10:02:40 [5/12] static ok in 29s: ok
+10:02:40 [6/12] agent:context ...
 10:02:41   agent claude started on context.decide (attempt 1, timeout 30m00s) ...
 10:03:11   agent still working on context.decide: 30s elapsed, log 2048 B ...
 ```
@@ -356,7 +375,9 @@ root. The `claude` bypass permission mode refuses root; the default
 [`.gitlab-ci.yml`](../.gitlab-ci.yml) builds two images of
 [leanon/extractkit-ci](https://hub.docker.com/r/leanon/extractkit-ci) on every
 change to the kit on the `docker` branch, and on no other branch: `latest`
-(uid 1000) and `root` (the same image started as root). Each tag is
+(uid 1000) and `root` (the same image started as root). A `test` job runs the
+unit tests and `ruff check` on every branch and merge request, and the build
+only starts after it passes. Each tag is
 overwritten by the next build; there are no per-commit tags. Each is
 smoke-tested before it is pushed. The Docker Hub description is
 `docker/README.md`, pushed by `docker-pushrm` from a manual job in a `docker`
@@ -376,7 +397,7 @@ extract:
     EXTRACTKIT_UNTIL: check
     # File-type CI/CD variable: the storage-state contents.
     # EXTRACTKIT_STORAGE_STATE_JSON
-    # The agent credential: see "Agent credentials" below.
+    # The agent credential and the XP login: see "Attachments" below.
   script:
     # The checkout is the legacy project, so cwd is the source.
     - extractkit headless --source "$CI_PROJECT_DIR" --json | tee extract-result.json
@@ -401,147 +422,104 @@ blocker file. In the container, flags go to
 `extractkit headless --json`, so `docker run` and a Compose service take the
 same flags; see [How a pipeline starts the image](#how-a-pipeline-starts-the-image).
 
-## Agent credentials
+## Attachments
 
-The kit never reads or stores the agent's credential. `extractkit headless`
-passes the environment to the agent and removes only `EXTRACTKIT_*`, so a job
-can read the credential from 1Password and export it before `extractkit`
-starts. One 1Password item holds a password-protected 7z archive for each
-agent, attached to the item and named after the variable that agent reads. The
-job reads `EXTRACTKIT_AGENT`, opens only that agent's archive with the
-passphrase in `PASSWORD`, and exports the credential.
+A pipeline keeps its credentials as attachments on one 1Password item, or as
+files in a folder. No file name is fixed: headless downloads every attachment,
+then reads each file by its content, so `anything.bin` is as good as
+`CLAUDE_CODE_OAUTH_TOKEN.yaml`. The same code runs standalone as
+`extractkit assets`, which lists what it found and never prints a secret.
 
-<!-- markdownlint-disable MD013 -->
-
-| Variable | Holds |
-| --- | --- |
-| `OP_SERVICE_ACCOUNT_TOKEN_FACTORY` | The 1Password service account token |
-| `OP_VAULT_NAME_FACTORY` | The vault name |
-| `OP_EXTRACT_NAME_FACTORY` | The title of the item with the archives |
-| `PASSWORD` | The archives' passphrase, set on each pipeline run |
-
-| `EXTRACTKIT_AGENT` | Attachment |
-| --- | --- |
-| `claude` | `CLAUDE_CODE_OAUTH_TOKEN.yaml.7z`, a `claude setup-token` token |
-| `codex` | `OPENAI_API_KEY.yaml.7z` |
-| `cursor` | `CURSOR_API_KEY.yaml.7z` |
-
-<!-- markdownlint-enable MD013 -->
-
-Seeds projects take the job from the `seeds/ci-templates` project:
-`.extractkit_template` in `general/extractkit.yml` reads the variables above,
-holds the credential lines and the `extractkit headless` call, and the project
-sets only its own `EXTRACTKIT_*` values and when the job runs. The template
-runs in the `extract` stage, so the project's `stages:` must list it. Outside
-Seeds, use the [plain job script](#plain-job-script).
+A file is a 7z archive, a zip archive, a YAML file or a JSON file. Archives may
+be password-protected or not. Each document is a resource, `resource.type` plus
+`resource.data`:
 
 ```yaml
-include:
-  - project: "seeds/ci-templates"
-    ref: master
-    file: "/general/extractkit.yml"
-
-extract:
-  extends: .extractkit_template
-  variables:
-    EXTRACTKIT_PROFILE: enonic
-    EXTRACTKIT_UNTIL: check
-  rules:
-    - if: $CI_COMMIT_BRANCH == "review"
-      when: manual
+resource:
+  type: agent_api_key
+  data:
+    token: "<the token>"       # claude setup-token, OPENAI_API_KEY or CURSOR_API_KEY
+    agent: claude              # required: the agent CLI that uses it
+    validity: "2027-10-05"     # informational, never enforced
 ```
 
-- The run picks the agent. `EXTRACTKIT_AGENT` selects the agent CLI and the
-  attachment, and a variable set on the Run pipeline page overrides the job's
-  YAML. Set it there, not only as `agent.cli` in a resources file, or the job
-  loads Claude's attachment for another agent. An agent missing from the
-  template's `case` stops the job before `op read`; add a line there when you
-  add an agent to `extractkit.yaml`.
-- Only the selected agent's credential is read and exported. It is piped from
-  `7z` to `python3` and never written unencrypted. A missing or wrong
-  `PASSWORD`, or an archive without a `token` key, stops the job.
-- The job unsets the passphrase and the service account token before the agent
-  starts. The agent inherits the environment, and one that can run `env` would
-  write them into logs the job keeps as artifacts.
-- For `claude`, `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` and `apiKeyHelper`
-  outrank `CLAUDE_CODE_OAUTH_TOKEN`, so the job unsets the API key. Claude
-  Code's bare mode ignores `CLAUDE_CODE_OAUTH_TOKEN`; the `claude` entry in
-  `extractkit.yaml` has no `--bare`, keep it that way.
-- `agent.api_key_env` names the selected agent's variable
-  (`CLAUDE_CODE_OAUTH_TOKEN`, `OPENAI_API_KEY` or `CURSOR_API_KEY`). `doctor`
-  checks only that it is set.
-- The Claude token lasts a year; renew it with a new archive and replace the
-  1Password attachment.
-- Not tested in the container by this repository: the credential archives from
-  1Password (the `claude setup-token` token, `OPENAI_API_KEY`,
-  `CURSOR_API_KEY`), and running `--agent codex` and `--agent cursor` in the
-  image.
+```yaml
+resource:
+  type: cms_url
+  data:
+    url: https://review.example.test   # any URL on the XP; XP 8 and 7 both tried
+    login: admin
+    password: "<the password>"
+```
 
-### Making the archives
+<!-- markdownlint-disable MD013 -->
+| Type | Used for | When it is missing or fails |
+| --- | --- | --- |
+| `agent_api_key` | Needs `data.agent`, a name from the `agents:` block of `extractkit.yaml`; without it the resource is reported and not used. Only the selected agent's resources count. The token is exported as that entry's `api_key_env` (`CLAUDE_CODE_OAUTH_TOKEN`, `OPENAI_API_KEY`, `CURSOR_API_KEY`). The entry's `conflicting_env` is removed from the agent's environment, because for `claude` an API key outranks the OAuth token. With several usable ones the first is used | The `agent:context`, `agent:live_config` and `agent` stages are `skipped`. A fresh checkout then stops at `doctor` with `readiness_missing`, because Serena onboarding and the Graphify index are made by the preflight agent; a prepared checkout runs on to `check`. This holds whenever an attachments source is given, even for an agent CLI that is logged in some other way; with no source, headless runs the agent as before |
+| `cms_url` | A login to the XP, written to a mode 0600 Playwright storage state in a private temp folder. Only used when no `--storage-state` is supplied and `--xp-host` is set; with `--xp-host`, only the resource for that host. Production hosts are refused | The `cms` stage is `skipped`, as with no storage state |
+<!-- markdownlint-enable MD013 -->
 
-Make an archive once per agent, on your machine. Each archive holds one YAML
-file named like the attachment minus `.7z`; its `token` key holds the
-credential, other keys (such as `validity`) are not read. Never put the
-credential or the passphrase in a command argument: `-p` without a value makes
-`7z` ask for the passphrase, and `-mhe=on` also encrypts the file names.
+Other types are ignored with a note. These never stop the run, and each is
+printed (also with `-q`) as `attachments: <file>: <what went wrong>`, never
+with what the file said:
+
+- the folder, the item or the `op` CLI is missing;
+- an attachment cannot be downloaded or read;
+- a file is not text, not an archive, not valid YAML or JSON, or not a resource;
+- an archive needs a password that was not supplied, or none of them fits;
+- `7z` is not installed;
+- a login is refused.
+
+`--assets-password-env VAR` (repeatable; a comma-separated
+`EXTRACTKIT_ASSETS_PASSWORD_ENV`) names environment variables that hold archive
+passwords. Each archive is tried with no password first, then with each one.
+`7z` takes the password on its command line, so other processes in the job
+container can see it while `7z` runs, before the agent starts.
+
+Headless removes `OP_SERVICE_ACCOUNT_TOKEN*` and the password variables from
+the environment of every process it starts, and gives the credential only to
+the agent (and to `doctor`, which checks `agent.api_key_env`).
+
+Download them with `--op-vault NAME --op-item NAME` (the `op` CLI reads
+`OP_SERVICE_ACCOUNT_TOKEN`), read a folder or one file with `--assets-dir`, or
+both.
+
+### Making an attachment
+
+Write the YAML or JSON above. To protect it, make an archive on your machine.
+Never put the credential or the passphrase in a command argument: `-p` without
+a value makes `7z` ask for the passphrase, and `-mhe=on` also encrypts the file
+names. The names inside and outside the archive do not matter.
 
 ```bash
 umask 077
-claude setup-token   # put the token in CLAUDE_CODE_OAUTH_TOKEN.yaml as token: "<token>"
-7z a -mhe=on -p CLAUDE_CODE_OAUTH_TOKEN.yaml.7z CLAUDE_CODE_OAUTH_TOKEN.yaml
+7z a -mhe=on -p agent.7z agent.yaml
 ```
 
-Attach the `.7z` file to the item in the 1Password app, then delete both local
-files with `shred -u`. Repeat with `OPENAI_API_KEY` and `CURSOR_API_KEY`. The
-Claude token needs a Claude Pro, Max, Team or Enterprise plan and covers model
-requests only; `codex` and `cursor` take API keys.
+Attach the file to the 1Password item, then delete the local files with
+`shred -u`. The `claude` token comes from `claude setup-token`, needs a Claude
+Pro, Max, Team or Enterprise plan, covers model requests only and lasts a year;
+`codex` and `cursor` take API keys. The `claude` entry in `extractkit.yaml` has
+no `--bare`, because bare mode ignores `CLAUDE_CODE_OAUTH_TOKEN`: keep it so.
 
-### Plain job script
-
-The image ships `/filter-by-name.sh`, which turns the vault name into the
-vault ID. The service account must be able to read the vault.
+### In a GitLab job
 
 ```yaml
-variables:
-  EXTRACTKIT_AGENT: claude
-  CI_SERVICE_ACCOUNT_TOKEN: $OP_SERVICE_ACCOUNT_TOKEN_FACTORY
-  CI_VAULT_NAME: $OP_VAULT_NAME_FACTORY
-  CI_AGENT_SECRET_NAME: $OP_EXTRACT_NAME_FACTORY
-script:
-  - export OP_SERVICE_ACCOUNT_TOKEN=$CI_SERVICE_ACCOUNT_TOKEN
-  - OP_VAULT_ID=$(op vault list | /filter-by-name.sh "${CI_VAULT_NAME}")
-  - |
-    # For claude an API key outranks the OAuth token, so a leftover one is dropped.
-    case "$EXTRACTKIT_AGENT" in
-      claude) AGENT_KEY_VAR=CLAUDE_CODE_OAUTH_TOKEN; unset ANTHROPIC_API_KEY ;;
-      codex) AGENT_KEY_VAR=OPENAI_API_KEY ;;
-      cursor) AGENT_KEY_VAR=CURSOR_API_KEY ;;
-      *)
-        echo "no 1Password credential mapped for agent '$EXTRACTKIT_AGENT'" >&2
-        exit 1 ;;
-    esac
-    : "${PASSWORD:?the passphrase of the credential archives}"
-    AGENT_KEY_DIR=$(mktemp -d)
-    AGENT_KEY_REF="op://${OP_VAULT_ID}/${CI_AGENT_SECRET_NAME}/${AGENT_KEY_VAR}.yaml.7z"
-    op read --out-file "$AGENT_KEY_DIR/archive.7z" "$AGENT_KEY_REF"
-    AGENT_KEY=$(7z x -so -p"$PASSWORD" "$AGENT_KEY_DIR/archive.7z" \
-      | python3 -c '
-    import sys, yaml
-    data = yaml.safe_load(sys.stdin)
-    if not isinstance(data, dict) or not data.get("token"):
-        sys.exit("no token in the archive (wrong PASSWORD?)")
-    print(data["token"])
-    ')
-    rm -rf "$AGENT_KEY_DIR"
-  - export "${AGENT_KEY_VAR}=${AGENT_KEY}"
-  # The agent inherits the environment; drop what opens the vault.
-  - unset PASSWORD OP_SERVICE_ACCOUNT_TOKEN OP_SERVICE_ACCOUNT_TOKEN_FACTORY CI_SERVICE_ACCOUNT_TOKEN
-  - extractkit headless --source "$CI_PROJECT_DIR" --json | tee extract-result.json
+extract:
+  image: leanon/extractkit-ci:latest
+  variables:
+    EXTRACTKIT_AGENT: claude
+    EXTRACTKIT_OP_VAULT: $OP_VAULT_NAME_FACTORY
+    EXTRACTKIT_OP_ITEM: $OP_EXTRACT_NAME_FACTORY
+    EXTRACTKIT_ASSETS_PASSWORD_ENV: PASSWORD   # set on each pipeline run
+    EXTRACTKIT_XP_HOST: https://review.example.test
+    EXTRACTKIT_BRANCH: draft
+  script:
+    - export OP_SERVICE_ACCOUNT_TOKEN=$OP_SERVICE_ACCOUNT_TOKEN_FACTORY
+    - extractkit headless --source "$CI_PROJECT_DIR" --json | tee extract-result.json
 ```
 
-Assign first and `export` after: `export VAR=$(...)` hides a failed `7z` or
-`op read`. `7z` takes the passphrase as `-p` on its command line, so other
-processes in the job container can see it while `7z` runs; the agent has not
-started yet. To use an Anthropic API key instead, archive it as
-`ANTHROPIC_API_KEY.yaml.7z`, set `AGENT_KEY_VAR` to that name and drop the
-`unset`.
+Seeds projects take the job from `seeds/ci-templates`
+(`.extractkit_template` in `general/extractkit.yml`), which sets these
+variables and the `extractkit headless` call. That template lives outside this
+repository.

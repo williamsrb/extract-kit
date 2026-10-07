@@ -1,4 +1,5 @@
 stages:
+  - test
   - package
 
 variables:
@@ -6,8 +7,27 @@ variables:
   DOCKER_BUILDKIT: "1"
   DOCKERHUB_USER: leanon
   DOCKERHUB_REPO: leanon/extractkit-ci
+  PYYAML_VERSION: 6.0.2
+  JSONSCHEMA_VERSION: 4.23.0
+  RUFF_VERSION: 0.16.8
   PUSHRM_VERSION: v1.9.0
   PUSHRM_SHA256: 2f48649ce6c6aba1656a0fb3fc7a82971caf8ece7d86e6eed3d10c106d20fac8
+
+# Unit tests and lint on every branch and merge request. The image build below
+# only starts after this stage passes, so a broken kit is never pushed.
+test:
+  stage: test
+  image: python:3.12-slim-bookworm
+  tags:
+    - docker
+  rules:
+    - if: $CI_COMMIT_BRANCH || $CI_PIPELINE_SOURCE == "merge_request_event"
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git p7zip-full > /dev/null
+    - pip install -q "pyyaml==${PYYAML_VERSION}" "jsonschema==${JSONSCHEMA_VERSION}" "ruff==${RUFF_VERSION}"
+  script:
+    - ruff check .
+    - python3 -m unittest discover -s tests
 
 # The kit is copied into the image at build time, so any change to the kit
 # rebuilds it. Docs, tests, the README and docker/README.md alone do not.
