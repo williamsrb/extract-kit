@@ -152,9 +152,9 @@ human, see [headless mode](docs/headless.md). In
 the commands and detailed docs, the output folder is called the *sidecar*
 and the local copy of the project the *checkout*.
 
-Docs: [LLM instructions](docs/llm.md), [usage](docs/usage.md),
+Docs: [usage](docs/usage.md),
 [flow](docs/flow.md), [CLI](docs/cli.md), [steps](docs/steps.md),
 [profiles](docs/profiles.md), [output](docs/output.md),
-[headless](docs/headless.md).
+[headless](docs/headless.md), [LLM instructions](docs/llm.md).
 
 Agents: read [docs/llm.md](docs/llm.md) first.
