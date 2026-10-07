@@ -64,10 +64,22 @@ Work in this order, and stop when the specs read well or the time runs short:
 
 `business/BUSINESS.md`, when it exists, gives the business names to use.
 
-Last, after every spec and use-case edit, write
-`{sidecar}/reports/spec-enrich.md`: an H1 `# Spec enrich`, then one bullet per
-file you rewrote with the FR numbers you changed. The task counts as done
-while this report is newer than every `spec.md`.
+The report `{sidecar}/reports/spec-enrich.md` is the progress ledger. This
+task can stop at any moment (the agent's credential runs out, or the time does)
+and a later run, possibly with another credential, goes on from it. So:
+
+- Before you edit anything, read the report if it exists and skip every file it
+  lists. If it does not exist, create it with the H1 `# Spec enrich` and the
+  line `Status: in progress`.
+- Right after you rewrite each file, add one bullet for it: the path and the FR
+  numbers you changed. Do it per file, not at the end.
+- Rewrite one file at a time and finish it before the next. Never leave a file
+  half rewritten.
+- When nothing is left worth rewriting, change the status line to
+  `Status: complete`, as the last edit.
+
+The task counts as done when the report says `Status: complete` and is newer
+than every `spec.md`.
 
 This task is optional. It never blocks the agent phase. Re-running
 `spec.kit` rewrites the specs from the maps, so enrich after the last run of

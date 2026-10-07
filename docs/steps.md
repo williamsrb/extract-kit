@@ -716,12 +716,14 @@ extracted behavior, then those that are only a field list. Every FR keeps
 its `Acceptance:` bullets and `Evidence:` line, and every added sentence
 ends with `_(inferred)_`.
 
-**Writes.** `spec-kit/specs/` and `use-cases/`, prose only, then
-`reports/spec-enrich.md` last. `check` then fails an FR without an
-`Evidence:` line.
+**Writes.** `spec-kit/specs/` and `use-cases/`, prose only, and
+`reports/spec-enrich.md`, which it extends after each file it rewrites.
+`check` then fails an FR without an `Evidence:` line.
 
-**Done when.** `reports/spec-enrich.md` is newer than every `spec.md`, so a
-later `spec.kit` run makes it pending again.
+**Done when.** `reports/spec-enrich.md` has the line `Status: complete` and is
+newer than every `spec.md`, so a later `spec.kit` run makes it pending again.
+Without that line the report is the progress ledger of a run that stopped
+midway: the next run skips the files it lists.
 
 **Skip.** Never returned by `agent next`. Run it with
 `extractkit agent show spec.enrich --out <sidecar>`; `headless` runs it after

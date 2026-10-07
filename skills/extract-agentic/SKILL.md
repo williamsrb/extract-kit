@@ -69,8 +69,8 @@ be undone in the same sidecar.
 
 `spec.enrich` is optional and `agent next` never returns it. Run it only when
 the operator asks: `extractkit agent show spec.enrich --out <sidecar>`
-(`extractkit headless` runs it unless `--no-enrich`). It writes
-`reports/spec-enrich.md` last.
+(`extractkit headless` runs it unless `--no-enrich`). It extends
+`reports/spec-enrich.md` after each file and ends it with `Status: complete`.
 `spec.review` is optional too, and `agent next` never returns it. It reviews the
 generated specs for meaning and writes only `reports/spec-review.md`; it
 edits no spec, and `promote` never copies the report. Run it when the

@@ -377,6 +377,91 @@ class AssetsStageTests(HeadlessCase):
         self.assertIn("not used", self.stage(doc, "assets")["message"])
 
 
+class CredentialFallbackTests(HeadlessCase):
+    """Several `agent_api_key` resources: probed in priority order, and switched when one stops answering."""
+
+    assets, prepare_readiness, stage = AssetsStageTests.assets, AssetsStageTests.prepare_readiness, AssetsStageTests.stage
+
+    def keys(self, **priorities: int) -> Path:
+        files = {f"{name}.yaml": resource("agent_api_key", token=f"tok-{name}", agent="fake", priority=value)
+                 for name, value in priorities.items()}
+        return self.assets(**files)
+
+    def calls(self) -> list[tuple[str, str]]:
+        rows = (self.source / "fake-calls.log").read_text().splitlines()
+        return [(row.split()[0], row.split()[1]) for row in rows]
+
+    def test_the_probe_skips_a_dead_credential_and_uses_the_next_in_priority_order(self) -> None:
+        folder = self.keys(a=1, b=2, c=3)
+        with mock.patch.dict(os.environ, {"FAKE_AGENT_DEAD": "tok-a"}):
+            code, doc = self.headless("--until", "agent:context", "--assets-dir", str(folder))
+        self.assertEqual(code, 0, doc)
+        message = self.stage(doc, "assets")["message"]
+        self.assertIn("a.yaml, b.yaml, c.yaml", message)
+        self.assertIn("credential 2 of 3 is in use", message)
+        used = [token for token, _ in self.calls()]
+        self.assertEqual(used[:2], ["tok-a", "tok-b"])  # the probes
+        self.assertNotIn("tok-c", used)
+        self.assertEqual(set(used[2:]), {"tok-b"})
+
+    def test_one_credential_is_not_probed(self) -> None:
+        code, doc = self.headless("--until", "agent:context", "--assets-dir", str(self.keys(a=1)))
+        self.assertEqual(code, 0, doc)
+        self.assertNotIn("Reply with the single word", (self.source / "fake-calls.log").read_text())
+
+    def test_when_none_answers_the_agent_stages_are_skipped_and_the_cause_is_printed(self) -> None:
+        self.prepare_readiness()
+        err = io.StringIO()
+        with mock.patch.dict(os.environ, {"FAKE_AGENT_DEAD": "tok-a,tok-b"}), contextlib.redirect_stderr(err):
+            code, doc = self.headless("--until", "check", "--assets-dir", str(self.keys(a=1, b=2)), "-q")
+        self.assertEqual(code, 0, doc)
+        self.assertEqual(self.stage(doc, "agent")["status"], "skipped")
+        self.assertIn("none of the 2 agent_api_key credentials for agent fake answered", err.getvalue())
+
+    def test_a_credential_that_runs_out_mid_run_hands_the_same_task_to_the_next(self) -> None:
+        folder = self.keys(a=1, b=2)
+        with mock.patch.dict(os.environ, {"FAKE_AGENT_DIE_ON": "tok-a:context.exclude"}):
+            code, doc = self.headless("--until", "agent:context", "--assets-dir", str(folder))
+        self.assertEqual(code, 0, doc)
+        self.assertEqual(self.overlay()["exclude"], ["prototype"])
+        task_calls = [(t, r) for t, r in self.calls() if r != "-" or t == "tok-a"]
+        self.assertIn(("tok-b", "resumed"), task_calls)
+        switched = [line for line in self.lines() if line.get("code") == "credential_switched"]
+        self.assertEqual([line["message"] for line in switched], ["a.yaml -> b.yaml"])
+        self.assertEqual(switched[0]["attempt"], 1)
+        attempts = [line["attempt"] for line in self.lines() if line.get("task") == "context.exclude" and line["ok"] and line.get("log")]
+        self.assertEqual(attempts, [1])  # the run that went on is still attempt 1: no fix attempt was used
+        self.assertTrue(any(f.name.endswith("-context.exclude-1-c2.log") for f in (self.sidecar() / "reports" / "headless").iterdir()))
+
+    def test_the_run_stops_with_credentials_exhausted_when_the_last_one_runs_out(self) -> None:
+        folder = self.keys(a=1, b=2)
+        with mock.patch.dict(os.environ, {"FAKE_AGENT_DIE_ON": "tok-a:context.exclude"}), \
+                mock.patch.object(headless.Headless, "_probe", side_effect=[True, False, False]):
+            code, doc = self.headless("--until", "agent:context", "--assets-dir", str(folder))
+        self.assertEqual(code, 1)
+        self.assertEqual(doc["error"]["code"], "credentials_exhausted")
+        self.assertIn("finished tasks are kept", doc["error"]["fix"])
+
+    def test_a_failure_the_credential_did_not_cause_is_not_a_switch(self) -> None:
+        folder = self.keys(a=1, b=2)
+        with mock.patch.object(headless.Headless, "_probe", return_value=True):
+            code, doc = self.headless("--until", "agent:context", "--assets-dir", str(folder), mode="crash")
+        self.assertEqual(code, 1)
+        self.assertEqual(doc["error"]["code"], "agent_failed")
+
+    def test_a_single_credential_that_dies_fails_as_before(self) -> None:
+        folder = self.keys(a=1)
+        with mock.patch.dict(os.environ, {"FAKE_AGENT_DIE_ON": "tok-a:context.exclude"}):
+            code, doc = self.headless("--until", "agent:context", "--assets-dir", str(folder))
+        self.assertEqual(code, 1)
+        self.assertEqual(doc["error"]["code"], "agent_failed")
+
+    def test_a_json_result_that_reports_an_error_fails_the_probe(self) -> None:
+        self.assertTrue(headless._reported_error('{"is_error": true, "result": "limit"}'))
+        self.assertFalse(headless._reported_error('{"is_error": false}'))
+        self.assertFalse(headless._reported_error("ok"))
+
+
 class RefusalTests(unittest.TestCase):
     def test_headless_is_guarded(self) -> None:
         result = run_checkout("headless", "--source", str(REPO / "tests" / "fixtures" / "enonic-mini"), "--json")

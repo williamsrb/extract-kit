@@ -5,7 +5,8 @@ files in a folder). No file name is fixed. Each file is opened by what it
 holds: a 7z or zip archive (password-protected or not), a YAML file or a JSON
 file. Every document is a resource, `resource.type` plus `resource.data`:
 
-    agent_api_key  data.token and data.agent (the agent CLI it is for): that CLI's credential
+    agent_api_key  data.token and data.agent (the agent CLI it is for): that CLI's credential;
+                   data.priority (a whole number, lower first, default 100) orders several
     cms_url        data.url, data.login, data.password: an XP admin login
 
 Nothing here raises for a missing or unreadable file, a missing or wrong
@@ -36,6 +37,7 @@ from .common import Row
 
 TYPE_AGENT = "agent_api_key"
 TYPE_CMS = "cms_url"
+DEFAULT_PRIORITY = 100
 MAX_BYTES = 1 << 20
 RUN_TIMEOUT = 60
 SEVEN_ZIP_MAGIC = b"7z\xbc\xaf\x27\x1c"
@@ -48,6 +50,14 @@ class Resource:
     type: str
     data: dict
     source: str
+
+
+@dataclass(frozen=True)
+class Credential:
+    """One usable agent token, in priority order. `token` is a secret: never print it."""
+
+    source: str
+    token: str = field(repr=False)
 
 
 @dataclass
@@ -65,6 +75,7 @@ class Outcome:
     """What the resources amounted to. `agent_env` holds a secret: never print it."""
 
     agent_env: dict[str, str] = field(default_factory=dict)
+    credentials: list[Credential] = field(default_factory=list)
     drop_env: list[str] = field(default_factory=list)
     storage_state: Path | None = None
     notes: list[str] = field(default_factory=list)
@@ -250,21 +261,27 @@ def _agent_credential(bundle: Bundle, agent: str, entry: Mapping, outcome: Outco
     usable = []
     for resource in mine:
         token = resource.data.get("token")
-        if isinstance(token, str) and token.strip():
-            usable.append((resource, token.strip()))
-        else:
+        if not (isinstance(token, str) and token.strip()):
             outcome.problems.append(f"{resource.source}: {TYPE_AGENT} has no token")
+            continue
+        priority = resource.data.get("priority", DEFAULT_PRIORITY)
+        if isinstance(priority, bool) or not isinstance(priority, int):
+            outcome.problems.append(f"{resource.source}: {TYPE_AGENT} priority must be a whole number; {DEFAULT_PRIORITY} was used")
+            priority = DEFAULT_PRIORITY
+        usable.append((priority, resource, token.strip()))
     if not usable:
         return
     if not var:
         outcome.problems.append(f"agent {agent} declares no api_key_env in extractkit.yaml; its {TYPE_AGENT} was not used")
         return
-    resource, token = usable[0]
-    outcome.agent_env[str(var)] = token
+    usable.sort(key=lambda item: item[0])  # stable: equal priorities keep file order
+    outcome.credentials = [Credential(resource.source, token) for _, resource, token in usable]
+    first = outcome.credentials[0]
+    outcome.agent_env[str(var)] = first.token
     outcome.drop_env = [str(name) for name in entry.get("conflicting_env") or []]
-    outcome.notes.append(f"{TYPE_AGENT} from {resource.source} for {agent} ({var})")
+    outcome.notes.append(f"{TYPE_AGENT} from {first.source} for {agent} ({var})")
     if len(usable) > 1:
-        outcome.notes.append(f"{len(usable)} {TYPE_AGENT} resources fit {agent}; the first is used")
+        outcome.notes.append(f"{len(usable)} {TYPE_AGENT} resources fit {agent}, in this order: {', '.join(c.source for c in outcome.credentials)}")
 
 
 def _storage_state(bundle: Bundle, xp_host: str | None, state_dir: Path, outcome: Outcome) -> None:

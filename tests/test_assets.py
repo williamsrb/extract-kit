@@ -156,11 +156,33 @@ class ResolveTests(AssetsCase):
         self.assertEqual(self.resolve(self.bundle(other)).agent_env, {})
         self.assertEqual(self.resolve(self.bundle(other, mine)).agent_env, {"CLAUDE_CODE_OAUTH_TOKEN": SECRET})
 
-    def test_several_tokens_use_the_first_and_say_so(self) -> None:
-        first, second = (assets.Resource("agent_api_key", {"token": t, "agent": "claude"}, f"{t}.yaml") for t in ("one", "two"))
-        outcome = self.resolve(self.bundle(first, second))
-        self.assertEqual(outcome.agent_env, {"CLAUDE_CODE_OAUTH_TOKEN": "one"})
-        self.assertTrue(any("first is used" in note for note in outcome.notes))
+    def agent_resource(self, name: str, **data: object) -> assets.Resource:
+        return assets.Resource("agent_api_key", {"token": f"tok-{name}", "agent": "claude", **data}, f"{name}.yaml")
+
+    def test_several_tokens_keep_file_order_and_say_so(self) -> None:
+        outcome = self.resolve(self.bundle(self.agent_resource("one"), self.agent_resource("two")))
+        self.assertEqual(outcome.agent_env, {"CLAUDE_CODE_OAUTH_TOKEN": "tok-one"})
+        self.assertEqual([c.source for c in outcome.credentials], ["one.yaml", "two.yaml"])
+        self.assertTrue(any("in this order: one.yaml, two.yaml" in note for note in outcome.notes))
+
+    def test_priority_orders_the_credentials_lowest_first_and_ties_keep_file_order(self) -> None:
+        resources = [
+            self.agent_resource("late", priority=50), self.agent_resource("default"),
+            self.agent_resource("first", priority=1), self.agent_resource("also-default"),
+        ]
+        outcome = self.resolve(self.bundle(*resources))
+        self.assertEqual([c.source for c in outcome.credentials], ["first.yaml", "late.yaml", "default.yaml", "also-default.yaml"])
+        self.assertEqual(outcome.agent_env, {"CLAUDE_CODE_OAUTH_TOKEN": "tok-first"})
+
+    def test_a_bad_priority_is_a_problem_and_the_default_is_used(self) -> None:
+        for value in ("high", 1.5, True):
+            with self.subTest(value=value):
+                outcome = self.resolve(self.bundle(self.agent_resource("a", priority=value), self.agent_resource("b", priority=5)))
+                self.assertEqual([c.source for c in outcome.credentials], ["b.yaml", "a.yaml"])
+                self.assertEqual(outcome.problems, ["a.yaml: agent_api_key priority must be a whole number; 100 was used"])
+
+    def test_a_credential_never_shows_its_token_in_a_repr(self) -> None:
+        self.assertNotIn(SECRET, repr(assets.Credential("a.yaml", SECRET)))
 
     def test_a_token_without_an_agent_is_a_problem_and_is_not_used(self) -> None:
         for data in ({"token": SECRET}, {"token": SECRET, "agent": ""}, {"token": SECRET, "agent": 7}):

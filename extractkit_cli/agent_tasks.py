@@ -158,10 +158,19 @@ def live_config_written(out: Path) -> bool:
     return overlay is not None and "live_config" in overlay
 
 
+ENRICH_COMPLETE = "Status: complete"
+
+
 def specs_enriched(out: Path) -> bool:
-    """`reports/spec-enrich.md` exists and is newer than every spec, so no `spec.kit` run undid it."""
+    """`reports/spec-enrich.md` says `Status: complete` and is newer than every spec, so no `spec.kit` run undid it.
+
+    The report is also the progress ledger of a run that stopped midway (an exhausted credential, a timeout):
+    without the status line the task is not done, and the next run skips the files it lists.
+    """
     report = out / "reports" / "spec-enrich.md"
     if not report.is_file():
+        return False
+    if ENRICH_COMPLETE not in (line.strip() for line in report.read_text(encoding="utf-8", errors="replace").splitlines()):
         return False
     specs = list((out / "spec-kit" / "specs").rglob("spec.md")) if (out / "spec-kit" / "specs").is_dir() else []
     return all(spec.stat().st_mtime <= report.stat().st_mtime for spec in specs)

@@ -4,6 +4,9 @@
 FAKE_AGENT_MODE: `ok` (default) does the work; `block` writes a blocker file;
 `noop` exits 0 without writing anything; `sleep` hangs; `crash` exits 2.
 FAKE_AGENT_REPORT_ENV: comma-separated variable names; their values go to `fake-env.json`.
+FAKE_AGENT_DEAD: comma-separated FAKE_TOKEN values that always exit 1, like a spent quota.
+FAKE_AGENT_DIE_ON: `<token>:<task id>`; that token exits 1 on that task and is dead from then on.
+Every run appends `<token> <resumed|-> <first prompt line>` to `fake-calls.log`.
 """
 
 from __future__ import annotations
@@ -24,6 +27,18 @@ cwd = Path.cwd()
 if os.environ.get("FAKE_AGENT_REPORT_ENV"):
     names = os.environ["FAKE_AGENT_REPORT_ENV"].split(",")
     (cwd / "fake-env.json").write_text(json.dumps({n: os.environ.get(n) for n in names}), encoding="utf-8")
+
+token = os.environ.get("FAKE_TOKEN", "")
+with (cwd / "fake-calls.log").open("a", encoding="utf-8") as calls:
+    calls.write(f"{token} {'resumed' if '## Resumed' in prompt else '-'} {prompt.splitlines()[0] if prompt else ''}\n")
+spent = cwd / ".fake-dead"
+if token and (token in os.environ.get("FAKE_AGENT_DEAD", "").split(",") or (spent.is_file() and token in spent.read_text().split())):
+    sys.exit(1)
+die_token, _, die_task = os.environ.get("FAKE_AGENT_DIE_ON", "").partition(":")
+if die_token and die_token == token and re.search(rf"^# Task {re.escape(die_task)}:", prompt, re.MULTILINE):
+    with spent.open("a", encoding="utf-8") as handle:
+        handle.write(token + "\n")
+    sys.exit(1)
 
 if mode == "sleep":
     time.sleep(60)

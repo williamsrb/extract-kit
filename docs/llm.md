@@ -151,7 +151,7 @@ skill runs this loop.
 | `rules.name` | `rules/review.md` (names and intents) | no business rule in `rules/view-rules.json` is still `extracted` |
 | `business` | `business/BUSINESS.md`, then re-runs `step product.impeccable` | the file exists |
 | `constitution` | `spec-kit/constitution/project.md`, then re-runs `step spec.kit` | the file exists |
-| `spec.enrich` | `spec-kit/specs/`, `use-cases/` (prose only), then `reports/spec-enrich.md` | optional, never blocks; done while the report is newer than every `spec.md` |
+| `spec.enrich` | `spec-kit/specs/`, `use-cases/` (prose only), then `reports/spec-enrich.md` | optional, never blocks; done while the report says `Status: complete` and is newer than every `spec.md` |
 | `spec.review` | `reports/spec-review.md` (findings only; edits no spec) | optional, never blocks |
 <!-- markdownlint-enable MD013 -->
 
@@ -219,6 +219,7 @@ operator asks.
 | `task_blocked` (exit 3) | An agent wrote `<sidecar>/reports/blockers/<id>.md`, or `check` still failed after the fix attempts | A person reads the blocker, fixes the input, and re-runs headless |
 | `task_inputs_missing` | In the final `agent` stage a task waits on a file no earlier stage wrote | A pipeline failure, not a question: run the phases that write it |
 | `agent_timeout`, `agent_failed`, `unknown_agent` | The agent CLI ran past `--task-timeout`, exited non-zero, or is not in the `agents:` block | See `reports/headless/*.log`; check the CLI login or API key |
+| `credentials_exhausted` | Every `agent_api_key` for the agent stopped answering (quota, expiry) | Run headless again later or with more credentials; finished tasks are kept |
 | `serena onboarding` MISSING | No `.serena/project.yml` or no memory file | Ask the operator to onboard the project in an agent session opened in the checkout, not in the kit |
 | `graphify index` MISSING | No `graphify-out/graph.json` | Ask the operator to build a Graphify index from a session opened in the checkout (the graphify skill, for example `/graphify .`) |
 | `graft index` warning | No `graft/` | Optional. `map.code` skips until the operator runs `graft build` |

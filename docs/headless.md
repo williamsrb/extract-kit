@@ -176,9 +176,12 @@ The required tasks are `rules.name`, `business` (it re-runs
 `product.impeccable`, which takes PRODUCT.md's users, jobs and capabilities
 from `BUSINESS.md`) and `constitution` (it re-runs `spec.kit`, which composes
 `spec-kit/constitution.md` from it). Then `spec.enrich` rewrites the spec and
-use-case prose; it is done while `reports/spec-enrich.md` is newer than every
-`spec.md`. On a large project it can need more than the default
-`--task-timeout` of 1800 seconds. It is optional, so a timeout, a blocker or
+use-case prose; it is done while `reports/spec-enrich.md` says `Status: complete`
+and is newer than every `spec.md`. The report is also its progress ledger: the
+agent adds a bullet after each file, so a run that stopped midway (see
+[Several credentials](#several-credentials)) is continued, not redone. On a
+large project it can need more than the default `--task-timeout` of 1800
+seconds. It is optional, so a timeout, a blocker or
 fix attempts that ran out do not stop the run: the `agent` stage message says
 `spec.enrich failed and was skipped`, the agent log and any blocker file stay
 in the sidecar, and `check` still runs and fails if enrich left a spec invalid.
@@ -441,6 +444,7 @@ resource:
     token: "<the token>"       # claude setup-token, OPENAI_API_KEY or CURSOR_API_KEY
     agent: claude              # required: the agent CLI that uses it
     validity: "2027-10-05"     # informational, never enforced
+    priority: 10               # optional whole number, lower first, default 100
 ```
 
 ```yaml
@@ -455,7 +459,7 @@ resource:
 <!-- markdownlint-disable MD013 -->
 | Type | Used for | When it is missing or fails |
 | --- | --- | --- |
-| `agent_api_key` | Needs `data.agent`, a name from the `agents:` block of `extractkit.yaml`; without it the resource is reported and not used. Only the selected agent's resources count. The token is exported as that entry's `api_key_env` (`CLAUDE_CODE_OAUTH_TOKEN`, `OPENAI_API_KEY`, `CURSOR_API_KEY`). The entry's `conflicting_env` is removed from the agent's environment, because for `claude` an API key outranks the OAuth token. With several usable ones the first is used | The `agent:context`, `agent:live_config` and `agent` stages are `skipped`. A fresh checkout then stops at `doctor` with `readiness_missing`, because Serena onboarding and the Graphify index are made by the preflight agent; a prepared checkout runs on to `check`. This holds whenever an attachments source is given, even for an agent CLI that is logged in some other way; with no source, headless runs the agent as before |
+| `agent_api_key` | Needs `data.agent`, a name from the `agents:` block of `extractkit.yaml`; without it the resource is reported and not used. Only the selected agent's resources count. The token is exported as that entry's `api_key_env` (`CLAUDE_CODE_OAUTH_TOKEN`, `OPENAI_API_KEY`, `CURSOR_API_KEY`). The entry's `conflicting_env` is removed from the agent's environment, because for `claude` an API key outranks the OAuth token. With several usable ones see [Several credentials](#several-credentials) | The `agent:context`, `agent:live_config` and `agent` stages are `skipped`. A fresh checkout then stops at `doctor` with `readiness_missing`, because Serena onboarding and the Graphify index are made by the preflight agent; a prepared checkout runs on to `check`. This holds whenever an attachments source is given, even for an agent CLI that is logged in some other way; with no source, headless runs the agent as before |
 | `cms_url` | A login to the XP, written to a mode 0600 Playwright storage state in a private temp folder. Only used when no `--storage-state` is supplied and `--xp-host` is set; with `--xp-host`, only the resource for that host. Production hosts are refused | The `cms` stage is `skipped`, as with no storage state |
 <!-- markdownlint-enable MD013 -->
 
@@ -483,6 +487,36 @@ the agent (and to `doctor`, which checks `agent.api_key_env`).
 Download them with `--op-vault NAME --op-item NAME` (the `op` CLI reads
 `OP_SERVICE_ACCOUNT_TOKEN`), read a folder or one file with `--assets-dir`, or
 both.
+
+### Several credentials
+
+An item may hold several `agent_api_key` resources for the same agent, for
+example more than one Claude seat. `data.priority` orders them (a whole number,
+lower first, default 100; equal values keep the order the files were read in).
+
+- With two or more, the `assets` stage probes them in order: one short agent
+  call each, a one-word question. The first that answers is used. The probe
+  costs a few tokens per credential and runs only when there are two or more.
+- When the agent exits non-zero during a run, headless probes the credential in
+  use. If it still answers, the failure was not about it and the run stops as
+  before. If it does not (quota spent, token revoked), headless takes the next
+  credential that answers and runs the same task again, without using up a fix
+  attempt. The new agent is told that a previous run stopped midway and must
+  complete the files, not start over. The switch is printed and logged as
+  `credential_switched` in `reports/headless.jsonl`.
+- When none answers, the run stops with `credentials_exhausted`. Run headless
+  again later: finished tasks are not run again, and `spec.enrich` goes on from
+  its ledger.
+- Probing a credential that answers never changes it; a credential is only
+  left behind in the order, never retried within the same run.
+
+What is lost when a credential runs out is the one task in flight. Required
+tasks each write one document from fixed inputs (`context.*`, `rules.name`,
+`business`, `constitution`), so redoing one is a short run. `spec.enrich` is the
+open-ended one and works file by file against its ledger.
+
+An agent that reports a spent quota in a JSON result and still exits 0 is
+only caught by the probe at the start of a run, not during a task.
 
 ### Making an attachment
 

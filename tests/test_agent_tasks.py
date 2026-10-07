@@ -233,11 +233,23 @@ class DoneStateTests(unittest.TestCase):
         spec.write_text("# x\n", encoding="utf-8")
         report = self.out / "reports" / "spec-enrich.md"
         report.parent.mkdir()
-        report.write_text("# Spec enrich\n", encoding="utf-8")
+        report.write_text("# Spec enrich\nStatus: complete\n", encoding="utf-8")
         os.utime(spec, (1000, 1000))
         os.utime(report, (2000, 2000))
         self.assertTrue(agent_tasks.is_done(task, self.out))
         os.utime(spec, (3000, 3000))
+        self.assertFalse(agent_tasks.is_done(task, self.out))
+
+    def test_a_spec_enrich_report_without_the_complete_line_is_a_ledger_not_a_finish(self) -> None:
+        task = self.by_id["spec.enrich"]
+        spec = self.out / "spec-kit" / "specs" / "content" / "spec.md"
+        spec.parent.mkdir(parents=True)
+        spec.write_text("# x\n", encoding="utf-8")
+        report = self.out / "reports" / "spec-enrich.md"
+        report.parent.mkdir()
+        report.write_text("# Spec enrich\nStatus: in progress\n- content/spec.md FR-1\n", encoding="utf-8")
+        os.utime(spec, (1000, 1000))
+        os.utime(report, (2000, 2000))
         self.assertFalse(agent_tasks.is_done(task, self.out))
 
     def test_spec_review_is_optional_and_never_pending(self) -> None:

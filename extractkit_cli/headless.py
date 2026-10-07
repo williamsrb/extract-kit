@@ -79,6 +79,13 @@ CMS_LISTS = (("--cms-key", "cms_keys"), ("--round2", "round2"))
 # What opens the vault never reaches a child process.
 VAULT_TOKEN_PREFIX = "OP_SERVICE_ACCOUNT_TOKEN"
 NO_AGENT_CREDENTIAL = "skipped: no agent credential (see the assets stage)"
+PROBE_PROMPT = "Reply with the single word: ok"
+PROBE_TIMEOUT = 90
+RESUMED_NOTE = (
+    "\n\n## Resumed\n\nA previous agent run on this task stopped before it finished, because its credential "
+    "ran out. The files this task writes may be half-written. Read what is already there and complete it; "
+    "do not start over and do not redo what is already correct.\n"
+)
 # The agent process sees these and what its `agents:` entry names, not the rest of the job environment.
 AGENT_ENV_NAMES = frozenset({
     "PATH", "HOME", "USER", "LOGNAME", "SHELL", "LANG", "LANGUAGE", "TERM", "COLORTERM", "NO_COLOR", "TMPDIR", "TZ",
@@ -101,6 +108,10 @@ class StageFailed(Exception):
 
 class Blocked(StageFailed):
     exit = 3
+
+
+class AgentExit(StageFailed):
+    """The agent CLI ran and exited non-zero. The only failure a credential switch can cure."""
 
 
 def stage_id(value: str) -> str:
@@ -143,8 +154,8 @@ class RunLog:
         self.lines: list[dict] = []
         self.pending: Path | None = None
 
-    def agent_log(self, stage: str, task: str, attempt: int) -> Path:
-        name = f"{stage.replace(':', '-')}-{task}-{attempt}.log"
+    def agent_log(self, stage: str, task: str, attempt: int, credential: int = 0) -> Path:
+        name = f"{stage.replace(':', '-')}-{task}-{attempt}" + (f"-c{credential + 1}" if credential else "") + ".log"
         if self.out is None and self.pending is None:
             self.pending = Path(tempfile.mkdtemp(prefix="extractkit-headless-"))
         base = (self.out / "reports" / "headless") if self.out else self.pending
@@ -248,6 +259,8 @@ class Headless:
         self._number = ""
         self.usage: list[dict] = []
         self.agent_env: dict[str, str] = {}
+        self.credentials: list[assets.Credential] = []
+        self.credential_at = 0
         self.drop_env: list[str] = []
         self.agent_ready = True
         self.s = self._settings()
@@ -416,7 +429,18 @@ class Headless:
         return token
 
     def _agent(self, stage: str, task: str, attempt: int, prompt: str, tools: list[str]) -> Path:
-        log = self.log.agent_log(stage, task, attempt)
+        """Run the agent once. When its credential has run out, go on with the next one on the same task."""
+        resumed = False
+        while True:
+            try:
+                return self._agent_once(stage, task, attempt, prompt + (RESUMED_NOTE if resumed else ""), tools)
+            except AgentExit:
+                if not self._switch_credential(stage, task, attempt):
+                    raise
+                resumed = True
+
+    def _agent_once(self, stage: str, task: str, attempt: int, prompt: str, tools: list[str]) -> Path:
+        log = self.log.agent_log(stage, task, attempt, self.credential_at)
         argv = self._argv(tools)
         start = time.monotonic()
         self._say(f"agent {argv[0]} started on {task} (attempt {attempt}, timeout {live.duration(self.s.timeout)}), log {self.log.where(log)}", indent=1)
@@ -438,7 +462,7 @@ class Headless:
             raise StageFailed("agent_failed", f"could not start {argv[0]}: {exc}", f"install {argv[0]}") from None
         if child.returncode != 0:
             self._line(stage, task, attempt, False, child.returncode, "agent_failed", f"{argv[0]} exited {child.returncode}", start, log)
-            raise StageFailed(
+            raise AgentExit(
                 "agent_failed", f"{argv[0]} exited {child.returncode} on {task}; see {self.log.where(log)}",
                 "check the agent CLI login or API key in this environment",
             )
@@ -447,6 +471,56 @@ class Headless:
         self._say(f"agent finished {task} in {live.duration(time.monotonic() - start)}{_spent(usage)}", indent=1)
         self._line(stage, task, attempt, True, 0, None, "agent finished", start, log, usage)
         return log
+
+    # -- credentials ------------------------------------------------------------
+
+    def _use_credential(self, index: int) -> None:
+        self.credential_at = index
+        self.agent_env = {str(self.s.entry["api_key_env"]): self.credentials[index].token}
+
+    def _probe(self, credential: assets.Credential) -> bool:
+        """Ask the agent a one-word question with this credential. Any failure to answer means it is unusable."""
+        env = self._env(agent=True, restrict=True)
+        env[str(self.s.entry["api_key_env"])] = credential.token
+        try:
+            done = subprocess.run(
+                self._argv(self.s.allowed_tools), input=PROBE_PROMPT, cwd=self.source, env=env, text=True,
+                capture_output=True, timeout=PROBE_TIMEOUT, check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return False
+        return done.returncode == 0 and not _reported_error(done.stdout)
+
+    def _pick_credential(self, start: int) -> bool:
+        """Use the first credential from `start` on that answers a probe. Several are tried in priority order."""
+        for index in range(start, len(self.credentials)):
+            credential = self.credentials[index]
+            self._say(f"probing credential {index + 1}/{len(self.credentials)} ({credential.source}) ...", indent=1)
+            if self._probe(credential):
+                self._use_credential(index)
+                return True
+            self._say(f"credential {index + 1} ({credential.source}) did not answer", indent=1)
+        return False
+
+    def _switch_credential(self, stage: str, task: str, attempt: int) -> bool:
+        """After an agent exit: when the credential no longer answers, move to the next that does.
+
+        False when there is nothing to switch to, or when the credential still answers (the exit was not about it).
+        """
+        if len(self.credentials) < 2 or self._probe(self.credentials[self.credential_at]):
+            return False
+        start = time.monotonic()
+        gone = self.credentials[self.credential_at].source
+        if not self._pick_credential(self.credential_at + 1):
+            self._line(stage, task, attempt, False, 1, "credentials_exhausted", f"credential {gone} and the ones after it did not answer", start)
+            raise StageFailed(
+                "credentials_exhausted", f"no agent credential answers any more (last in use: {gone})",
+                "run headless again later, or with more credentials; the finished tasks are kept and are not run again",
+            )
+        now = self.credentials[self.credential_at].source
+        self._say(f"credential {gone} did not answer; going on with {now} ({task}, attempt {attempt})", indent=1)
+        self._line(stage, task, attempt, True, 0, "credential_switched", f"{gone} -> {now}", start)
+        return True
 
     def _wait(self, child: subprocess.Popen, prompt: str, log: Path, task: str, start: float) -> None:
         """Feed the prompt, then wait for the agent, saying every HEARTBEAT seconds that it is alive."""
@@ -540,6 +614,12 @@ class Headless:
         except Exception as exc:  # noqa: BLE001 - the stage must not stop the run, whatever a file or a tool did
             bundle, outcome = assets.Bundle(), assets.Outcome(problems=[f"attachments could not be processed ({type(exc).__name__})"])
         self.agent_env, self.drop_env = outcome.agent_env, outcome.drop_env
+        self.credentials = outcome.credentials
+        if len(self.credentials) > 1 and not self._pick_credential(0):
+            outcome.problems.append(f"none of the {len(self.credentials)} {assets.TYPE_AGENT} credentials for agent {self.s.agent} answered")
+            self.agent_env, self.credentials = {}, []
+        elif len(self.credentials) > 1 and self.credential_at:
+            outcome.notes.append(f"credential {self.credential_at + 1} of {len(self.credentials)} is in use; the ones before it did not answer")
         if outcome.storage_state:
             args.storage_state = str(outcome.storage_state)
             self.s.online = True
@@ -800,6 +880,15 @@ def _path(doc: object, dotted: str) -> object:
     for key in dotted.split("."):
         doc = doc.get(key) if isinstance(doc, dict) else None
     return doc
+
+
+def _reported_error(text: str) -> bool:
+    """An agent CLI that prints a JSON result can report a failure (a spent quota) and still exit 0."""
+    try:
+        doc = json.loads(text)
+    except ValueError:
+        return False
+    return isinstance(doc, dict) and doc.get("is_error") is True
 
 
 def agent_usage(text: str, spec: dict | None) -> dict:
