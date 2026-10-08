@@ -142,7 +142,7 @@ class ResourcesTests(unittest.TestCase):
         self.assertEqual(rows["agent api key"]["state"], "MISSING")
 
     def test_schema_rejects_unknown_keys_and_a_database(self) -> None:
-        for bad in ({"sqlite": {"path": "x.db"}}, {"xp": {"hots": "x"}}, {"agent": {"permissions": "yolo"}}):
+        for bad in ({"sqlite": {"path": "x.db"}}, {"xp": {"hots": "x"}}, {"agent": {"permissions": "yolo"}}, {"agent": {"mdl": "x"}}):
             with self.subTest(bad=bad):
                 result = run("doctor", "--profile", "enonic", "--source", ".", "--resources",
                              str(self._resources(bad)), "--json", cwd=self.source)
@@ -166,6 +166,18 @@ class ResourcesTests(unittest.TestCase):
         config = {r["name"]: r for r in json.loads(result.stdout)["config"]}
         self.assertEqual((config["--branch"]["origin"], config["--branch"]["value"]), ("env", "master"))
         self.assertEqual(config["--xp-host"]["origin"], "file")
+
+    def test_agent_model_and_effort_come_from_the_file(self) -> None:
+        resources = self._resources({"agent": {"model": "opus", "effort": "high"}})
+        result = run("headless", "--source", ".", "--resources", str(resources), "--agent", "cursor", "--json",
+                     cwd=self.source)
+        self.assertEqual(json.loads(result.stdout)["error"]["code"], "agent_option_unsupported")
+        config = {r["name"]: r for r in json.loads(result.stdout)["config"]}
+        self.assertEqual((config["--agent-model"]["origin"], config["--agent-model"]["value"]), ("file", "opus"))
+        result = run("headless", "--source", ".", "--resources", str(resources), "--agent", "cursor", "--json",
+                     cwd=self.source, env={"EXTRACTKIT_AGENT_MODEL": "sonnet"})
+        config = {r["name"]: r for r in json.loads(result.stdout)["config"]}
+        self.assertEqual((config["--agent-model"]["origin"], config["--agent-model"]["value"]), ("env", "sonnet"))
 
     def test_resources_env_var(self) -> None:
         resources = self._resources({"xp": {"branch": "draft"}})

@@ -405,6 +405,12 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Agent CLI from the agents: block of extractkit.yaml (default: claude).")
     hl.add_argument("--agent-permissions", dest="agent_permissions", choices=("allowlist", "bypass"),
                     metavar="MODE", help="allowlist (default) or bypass. Bypass is the operator's call.")
+    hl.add_argument("--agent-model", dest="agent_model", metavar="MODEL",
+                    help="Model for the agent CLI. Flag, then EXTRACTKIT_AGENT_MODEL, then agent.model in the "
+                         "resources file; unset means the entry's default_model, then the CLI's own default.")
+    hl.add_argument("--agent-effort", dest="agent_effort", metavar="LEVEL",
+                    help="Effort for the agent CLI, same precedence as --agent-model. Fails when the agent's "
+                         "entry has no effort_args.")
     hl.add_argument("--agent-env", dest="agent_env", action="append", metavar="NAME",
                     help="Extra environment variable the agent process may see (repeatable). By default it gets "
                          "only the base list and its agents: entry's env_prefixes.")

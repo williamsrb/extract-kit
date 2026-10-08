@@ -9,6 +9,11 @@ schema_versions: [1]
 #   bypass_args     appended only when agent.permissions is `bypass`
 #   allowed_tools   default tool allowlist for an agent task
 #   preflight_tools default tool allowlist for the Serena and Graphify preflight
+#   model_args      optional: appended when a model is set (--agent-model, EXTRACTKIT_AGENT_MODEL, agent.model
+#                   or default_model); without it, a set model fails with agent_option_unsupported
+#   effort_args     optional: the same for the effort (--agent-effort, agent.effort or default_effort)
+#   default_model   optional: the model when nothing is set; unset means the CLI's own default
+#   default_effort  optional: the same for the effort
 #   usage           optional: how to read tokens and cost from the agent's log
 #   api_key_env     optional: the variable the CLI reads its credential from; headless fills it
 #                   from an agent_api_key attachment (see docs/headless.md)
@@ -17,13 +22,16 @@ schema_versions: [1]
 #                   here the flags that lift the kit's own guards
 #   env_prefixes    optional: prefixes of the variables this CLI needs; the agent process gets those,
 #                   a short base list (PATH, HOME, proxies, certificates) and `--agent-env`, nothing else
-# Templates accept {allowed_tools} (comma-joined) and {source}. Another CLI is a
-# new entry here, with no code change. Argv verified 2026-10-02 against
+# Templates accept {allowed_tools} (comma-joined), {source}, {model} and {effort}. The model
+# and effort args go before the permission args, which may end with the stdin `-`. Another
+# CLI is a new entry here, with no code change. Argv verified 2026-10-02 against
 # claude 2.1.280, codex-cli 0.151.0 and cursor-agent 2026.10.01 (`--help`,
 # plus one stdin run of each in a scratch git folder).
 agents:
   claude:
     argv: [claude, -p, --output-format, json]
+    model_args: [--model, "{model}"]
+    effort_args: [--effort, "{effort}"]
     api_key_env: CLAUDE_CODE_OAUTH_TOKEN
     conflicting_env: [ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN]
     env_prefixes: [ANTHROPIC_, CLAUDE_]
@@ -37,6 +45,8 @@ agents:
       cost_usd: total_cost_usd
   codex:
     argv: [codex, exec, --cd, "{source}"]
+    model_args: [--model, "{model}"]
+    effort_args: [-c, "model_reasoning_effort={effort}"]
     api_key_env: OPENAI_API_KEY
     env_prefixes: [OPENAI_, CODEX_]
     allowlist_args: [--sandbox, workspace-write, "-"]
@@ -51,6 +61,7 @@ agents:
   # `stream-json` results carry no token or cost fields, so it has no usage: block.
   cursor:
     argv: [cursor-agent, -p, --output-format, text, --trust, --approve-mcps]
+    model_args: [--model, "{model}"]
     api_key_env: CURSOR_API_KEY
     env_prefixes: [CURSOR_]
     allowlist_args: [--force, --sandbox, enabled]

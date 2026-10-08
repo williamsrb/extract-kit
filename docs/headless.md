@@ -55,6 +55,8 @@ auth:
 agent:
   cli: claude                  # a name in the agents: block of extractkit.yaml
   permissions: allowlist       # or bypass
+  model: claude-opus-4-5       # optional; passed through to the agent CLI
+  effort: high                 # optional; refused if the agent has no effort_args
   allowed_tools: [Read, Write, Edit, Glob, Grep, "Bash(extractkit *)", mcp__serena]
   api_key_env: ANTHROPIC_API_KEY   # the agent's variable, never a value
   timeout_seconds: 1800
@@ -125,7 +127,7 @@ variable meant for headless
 | `EXTRACTKIT_RESOURCES` | `--resources` | `doctor`, `headless`, `resume`, `run`, `step` |
 | `EXTRACTKIT_JSON`, `EXTRACTKIT_VERBOSE`, `EXTRACTKIT_QUIET` | `--json`, `-v`, `-q` | most commands |
 | `EXTRACTKIT_PROGRESS` | `--progress` | `resume`, `run`, `step` |
-| `EXTRACTKIT_AGENT`, `EXTRACTKIT_AGENT_PERMISSIONS`, `EXTRACTKIT_ALLOWED_TOOLS`, `EXTRACTKIT_AGENT_ENV` | `--agent`, `--agent-permissions`, `--allowed-tools`, `--agent-env` | `headless` (`EXTRACTKIT_AGENT` also `assets`) |
+| `EXTRACTKIT_AGENT`, `EXTRACTKIT_AGENT_PERMISSIONS`, `EXTRACTKIT_AGENT_MODEL`, `EXTRACTKIT_AGENT_EFFORT`, `EXTRACTKIT_ALLOWED_TOOLS`, `EXTRACTKIT_AGENT_ENV` | `--agent`, `--agent-permissions`, `--agent-model`, `--agent-effort`, `--allowed-tools`, `--agent-env` | `headless` (`EXTRACTKIT_AGENT` also `assets`) |
 | `EXTRACTKIT_MAX_FIX_ATTEMPTS`, `EXTRACTKIT_TASK_TIMEOUT` | `--max-fix-attempts` (0 or more), `--task-timeout` (1 or more) | `headless` |
 | `EXTRACTKIT_PROMOTE` | `--promote` | `headless` |
 | `EXTRACTKIT_NO_ENRICH` | `--no-enrich` | `headless` |
@@ -252,6 +254,24 @@ missing readiness item and fails with `readiness_missing`; it does not
 install tools. The container image has them, and registers Serena as a
 user-scope MCP server for `claude`; for `codex` and `cursor` the server still
 has to be added to that agent's own config.
+
+### Model and effort
+
+`--agent-model` and `--agent-effort` (or `EXTRACTKIT_AGENT_MODEL`,
+`EXTRACTKIT_AGENT_EFFORT`, or `agent.model` and `agent.effort` in the
+resources file) choose them, in that order of precedence. Each `agents:` entry
+may declare `default_model` and `default_effort`; none ships, so an unset value
+means the agent CLI's own default and no flag is added. The kit does not check
+the value: the CLI rejects a bad one (`agent_failed`).
+
+The entry's `model_args` and `effort_args` say how the value reaches the CLI
+(`{model}` and `{effort}` are filled in) and are placed before the permission
+args. `cursor` has no `effort_args`, so an effort set for it fails at the start
+with `agent_option_unsupported`, as does a model for an entry without
+`model_args`. `ANTHROPIC_MODEL` still reaches `claude` through `env_prefixes`,
+but `--agent-model` wins because it comes later on the command line. The
+resolved values are in the `agent ... started` line, every agent line of
+`reports/headless.jsonl` and the run summary (`default` when unset).
 
 ## Blockers and exit 3
 
@@ -396,6 +416,7 @@ extract:
   image: leanon/extractkit-ci:latest   # or your own build of docker/Dockerfile
   variables:
     EXTRACTKIT_AGENT: claude
+    EXTRACTKIT_AGENT_MODEL: opus
     EXTRACTKIT_RESOURCES: .extractkit/resources.yaml
     EXTRACTKIT_UNTIL: check
     # File-type CI/CD variable: the storage-state contents.
@@ -543,6 +564,7 @@ extract:
   image: leanon/extractkit-ci:latest
   variables:
     EXTRACTKIT_AGENT: claude
+    EXTRACTKIT_AGENT_MODEL: opus
     EXTRACTKIT_OP_VAULT: $OP_VAULT_NAME_FACTORY
     EXTRACTKIT_OP_ITEM: $OP_EXTRACT_NAME_FACTORY
     EXTRACTKIT_ASSETS_PASSWORD_ENV: PASSWORD   # set on each pipeline run

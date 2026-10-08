@@ -33,6 +33,8 @@
         "cli": { "type": "string", "minLength": 1 },
         "allowed_tools": { "type": "array", "items": { "type": "string", "minLength": 1 } },
         "permissions": { "enum": ["allowlist", "bypass"] },
+        "model": { "type": "string", "minLength": 1 },
+        "effort": { "type": "string", "minLength": 1 },
         "api_key_env": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
         "timeout_seconds": { "type": "integer", "minimum": 1 }
       }

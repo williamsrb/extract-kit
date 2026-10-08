@@ -234,6 +234,8 @@ class _Settings:
     agent: str
     entry: dict
     permissions: str
+    model: str | None
+    effort: str | None
     allowed_tools: list[str]
     preflight_tools: list[str]
     timeout: int
@@ -280,8 +282,19 @@ class Headless:
             )
         permissions = getattr(args, "agent_permissions", None) or "allowlist"
         override = [t for t in (getattr(args, "allowed_tools", None) or []) if t]
+        chosen = {}
+        for option in ("model", "effort"):
+            value = getattr(args, f"agent_{option}", None) or entry.get(f"default_{option}") or None
+            if value and not entry.get(f"{option}_args"):
+                raise ExtractkitError(
+                    f"agent {name} has no {option} argument in extractkit.yaml",
+                    f"unset --agent-{option}, EXTRACTKIT_AGENT_{option.upper()}, agent.{option} and default_{option}, "
+                    f"or add {option}_args to its agents: entry",
+                    code="agent_option_unsupported",
+                )
+            chosen[option] = value
         return _Settings(
-            agent=name, entry=entry, permissions=permissions,
+            agent=name, entry=entry, permissions=permissions, model=chosen["model"], effort=chosen["effort"],
             allowed_tools=override or list(entry.get("allowed_tools") or []),
             preflight_tools=override or list(entry.get("preflight_tools") or []),
             timeout=int(getattr(args, "task_timeout", None) or 1800),
@@ -417,9 +430,11 @@ class Headless:
         extra = entry.get("bypass_args" if self.s.permissions == "bypass" else "allowlist_args") or []
         values = {
             "allowed_tools": ",".join(tools), "denied_tools": ",".join(entry.get("denied_tools") or []),
-            "source": str(self.source),
+            "source": str(self.source), "model": self.s.model or "", "effort": self.s.effort or "",
         }
-        argv = [*(entry.get("argv") or []), *extra]
+        model_part = (entry.get("model_args") or []) if self.s.model else []
+        effort_part = (entry.get("effort_args") or []) if self.s.effort else []
+        argv = [*(entry.get("argv") or []), *model_part, *effort_part, *extra]
         return [self._fill(token, values) for token in argv]
 
     @staticmethod
@@ -443,7 +458,7 @@ class Headless:
         log = self.log.agent_log(stage, task, attempt, self.credential_at)
         argv = self._argv(tools)
         start = time.monotonic()
-        self._say(f"agent {argv[0]} started on {task} (attempt {attempt}, timeout {live.duration(self.s.timeout)}), log {self.log.where(log)}", indent=1)
+        self._say(f"agent {argv[0]} started on {task} (attempt {attempt}, timeout {live.duration(self.s.timeout)}, model {self.s.model or "default"}, effort {self.s.effort or "default"}), log {self.log.where(log)}", indent=1)
         try:
             with log.open("w", encoding="utf-8") as handle:
                 child = subprocess.Popen(
@@ -452,16 +467,16 @@ class Headless:
                 )
                 self._wait(child, prompt, log, task, start)
         except subprocess.TimeoutExpired:
-            self._line(stage, task, attempt, False, 1, "agent_timeout", f"{argv[0]} ran over {self.s.timeout}s", start, log)
+            self._line(stage, task, attempt, False, 1, "agent_timeout", f"{argv[0]} ran over {self.s.timeout}s", start, log, agent=True)
             raise StageFailed(
                 "agent_timeout", f"{argv[0]} ran over {self.s.timeout}s on {task}",
                 "raise --task-timeout, or split the task",
             ) from None
         except OSError as exc:
-            self._line(stage, task, attempt, False, 1, "agent_failed", str(exc), start, log)
+            self._line(stage, task, attempt, False, 1, "agent_failed", str(exc), start, log, agent=True)
             raise StageFailed("agent_failed", f"could not start {argv[0]}: {exc}", f"install {argv[0]}") from None
         if child.returncode != 0:
-            self._line(stage, task, attempt, False, child.returncode, "agent_failed", f"{argv[0]} exited {child.returncode}", start, log)
+            self._line(stage, task, attempt, False, child.returncode, "agent_failed", f"{argv[0]} exited {child.returncode}", start, log, agent=True)
             raise AgentExit(
                 "agent_failed", f"{argv[0]} exited {child.returncode} on {task}; see {self.log.where(log)}",
                 "check the agent CLI login or API key in this environment",
@@ -469,7 +484,7 @@ class Headless:
         usage = agent_usage(log.read_text(encoding="utf-8", errors="replace"), self.s.entry.get("usage"))
         self.usage.append(usage)
         self._say(f"agent finished {task} in {live.duration(time.monotonic() - start)}{_spent(usage)}", indent=1)
-        self._line(stage, task, attempt, True, 0, None, "agent finished", start, log, usage)
+        self._line(stage, task, attempt, True, 0, None, "agent finished", start, log, usage, agent=True)
         return log
 
     # -- credentials ------------------------------------------------------------
@@ -540,10 +555,11 @@ class Headless:
 
     def _line(self, stage: str, task: str | None, attempt: int | None, ok: bool, code_exit: int,
               code: str | None, message: str, start: float, log: Path | None = None,
-              usage: dict | None = None) -> None:
+              usage: dict | None = None, agent: bool = False) -> None:
         self.log.add(
             stage=stage, task=task, attempt=attempt, ok=ok, exit=code_exit, code=code,
             message=message, duration_s=round(time.monotonic() - start, 3), log=self.log.rel(log),
+            **({"model": self.s.model or "default", "effort": self.s.effort or "default"} if agent else {}),
             **(usage or {}),
         )
 
@@ -844,6 +860,7 @@ class Headless:
         return {
             "duration_s": round(sum(r.duration_s for r in self.records), 3),
             "agent_runs": len(self.usage), "usage": usage,
+            "agent": {"name": self.s.agent, "model": self.s.model or "default", "effort": self.s.effort or "default"},
         }
 
     # -- result -----------------------------------------------------------------
@@ -858,7 +875,9 @@ class Headless:
             row = f"{record.status:8s} {record.id:18s} {live.duration(record.duration_s):>7s}  {record.message}"
             print(f"  {row}")
             self._say(row, indent=1)
-        total = f"total {live.duration(summary['duration_s'])}, {summary['agent_runs']} agent run(s)"
+        agent = summary["agent"]
+        total = (f"total {live.duration(summary['duration_s'])}, {summary['agent_runs']} agent run(s) "
+                 f"({agent['name']}, model {agent['model']}, effort {agent['effort']})")
         if summary["agent_runs"]:
             total += _spent(summary["usage"]) if summary["usage"] else " (the agent reported no token or cost data)"
         print(f"  {total}")

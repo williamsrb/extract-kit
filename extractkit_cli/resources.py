@@ -41,6 +41,8 @@ FIELDS: tuple[tuple[str, str, str], ...] = (
     ("auth", "storage_state", "storage_state"),
     ("agent", "cli", "agent"),
     ("agent", "permissions", "agent_permissions"),
+    ("agent", "model", "agent_model"),
+    ("agent", "effort", "agent_effort"),
     ("agent", "allowed_tools", "allowed_tools"),
     ("agent", "timeout_seconds", "task_timeout"),
 )

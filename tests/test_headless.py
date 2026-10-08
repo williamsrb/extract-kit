@@ -25,6 +25,7 @@ FAKE = REPO / "tests" / "fixtures" / "fake_agent.py"
 FAKE_TABLE = {
     "fake": {
         "argv": [sys.executable, str(FAKE)], "allowlist_args": [], "bypass_args": [],
+        "model_args": ["--model", "{model}"], "effort_args": ["--effort", "{effort}"],
         "allowed_tools": ["Read"], "preflight_tools": ["Read"],
         "api_key_env": "FAKE_TOKEN", "conflicting_env": ["FAKE_CONFLICT"], "env_prefixes": ["FAKE_"],
     },
@@ -162,6 +163,16 @@ class StageTests(HeadlessCase):
         self.assertIn("summary:", err.getvalue())
         self.assertEqual(doc["summary"]["agent_runs"], len(self.agent_runs()))
         self.assertGreater(doc["summary"]["duration_s"], 0)
+
+    def test_model_and_effort_reach_the_agent_lines_and_the_summary(self) -> None:
+        _, doc = self.headless("--until", "agent:context", "--agent-model", "m1", "--agent-effort", "high")
+        self.assertEqual(doc["summary"]["agent"], {"name": "fake", "model": "m1", "effort": "high"})
+        runs = self.agent_runs()
+        self.assertTrue(runs)
+        for line in runs:
+            self.assertEqual((line["model"], line["effort"]), ("m1", "high"))
+        _, doc = self.headless("--until", "agent:context")
+        self.assertEqual(doc["summary"]["agent"]["model"], "default")
 
     def agent_runs(self) -> list[dict]:
         return [l for l in self.lines() if l["message"] == "agent finished"]
@@ -597,6 +608,48 @@ class LoopTests(unittest.TestCase):
                     source="/tmp", agent="fake", agent_permissions=permissions, allowed_tools=None,
                     task_timeout=5, max_fix_attempts=2, storage_state=None))
                 self.assertEqual(driver._argv(driver.s.allowed_tools), expected)
+
+    def _shipped(self, name: str, **options: str) -> headless.Headless:
+        return headless.Headless(Namespace(
+            source="/tmp", agent=name, agent_permissions=None, allowed_tools=None,
+            task_timeout=5, max_fix_attempts=2, storage_state=None, **options))
+
+    def test_nothing_set_leaves_the_shipped_argv_unchanged(self) -> None:
+        for name, head in (("claude", ["claude", "-p", "--output-format", "json", "--permission-mode", "acceptEdits"]),
+                           ("codex", ["codex", "exec", "--cd", "/tmp", "--sandbox", "workspace-write", "-"]),
+                           ("cursor", ["cursor-agent", "-p", "--output-format", "text", "--trust", "--approve-mcps",
+                                       "--force", "--sandbox", "enabled"])):
+            argv = self._shipped(name)._argv([])
+            with self.subTest(agent=name):
+                self.assertEqual(argv[:len(head)], head)
+                self.assertNotIn("--model", argv)
+                self.assertNotIn("--effort", argv)
+
+    def test_model_and_effort_go_before_the_permission_args(self) -> None:
+        argv = self._shipped("codex", agent_model="gpt-x", agent_effort="high")._argv([])
+        self.assertEqual(argv, ["codex", "exec", "--cd", "/tmp", "--model", "gpt-x", "-c",
+                                "model_reasoning_effort=high", "--sandbox", "workspace-write", "-"])
+        argv = self._shipped("claude", agent_model="opus", agent_effort="max")._argv(["Read"])
+        self.assertEqual(argv[4:8], ["--model", "opus", "--effort", "max"])
+        self.assertEqual(argv[8], "--permission-mode")
+
+    def test_the_entry_default_applies_below_the_flag(self) -> None:
+        table = {"fake": {"argv": ["a"], "model_args": ["-m", "{model}"], "default_model": "d",
+                          "allowlist_args": ["-"], "allowed_tools": [], "preflight_tools": []}}
+        with mock.patch.object(headless, "agent_table", return_value=table):
+            for options, expected in (({}, "d"), ({"agent_model": "flag"}, "flag")):
+                driver = headless.Headless(Namespace(source="/tmp", agent="fake", **options))
+                with self.subTest(options=options):
+                    self.assertEqual(driver._argv([]), ["a", "-m", expected, "-"])
+
+    def test_an_option_without_args_fails_at_start(self) -> None:
+        with self.assertRaises(headless.ExtractkitError) as caught:
+            self._shipped("cursor", agent_effort="high")
+        self.assertEqual(caught.exception.code, "agent_option_unsupported")
+        self.assertIn("cursor", str(caught.exception))
+        table = {"fake": {"argv": ["a"], "allowlist_args": [], "allowed_tools": [], "preflight_tools": []}}
+        with mock.patch.object(headless, "agent_table", return_value=table), self.assertRaises(headless.ExtractkitError):
+            headless.Headless(Namespace(source="/tmp", agent="fake", agent_model="m"))
 
     def test_the_shipped_agents_build_a_stdin_command_per_permission_mode(self) -> None:
         table = headless.agent_table()
