@@ -29,6 +29,16 @@ kit checkout can be deleted afterwards.
 An assistant that does not load skills reads the `SKILL.md` file and
 follows it as a procedure.
 
+## Knowledge base
+
+`kb/<bucket>/How-to-*.md` holds How-tos in the devkit KB layout (frontmatter
+plus a generated `llm-index.md` per bucket). `extractkit kb list` and
+`kb show ID` print them. The CMS phase reads `kb/enonic/` (log in to an XP7,
+traverse its CMS). The source of each file is `~/.agents/kb/implementation/`;
+edit it there, then copy it here and rebuild the index with devkit's
+`llm_index.py`. The How-tos keep the KB's long lines, so they do not pass
+markdownlint at 80 columns.
+
 ## Agent tasks
 
 The prompts are in `agent-tasks/<id>/prompt.md`. Render one with real paths

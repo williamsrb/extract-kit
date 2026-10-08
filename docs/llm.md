@@ -106,6 +106,10 @@ extractkit resume --source <legacy> --branch draft --storage-state <state.json>
 <!-- markdownlint-enable MD013 -->
 
 Local or review XP only. Skip it with `--from merge` in the next phase.
+Before this step, read the How-tos for the CMS: `extractkit kb list`, then
+`extractkit kb show xp7-admin` (log in, get a storage state) and
+`extractkit kb show xp7-cms` (Guillotine, Content Studio REST, Site Config,
+what to pin with `--cms-key`).
 `enonic.cms` also writes `inventory/live-config-candidates.json`: the
 Site Config and Config Env keys whose value is a URL or a host map, and
 whether the current `live_config` rules cover them. The task

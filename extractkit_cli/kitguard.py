@@ -18,9 +18,9 @@ from pathlib import Path
 from .common import REPO_ROOT, kit_tree_of
 from .errors import ExtractkitError
 
-# None of these reads a source or writes a sidecar. `deps` is the tool half of
-# `doctor`, and `doctor` is exempt until it is given a `--source`.
-EXEMPT_COMMANDS = frozenset({"install", "deps", "profile"})
+# None of these reads a source or writes a sidecar. `kb` only prints kit files. `deps` is
+# the tool half of `doctor`, and `doctor` is exempt until it is given a `--source`.
+EXEMPT_COMMANDS = frozenset({"install", "deps", "profile", "kb"})
 
 
 def cwd() -> Path:

@@ -71,6 +71,9 @@ Required and optional inputs and the output of every phase and agent task:
    excludes
 4. Optional live CMS (Enonic profile only):
 
+   Read the CMS How-tos first: `extractkit kb list`, then `kb show xp7-admin`
+   (login and storage state) and `kb show xp7-cms` (traversal, what to pin).
+
    `extractkit step enonic.cms ... --branch draft --storage-state <file>
    --guillotine <url> --cms-key /en`
 

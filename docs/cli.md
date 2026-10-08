@@ -18,6 +18,7 @@ your own command with that flag added.
 | `run --source DIR [--profile NAME]` | Pipeline; `--from` / `--until` |
 | `step STEP --source DIR [--profile NAME]` | One phase or one slot |
 | `agent list\|show ID\|next [--out DIR] [--json]` | List, render and pick agent tasks. The kit never calls a model |
+| `kb list\|show ID` | List and print the bundled How-tos in `kb/`: logging in to an XP7 and traversing its CMS, for the CMS phase |
 | `check --out DIR` | Schema, coverage, `x-source`, spec FR, `BUSINESS.md` when present |
 | `status [--source DIR] [--out DIR]` | Phase checklist (alias `next`) |
 | `resume --source DIR [--profile NAME]` | Continue from first incomplete slot |

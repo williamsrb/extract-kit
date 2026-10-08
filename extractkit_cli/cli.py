@@ -21,6 +21,7 @@ from . import (
     guide,
     headless,
     install,
+    kb,
     kitguard,
     profiles,
     progress,
@@ -259,6 +260,13 @@ def build_parser() -> argparse.ArgumentParser:
     a_next = agent.add_parser("next", help="Print the first pending required task whose inputs exist.")
     agent_flags(a_next)
     a_next.set_defaults(func=agent_tasks.cmd_next)
+
+    kb_group = group("kb", "List and print the bundled How-tos (CMS access and traversal).")
+    k_list = kb_group.add_parser("list", help="Every bundled How-to with its id, size and path.")
+    k_list.set_defaults(func=kb.cmd_list)
+    k_show = kb_group.add_parser("show", help="Print one How-to.")
+    k_show.add_argument("name", metavar="ID", help="A How-to id, or a part of it that matches one.")
+    k_show.set_defaults(func=kb.cmd_show)
 
     ins = flat("install", "Copy the kit into ~/.local/share/extractkit, add the launcher to ~/.local/bin and the skills to ~/.agents/skills and ~/.claude/skills.")
     ins.add_argument("--force", action="store_true",
