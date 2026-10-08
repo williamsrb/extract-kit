@@ -1,6 +1,5 @@
 # Kit identity. Profile types live under profiles/ as YAML.
-name: 99x Extract Kit
-fork_id: 99x
+name: Extract Kit
 schema_versions: [1]
 
 # Agent CLIs `extractkit headless` can start. Each entry is data:

@@ -126,7 +126,7 @@ def build_manifest(
 ) -> dict:
     sha, dirty = git_state(source)
     return {
-        "schema": "99x.extract.manifest/v1",
+        "schema": "extractkit.manifest/v1",
         "run_id": run_id,
         "source": {
             "path": str(source.resolve()),

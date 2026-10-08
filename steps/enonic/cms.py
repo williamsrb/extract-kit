@@ -603,7 +603,7 @@ def survey_volume(cfg: CmsConfig, cookie: str, type_ids: list[str]) -> dict:
     media = _count_probe(url, cookie, "type LIKE 'media:*'", _terms("types", "type"))
     projects, reason = _project_list(cfg.host, cookie)
     doc: dict = {
-        "schema": "99x.extract.content-volume/v1",
+        "schema": "extractkit.content-volume/v1",
         "host": cfg.host,
         "branch": cfg.branch,
         "types": types,
@@ -928,7 +928,7 @@ class EnonicCmsStep:
         ctx.write_json("inventory/live-config-candidates.json", candidates)  # type: ignore[attr-defined]
         usage = probe_usage(cfg.guillotine, cookie, resources)
         payload = {
-            "schema": "99x.extract.runtime-inventory/v1",
+            "schema": "extractkit.runtime-inventory/v1",
             "env": cfg.env,
             "host": cfg.host,
             "branch": cfg.branch,

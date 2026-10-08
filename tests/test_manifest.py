@@ -123,10 +123,7 @@ class OverlayTests(unittest.TestCase):
                 ("context", "profile.yaml"), (".extractkit", "profile.yaml"),
             ])
             self.assertEqual(composed["exclude"], ["prototype", "legacy"])
-            self.assertEqual(composed["live_config"], {
-                **manifest.load("enonic")["live_config"],
-                "site_url_keys": ["b"], "hostmap_keys": ["h"],
-            })
+            self.assertEqual(composed["live_config"], {"site_url_keys": ["b"], "hostmap_keys": ["h"]})
 
     def test_an_overlay_cannot_rebind_the_stack(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

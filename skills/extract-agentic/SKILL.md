@@ -1,7 +1,7 @@
 ---
 name: extract-agentic
 description: >
-  Run the agent tasks of a 99x-extract-kit sidecar after synthesis: name the
+  Run the agent tasks of an extractkit sidecar after synthesis: name the
   view-layer business rules, write BUSINESS.md (the general business flow),
   write the project constitution, optionally enrich specs. Also decides the project context
   (`context.exclude`, `context.live_config`). Use when `extractkit status` shows the agent

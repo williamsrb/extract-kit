@@ -10,6 +10,7 @@ _comment:
     scope row). prototype ships from the prototype branch only; prototype-old from nothing.
 exclude: [prototype, prototype-old]
 live_config:
+  configenv_path: /admin/tool/example.configenv/module-config
   site_url_keys: [tourplanurl]
   hostmap_keys: [env-hostmap, hostmap]
   providers:

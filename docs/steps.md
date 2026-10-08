@@ -308,8 +308,7 @@ the cookie and the production check belong to the host you named.
    implicit `data.supports` in `/_templates` folder order.
 5. Read Site Config (Content Studio REST) for the pinned keys only, and
    the Config Env table (`--configenv`, or the profile's
-   `live_config.configenv_path`, which `enonic` defaults to the seeds
-   Config Env tool). With neither, Config Env is skipped with a fix; the
+   `live_config.configenv_path`, which no profile sets by default). With neither, Config Env is skipped with a fix; the
    step does not fail. List every public Site Config and Config Env key whose
    value is a URL or a host map in `inventory/live-config-candidates.json`
    (`origin`, `key`, `kind: url|hostmap`, `covered`). The agent task

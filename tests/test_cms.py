@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import threading
 import unittest
@@ -11,6 +12,7 @@ from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from types import SimpleNamespace
+from unittest import mock
 from urllib.parse import urlparse
 
 import yaml
@@ -27,7 +29,7 @@ from tests.support import (
     sidecar_run_dir,
 )
 
-CONFIGENV_PATH = "/admin/tool/no.seeds.configenv/module-config"
+CONFIGENV_PATH = "/admin/tool/example.configenv/module-config"
 
 PAGE_AS_JSON = {
     "descriptor": "com.example.mini:mini-page",
@@ -269,11 +271,14 @@ class CmsTargetTests(unittest.TestCase):
         self.assertEqual(cms_target.classify("http://localhost:8080"), "local")
         self.assertEqual(cms_target.classify("http://127.0.0.1:8080"), "local")
 
-    def test_k8s_seeds_is_review(self) -> None:
-        self.assertEqual(
-            cms_target.classify("https://as.review.k8s.seeds.no"),
-            "review",
-        )
+    def test_a_configured_suffix_is_review(self) -> None:
+        with mock.patch.dict(os.environ, {"EXTRACTKIT_REVIEW_SUFFIXES": ".review.example.test"}):
+            self.assertEqual(cms_target.classify("https://app.review.example.test"), "review")
+            self.assertEqual(cms_target.classify("https://app.example.test"), "production")
+
+    def test_no_suffix_is_review_by_default(self) -> None:
+        with mock.patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(cms_target.classify("https://app.review.example.test"), "production")
 
     def test_production_is_refused(self) -> None:
         with self.assertRaises(ExtractkitError) as caught:
@@ -440,7 +445,7 @@ class CmsCliTests(unittest.TestCase):
             )
             self.assertEqual(pages[0]["resolve"], "customized")
 
-    def _run_cms(self, parent: Path, source: Path, url: str) -> dict:
+    def _run_cms(self, parent: Path, source: Path, url: str, configenv: bool = False) -> dict:
         state = parent / "state.json"
         _storage_state(state)
         result = run(
@@ -448,6 +453,7 @@ class CmsCliTests(unittest.TestCase):
             "--source", str(source), "--branch", "draft",
             "--xp-host", url, "--guillotine", url,
             "--storage-state", str(state), "--cms-key", "/en",
+            *(["--configenv", f"{url}{CONFIGENV_PATH}"] if configenv else []),
         )
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         runtime = sidecar_run_dir(source) / "inventory" / "runtime.json"
@@ -533,12 +539,12 @@ class CmsCliTests(unittest.TestCase):
             self.assertIsNone(doc["media"]["total"])
             self.assertIn("unknown", (sidecar_run_dir(source) / "inventory/content-volume.md").read_text())
 
-    def test_generic_enonic_profile_reads_config_env_at_the_default_path(self) -> None:
+    def test_enonic_profile_reads_config_env_from_the_given_url(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             parent = Path(raw)
             source = copy_fixture(parent)
             with graphql_server(PAGE_AS_JSON) as (_hits, url):
-                payload = self._run_cms(parent, source, url)
+                payload = self._run_cms(parent, source, url, configenv=True)
             self.assertEqual(payload["configenv"], f"{url}{CONFIGENV_PATH}")
             self.assertEqual(len(payload["configEnv"]), 3)
             self.assertEqual(
@@ -553,7 +559,7 @@ class CmsCliTests(unittest.TestCase):
             parent = Path(raw)
             source = copy_fixture(parent)
             with graphql_server(PAGE_AS_JSON, configenv=False) as (_hits, url):
-                payload = self._run_cms(parent, source, url)
+                payload = self._run_cms(parent, source, url, configenv=True)
             self.assertEqual(payload["configEnv"], [])
             manifest_doc = yaml.safe_load((sidecar_run_dir(source) / "MANIFEST.yaml").read_text())
             skips = {row["step"]: row for row in manifest_doc["skips"]}
@@ -576,7 +582,7 @@ class CmsCliTests(unittest.TestCase):
             parent = Path(raw)
             source = copy_fixture(parent)
             with graphql_server(PAGE_AS_JSON) as (_hits, url):
-                self._run_cms(parent, source, url)
+                self._run_cms(parent, source, url, configenv=True)
             rows = {(r["origin"], r["key"]): r for r in self._candidates(source)}
             self.assertEqual(rows[("configEnv", "env-hostMap")]["kind"], "hostmap")
             self.assertFalse(rows[("configEnv", "env-hostMap")]["covered"])
@@ -601,7 +607,7 @@ class CmsCliTests(unittest.TestCase):
                 encoding="utf-8",
             )
             with graphql_server(PAGE_AS_JSON) as (_hits, url):
-                self._run_cms(parent, source, url)
+                self._run_cms(parent, source, url, configenv=True)
             rows = {r["key"]: r for r in self._candidates(source)}
             self.assertTrue(rows["env-hostMap"]["covered"])
             self.assertTrue(next(r for k, r in rows.items() if k.endswith("tourplanUrl"))["covered"])
@@ -654,7 +660,7 @@ class CmsCliTests(unittest.TestCase):
         self.assertEqual(cfg.round2, ["home"])
         self.assertEqual(cfg.sample_per_type, 3)
         self.assertTrue(cfg.guillotine.endswith("/admin/site/preview/en/draft"))
-        self.assertNotIn("no.seeds.as/graphql", cfg.guillotine)
+        self.assertNotIn("com.example.app/graphql", cfg.guillotine)
         self.assertTrue(
             cfg.configenv.endswith("/admin/tool/example/module-config"),
         )

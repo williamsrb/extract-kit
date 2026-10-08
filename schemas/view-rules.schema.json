@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.view-rules/v1",
+  "$id": "extractkit.view-rules/v1",
   "title": "view-layer rules v1",
   "type": "object",
   "required": ["schema", "coverage", "rules", "groups", "removed"],
   "properties": {
-    "schema": { "const": "99x.extract.view-rules/v1" },
+    "schema": { "const": "extractkit.view-rules/v1" },
     "coverage": { "type": "object" },
     "rules": {
       "type": "array",

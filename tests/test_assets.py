@@ -221,11 +221,12 @@ class ResolveTests(AssetsCase):
 
     def test_only_the_resource_for_the_xp_host_is_used(self) -> None:
         url = self.serve(XP8)
-        other = assets.Resource("cms_url", {"url": "https://review.other.k8s.seeds.no", "login": "a", "password": "b"}, "other.yaml")
-        outcome = self.resolve(self.bundle(other, self.cms(url)), want_state=True, xp_host=url)
-        self.assertIsNotNone(outcome.storage_state)
-        outcome = self.resolve(self.bundle(other), want_state=True, xp_host=url)
-        self.assertIsNone(outcome.storage_state)
+        other = assets.Resource("cms_url", {"url": "https://review.other.example.test", "login": "a", "password": "b"}, "other.yaml")
+        with mock.patch.dict(os.environ, {"EXTRACTKIT_REVIEW_SUFFIXES": ".example.test"}):
+            outcome = self.resolve(self.bundle(other, self.cms(url)), want_state=True, xp_host=url)
+            self.assertIsNotNone(outcome.storage_state)
+            outcome = self.resolve(self.bundle(other), want_state=True, xp_host=url)
+            self.assertIsNone(outcome.storage_state)
 
     def test_a_production_host_is_never_sent_a_password(self) -> None:
         resource = assets.Resource("cms_url", {"url": "https://www.example.com", "login": "a", "password": "b"}, "p.yaml")

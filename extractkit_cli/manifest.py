@@ -1,6 +1,6 @@
 """YAML profile loading and composition.
 
-Port of 99x-dev-kit `devkit_cli/manifest.py` `load()` for YAML: `_seen` loop
+Profile `load()` for YAML: `_seen` loop
 detection, parent-first lists, child replace for adapter slots and the
 unfinished-work field. `@allowlist:` is not ported (no consumer).
 

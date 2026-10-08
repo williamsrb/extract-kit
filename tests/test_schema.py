@@ -8,7 +8,7 @@ from extractkit_cli.errors import ExtractkitError
 from extractkit_cli.schema import load_schema, validate
 
 EXAMPLE = {
-    "schema": "99x.extract.project-map/v1",
+    "schema": "extractkit.project-map/v1",
     "surfaces": [
         {
             "id": "com.example.mini:part:mini-part",
@@ -38,7 +38,7 @@ class SchemaTests(unittest.TestCase):
 
     def test_missing_id_fails(self) -> None:
         bad = {
-            "schema": "99x.extract.project-map/v1",
+            "schema": "extractkit.project-map/v1",
             "surfaces": [{"kind": "part", "entry": "x", "status": "live"}],
         }
         with self.assertRaises(ExtractkitError):
@@ -46,7 +46,7 @@ class SchemaTests(unittest.TestCase):
 
     def test_enonic_fields_are_not_top_level_required(self) -> None:
         generic = {
-            "schema": "99x.extract.project-map/v1",
+            "schema": "extractkit.project-map/v1",
             "surfaces": [
                 {
                     "id": "php:route:home",
@@ -61,7 +61,7 @@ class SchemaTests(unittest.TestCase):
     def test_enonic_content_survey_examples_are_valid(self) -> None:
         validate(
             {
-                "schema": "99x.extract.content-survey/v1",
+                "schema": "extractkit.content-survey/v1",
                 "host": "http://localhost:8080",
                 "branch": "draft",
                 "samplePerType": 3,
@@ -75,7 +75,7 @@ class SchemaTests(unittest.TestCase):
         )
         validate(
             {
-                "schema": "99x.extract.content-survey-resolved/v1",
+                "schema": "extractkit.content-survey-resolved/v1",
                 "samplePerType": 3,
                 "templatesFolder": "/en/_templates",
                 "rule": ["customized", "explicit", "implicit"],
@@ -87,7 +87,7 @@ class SchemaTests(unittest.TestCase):
         )
         validate(
             {
-                "schema": "99x.extract.page-templates/v1",
+                "schema": "extractkit.page-templates/v1",
                 "templatesFolder": "/en/_templates",
                 "total": 0,
                 "templates": [],
@@ -98,7 +98,7 @@ class SchemaTests(unittest.TestCase):
     def test_bounded_contexts_example_is_valid(self) -> None:
         validate(
             {
-                "schema": "99x.extract.bounded-contexts/v1",
+                "schema": "extractkit.bounded-contexts/v1",
                 "contexts": [
                     {
                         "id": "presentation",
@@ -126,10 +126,10 @@ class SchemaTests(unittest.TestCase):
         surface = {
             "id": "a:part:p", "kind": "part", "entry": "x", "status": "unobserved",
         }
-        validate({"schema": "99x.extract.project-map/v1", "surfaces": [surface]}, "project-map")
-        validate({"schema": "99x.extract.component-map/v1", "components": [surface]}, "component-map")
-        validate({"schema": "99x.extract.content-model/v1", "types": [surface]}, "content-model")
-        validate({"schema": "99x.extract.route-map/v1", "routes": [surface]}, "route-map")
+        validate({"schema": "extractkit.project-map/v1", "surfaces": [surface]}, "project-map")
+        validate({"schema": "extractkit.component-map/v1", "components": [surface]}, "component-map")
+        validate({"schema": "extractkit.content-model/v1", "types": [surface]}, "content-model")
+        validate({"schema": "extractkit.route-map/v1", "routes": [surface]}, "route-map")
 
     def test_nested_field_validates_and_bad_field_fails(self) -> None:
         field = {
@@ -141,10 +141,10 @@ class SchemaTests(unittest.TestCase):
             "id": "a:content-type:t", "kind": "content-type", "entry": "x",
             "status": "live", "fields": [field],
         }
-        validate({"schema": "99x.extract.content-model/v1", "types": [surface]}, "content-model")
+        validate({"schema": "extractkit.content-model/v1", "types": [surface]}, "content-model")
         surface["fields"] = [{"label": "no name or mixin"}]
         with self.assertRaises(ExtractkitError):
-            validate({"schema": "99x.extract.content-model/v1", "types": [surface]}, "content-model")
+            validate({"schema": "extractkit.content-model/v1", "types": [surface]}, "content-model")
 
 
 if __name__ == "__main__":

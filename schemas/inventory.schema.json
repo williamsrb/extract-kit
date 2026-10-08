@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.inventory/v1",
+  "$id": "extractkit.inventory/v1",
   "title": "static inventory",
   "type": "object",
   "required": ["schema", "resources"],
@@ -106,7 +106,7 @@
     }
   },
   "properties": {
-    "schema": { "const": "99x.extract.inventory/v1" },
+    "schema": { "const": "extractkit.inventory/v1" },
     "resources": {
       "type": "array",
       "items": {

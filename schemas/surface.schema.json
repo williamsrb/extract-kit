@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.surface/v1",
+  "$id": "extractkit.surface/v1",
   "title": "stack-agnostic surface",
   "type": "object",
   "required": ["id", "kind", "entry", "status"],

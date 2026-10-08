@@ -1,9 +1,7 @@
-# 99x Extract Kit CI
+# Extract Kit CI
 
 ## Quick reference
 
-- **Maintained by**:
-  [99x Brazil](https://99x.io/services/web-solutions)
 - **Where to get help**:
   [the private team Slack](https://leanonteam.slack.com)
 
@@ -15,11 +13,9 @@
 ## Quick reference (cont.)
 
 - **Published image artifact details**:
-  [`docker/Dockerfile`](https://git.seeds.no/williams/99x-extract-kit/-/blob/docker/docker/Dockerfile)
-  ([history](https://git.seeds.no/williams/99x-extract-kit/-/commits/docker/docker/Dockerfile))
+  `docker/Dockerfile`
 - **Source of this description**:
-  [`docker/README.md`](https://git.seeds.no/williams/99x-extract-kit/-/blob/docker/docker/README.md)
-  ([history](https://git.seeds.no/williams/99x-extract-kit/-/commits/docker/docker/README.md))
+  `docker/README.md`
 
 ## What is it?
 
@@ -35,7 +31,7 @@ with Chromium, PHP and Composer, the 1Password CLI (`op`) and 7-Zip (`7z`).
 
 Starts as uid 1000 (`extract`).
 
-- **Dockerfile**: [`docker/Dockerfile`](https://git.seeds.no/williams/99x-extract-kit/-/blob/docker/docker/Dockerfile)
+- **Dockerfile**: `docker/Dockerfile`
 - **Architecture**: `linux/amd64`
 - **Pull command**: `docker pull leanon/extractkit-ci:latest`
 
@@ -44,7 +40,7 @@ Starts as uid 1000 (`extract`).
 The same image, started as root. Use it on runners that clone the source as
 root; with `latest` the run stops there with `source_not_writable`.
 
-- **Dockerfile**: [`docker/Dockerfile`](https://git.seeds.no/williams/99x-extract-kit/-/blob/docker/docker/Dockerfile)
+- **Dockerfile**: `docker/Dockerfile`
   with `--build-arg RUN_AS=root`
 - **Architecture**: `linux/amd64`
 - **Pull command**: `docker pull leanon/extractkit-ci:root`
@@ -84,7 +80,7 @@ extract:
 
 The job needs the selected agent's credential, either in its environment or as
 an attachment (`EXTRACTKIT_OP_VAULT` and `EXTRACTKIT_OP_ITEM`; see
-[Headless](https://git.seeds.no/williams/99x-extract-kit/-/blob/docker/docs/headless.md#attachments)).
+`docs/headless.md`, section Attachments).
 The image
 needs no `entrypoint: [""]`: flags run `extractkit headless --json`, and any
 other command (`sh`, `git`) runs unchanged.

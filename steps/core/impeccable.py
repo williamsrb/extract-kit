@@ -149,7 +149,7 @@ def _design_md(surfaces: list[dict]) -> str:
 
 def _design_json(surfaces: list[dict]) -> dict:
     return {
-        "schema": "99x.extract.design-sidecar/v1",
+        "schema": "extractkit.design-sidecar/v1",
         "mode": "as-is",
         "components": [
             {

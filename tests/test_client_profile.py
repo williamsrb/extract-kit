@@ -23,11 +23,7 @@ from tests.support import (
 from tests.test_cms import PAGE_AS_JSON, _storage_state, graphql_server
 
 BEFORE = REPO / "tests" / "fixtures" / "live-config-before-o8.json"
-CLIENT_LITERALS = re.compile(
-    r"netaxept|flywire|tourplan|travelspecialist|no\.seeds\.configenv", re.IGNORECASE,
-)
-# profiles/ holds the Config Env tool path on purpose: it is a seeds admin app, not client code.
-PROFILE_LITERALS = re.compile(r"netaxept|flywire|tourplan|travelspecialist", re.IGNORECASE)
+CLIENT_LITERALS = re.compile(r"netaxept|flywire|tourplan|travelspecialist", re.IGNORECASE)
 
 
 def _hits(paths: list[Path], pattern: re.Pattern[str]) -> list[str]:
@@ -47,17 +43,14 @@ class ClientProfileTests(unittest.TestCase):
 
     def test_the_kit_ships_no_client_profile(self) -> None:
         self.assertEqual(manifest.available(), ["core", "enonic", "php"])
-        self.assertEqual(_hits(sorted((REPO / "profiles").glob("*.yaml")), PROFILE_LITERALS), [])
+        self.assertEqual(_hits(sorted((REPO / "profiles").glob("*.yaml")), CLIENT_LITERALS), [])
 
     def test_the_as_override_is_an_overlay_and_leaves_the_stack_alone(self) -> None:
         raw = yaml.safe_load(AS_OVERLAY.read_text(encoding="utf-8"))
         self.assertEqual(set(raw) - {"_comment"}, {"exclude", "live_config"})
         composed = as_profile()
         self.assertEqual(composed["adapters"], manifest.load("enonic")["adapters"])
-        self.assertEqual(
-            composed["live_config"]["configenv_path"],
-            manifest.load("enonic")["live_config"]["configenv_path"],
-        )
+        self.assertNotIn("live_config", manifest.load("enonic"))
 
     def test_the_override_reproduces_the_pre_change_endpoints_byte_for_byte(self) -> None:
         expected = json.loads(BEFORE.read_text(encoding="utf-8"))

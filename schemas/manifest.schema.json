@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.manifest/v1",
+  "$id": "extractkit.manifest/v1",
   "title": "extract run MANIFEST",
   "type": "object",
   "required": ["schema", "run_id", "source"],
   "additionalProperties": true,
   "properties": {
-    "schema": { "const": "99x.extract.manifest/v1" },
+    "schema": { "const": "extractkit.manifest/v1" },
     "run_id": { "type": "string", "minLength": 1 },
     "source": {
       "type": "object",

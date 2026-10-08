@@ -1,6 +1,6 @@
 # Agent instructions
 
-This repo is 99x Extract Kit. Any coding assistant can drive it; the kit
+This repo is Extract Kit. Any coding assistant can drive it; the kit
 never calls a model, except `extractkit headless`, which starts an agent CLI
 for a pipeline run. Read [docs/llm.md](docs/llm.md) first: it holds the
 invariants, the command sequence per phase, and the failure table.

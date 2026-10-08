@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.content-model/v1",
+  "$id": "extractkit.content-model/v1",
   "title": "content-model v1",
   "type": "object",
   "required": ["schema", "types"],
@@ -128,7 +128,7 @@
     }
   },
   "properties": {
-    "schema": { "const": "99x.extract.content-model/v1" },
+    "schema": { "const": "extractkit.content-model/v1" },
     "types": {
       "type": "array",
       "items": { "$ref": "#/$defs/surface" }

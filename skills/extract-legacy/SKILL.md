@@ -1,7 +1,7 @@
 ---
 name: extract-legacy
 description: >
-  Walk the 99x-extract-kit pipeline for a legacy checkout. Use when running
+  Walk the extractkit pipeline for a legacy checkout. Use when running
   extractkit, resuming an extract sidecar, promoting Spec Kit files, or
   deciding the next skill (impeccable, CMS survey). Not for XP8/React4XP ports.
 ---
@@ -37,7 +37,7 @@ specific to a skill run.
   `<source>/.extract/<run-id>/`. Each run ends with a `next` block: the
   command to run next.
 - Production CMS is refused. Local (`localhost` / `127.0.0.1`) or review
-  (`*.k8s.seeds.no`) only.
+  (a suffix in `EXTRACTKIT_REVIEW_SUFFIXES`) only.
 - Spec Kit mode is as-is. Do not write port plans, `DECISIONS.md`, or
   `IMPLEMENTATION.md`.
 - PHP profile is empty on purpose. Do not guess Laravel/Symfony parsers.

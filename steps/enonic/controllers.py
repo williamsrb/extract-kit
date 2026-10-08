@@ -403,7 +403,7 @@ class EnonicControllersStep:
 
     def run(self, ctx: object) -> None:
         payload = {
-            "schema": "99x.extract.controllers/v1",
+            "schema": "extractkit.controllers/v1",
             "controllers": collect_controllers(ctx.source, scope.of(ctx)),  # type: ignore[attr-defined]
         }
         schema.validate(payload, "controllers", what="inventory/controllers.json")

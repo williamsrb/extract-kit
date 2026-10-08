@@ -1,4 +1,4 @@
-# 99x Extract Kit
+# Extract Kit
 
 Extract Kit studies an existing software project and writes down what it
 does: its business rules, its pages and components, its data, and the

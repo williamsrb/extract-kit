@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.page-templates/v1",
+  "$id": "extractkit.page-templates/v1",
   "title": "Enonic XP7 /_templates folder dump (adapter extra)",
   "type": "object",
   "required": ["schema", "total", "templates"],
   "properties": {
-    "schema": { "const": "99x.extract.page-templates/v1" },
+    "schema": { "const": "extractkit.page-templates/v1" },
     "templatesFolder": { "type": "string" },
     "total": { "type": "integer", "minimum": 0 },
     "templates": {

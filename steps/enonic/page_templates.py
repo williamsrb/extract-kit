@@ -377,7 +377,7 @@ def build_raw_survey(
         for sample in sampled:
             trees.append(sample.get("page"))
     return {
-        "schema": "99x.extract.content-survey/v1",
+        "schema": "extractkit.content-survey/v1",
         "host": host,
         "branch": branch,
         "samplePerType": sample_limit,
@@ -408,7 +408,7 @@ def build_resolved_survey(
         for sample in sampled:
             trees.append(sample.get("page"))
     return {
-        "schema": "99x.extract.content-survey-resolved/v1",
+        "schema": "extractkit.content-survey-resolved/v1",
         "samplePerType": sample_limit,
         "templatesFolder": folder_key,
         "rule": list(RESOLVE_RULE),
@@ -433,7 +433,7 @@ def build_page_templates_doc(
 ) -> dict:
     ordered = ordered_templates(templates)
     return {
-        "schema": "99x.extract.page-templates/v1",
+        "schema": "extractkit.page-templates/v1",
         "templatesFolder": folder_key,
         "total": len(ordered),
         "templates": [

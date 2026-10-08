@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.content-survey-resolved/v1",
+  "$id": "extractkit.content-survey-resolved/v1",
   "title": "Enonic XP7 page-template resolution (adapter extra)",
   "type": "object",
   "required": ["schema", "samplePerType", "rule", "templates", "types"],
   "properties": {
-    "schema": { "const": "99x.extract.content-survey-resolved/v1" },
+    "schema": { "const": "extractkit.content-survey-resolved/v1" },
     "samplePerType": { "type": "integer", "minimum": 1 },
     "templatesFolder": { "type": "string" },
     "rule": {

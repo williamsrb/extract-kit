@@ -52,7 +52,7 @@ from checkout to sidecar to promote is in [flow](flow.md).
 
 Rewritten at the end of every `run`, `step` and `resume`:
 
-- `schema`: `99x.extract.manifest/v1`
+- `schema`: `extractkit.manifest/v1`
 - `run_id`: sidecar directory name (UTC timestamp)
 - `source`: `path`, git `sha` and `dirty` (null / false outside git),
   `profile`, `lineage`, and `tools` (extractkit and Python versions)

@@ -18,7 +18,7 @@ from extractkit_cli.common import load_json
 from steps.core.viewscan import controller, detect, markup, script
 
 RENDER_LIBS = ("thymeleaf", "mustache", "freemarker", "handlebars", "pebble")
-SCHEMA_ID = "99x.extract.templates/v1"
+SCHEMA_ID = "extractkit.templates/v1"
 
 
 def controller_rows(ctx: object) -> list[dict]:

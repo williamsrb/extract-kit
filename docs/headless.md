@@ -575,7 +575,3 @@ extract:
     - extractkit headless --source "$CI_PROJECT_DIR" --json | tee extract-result.json
 ```
 
-Seeds projects take the job from `seeds/ci-templates`
-(`.extractkit_template` in `general/extractkit.yml`), which sets these
-variables and the `extractkit headless` call. That template lives outside this
-repository.

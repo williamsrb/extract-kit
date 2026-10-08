@@ -211,20 +211,20 @@ class NormalizeStep:
                 },
             })
         ctx.write_json("map/project-map.json", {  # type: ignore[attr-defined]
-            "schema": "99x.extract.project-map/v1",
+            "schema": "extractkit.project-map/v1",
             "surfaces": surfaces,
         })
         ctx.write_json("map/component-map.json", {  # type: ignore[attr-defined]
-            "schema": "99x.extract.component-map/v1",
+            "schema": "extractkit.component-map/v1",
             "components": components,
         })
         ctx.write_json("map/content-model.json", {  # type: ignore[attr-defined]
-            "schema": "99x.extract.content-model/v1",
+            "schema": "extractkit.content-model/v1",
             "types": types,
             "references": build_references(types),
         })
         ctx.write_json("map/route-map.json", {  # type: ignore[attr-defined]
-            "schema": "99x.extract.route-map/v1",
+            "schema": "extractkit.route-map/v1",
             "routes": routes,
         })
 

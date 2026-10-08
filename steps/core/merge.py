@@ -48,7 +48,7 @@ def _ensure_maps(ctx: object) -> dict:
     if not path.is_file():
         NormalizeStep().run(ctx)
     return load_json(path, "map/project-map.json") if path.is_file() else {
-        "schema": "99x.extract.project-map/v1",
+        "schema": "extractkit.project-map/v1",
         "surfaces": [],
     }
 
@@ -233,20 +233,20 @@ def _rewrite_maps(ctx: object, surfaces: list[dict]) -> None:
         if s.get("kind") in ROUTE_KINDS | ADMIN_KINDS or s.get("kind") == "mapping"
     ]
     ctx.write_json("map/project-map.json", {  # type: ignore[attr-defined]
-        "schema": "99x.extract.project-map/v1",
+        "schema": "extractkit.project-map/v1",
         "surfaces": surfaces,
     })
     ctx.write_json("map/component-map.json", {  # type: ignore[attr-defined]
-        "schema": "99x.extract.component-map/v1",
+        "schema": "extractkit.component-map/v1",
         "components": components,
     })
     ctx.write_json("map/content-model.json", {  # type: ignore[attr-defined]
-        "schema": "99x.extract.content-model/v1",
+        "schema": "extractkit.content-model/v1",
         "types": types,
         "references": _existing_references(ctx),
     })
     ctx.write_json("map/route-map.json", {  # type: ignore[attr-defined]
-        "schema": "99x.extract.route-map/v1",
+        "schema": "extractkit.route-map/v1",
         "routes": routes,
     })
 
@@ -334,7 +334,7 @@ class MergeStep:
         merged, contradictions = merge_surfaces(surfaces, runtime)
         contexts = split_contexts(merged, runtime)
         payload = {
-            "schema": "99x.extract.bounded-contexts/v1",
+            "schema": "extractkit.bounded-contexts/v1",
             "contexts": contexts,
         }
         validate(payload, "bounded-contexts", what="map/bounded-contexts.json")

@@ -337,7 +337,7 @@ class EnonicDescriptorsStep:
     def run(self, ctx: object) -> None:
         resources = collect_resources(ctx.source, scope.of(ctx))  # type: ignore[attr-defined]
         payload = {
-            "schema": "99x.extract.inventory/v1",
+            "schema": "extractkit.inventory/v1",
             "resources": resources,
         }
         ctx.write_json("inventory/static.json", payload)  # type: ignore[attr-defined]

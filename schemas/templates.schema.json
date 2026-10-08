@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.templates/v1",
+  "$id": "extractkit.templates/v1",
   "title": "templates v1",
   "type": "object",
   "required": ["schema", "engines", "files", "controllers", "coverage"],
@@ -105,7 +105,7 @@
     }
   },
   "properties": {
-    "schema": { "const": "99x.extract.templates/v1" },
+    "schema": { "const": "extractkit.templates/v1" },
     "engines": {
       "type": "array",
       "items": {

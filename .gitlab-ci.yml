@@ -87,5 +87,5 @@ dockerhub-description:
     - >
       DOCKER_USER="$DOCKERHUB_USER" DOCKER_PASS="$CI_DOCKER_TOKEN"
       docker-pushrm --file docker/README.md
-      --short "Headless 99x Extract Kit: read a legacy project and write its business rules and specs"
+      --short "Headless Extract Kit: read a legacy project and write its business rules and specs"
       "$DOCKERHUB_REPO"

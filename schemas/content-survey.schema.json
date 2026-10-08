@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.content-survey/v1",
+  "$id": "extractkit.content-survey/v1",
   "title": "Enonic XP7 per-type content sample (adapter extra)",
   "type": "object",
   "required": ["schema", "host", "branch", "samplePerType", "types"],
   "properties": {
-    "schema": { "const": "99x.extract.content-survey/v1" },
+    "schema": { "const": "extractkit.content-survey/v1" },
     "host": { "type": "string" },
     "branch": { "type": "string" },
     "samplePerType": { "type": "integer", "minimum": 1 },

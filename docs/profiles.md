@@ -25,7 +25,7 @@ Extractor types are YAML files under `profiles/`.
 | `todo` | Unfinished work, printed when `run` refuses. |
 | `optional_slots` | Slots that may stay unbound or empty without blocking `run`, `status` or `resume` (`inventory.baseline`, `report.compat`). |
 | `cms` | Enonic CMS defaults (below). |
-| `live_config` | Rules for Site Config and Config Env endpoints (below). `enonic` sets only `configenv_path`; the rest comes from the project (overlay). |
+| `live_config` | Rules for Site Config and Config Env endpoints (below). No stack profile sets it; it comes from the project (overlay). |
 | `round2` | Bounded contexts to survey a second time. |
 | `exclude` | Source-relative folders or files every scan leaves out (lists extend the parent's). `--exclude` adds to it; see [CLI](cli.md#other-flags). Not set by a stack profile: the `context.exclude` agent task writes it into the overlay. |
 | `_comment` | Free text; ignored. |
@@ -53,7 +53,7 @@ An overlay layer may set only `exclude` and `live_config`; `_comment`,
 
 ## Composition
 
-Same algorithm as 99x-dev-kit `manifest.py`, ported for YAML:
+Algorithm:
 
 - `extends` with loop detection
 - lists (`pipeline`, `phases`, `deps`, `round2`) merge parent-first; a
@@ -110,7 +110,7 @@ built-in default.
 | `guillotine` | `--guillotine` | `{host}/admin/site/preview/{project}/{branch}` |
 | `keys` | `--cms-key` | `[/en]` in `enonic.yaml` |
 | `site_key` | — | used when `keys` is empty |
-| `configenv` | `--configenv` | `{host}` + `live_config.configenv_path` (`/admin/tool/no.seeds.configenv/module-config` in `enonic`); a 404, 405 or 501 records the skip `enonic.cms.configenv` |
+| `configenv` | `--configenv` | `{host}` + `live_config.configenv_path`; a 404, 405 or 501 records the skip `enonic.cms.configenv` |
 | `site_url` | `--site-url` | `{host}/admin/site/preview/{project}/{branch}` (baseline only) |
 | `storage_state` | `--storage-state` | none; required |
 | `sample_per_type` | — | `3` |
@@ -127,7 +127,7 @@ explicit `page.template` > implicit `data.supports`. See
 ## live_config
 
 Rules for what Site Config and Config Env imply. The generic adapter names
-no client. The `enonic` profile sets `configenv_path`; the rest is written
+no client. The overlay sets `configenv_path` when the project has one; the rest is written
 by the `context.live_config` agent task from the source and from
 `inventory/live-config-candidates.json` (every public key whose value is a
 URL or a host map, with `covered` saying whether the rules already use it),

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.project-map/v1",
+  "$id": "extractkit.project-map/v1",
   "title": "project-map v1",
   "type": "object",
   "required": ["schema", "surfaces"],
@@ -133,7 +133,7 @@
     }
   },
   "properties": {
-    "schema": { "const": "99x.extract.project-map/v1" },
+    "schema": { "const": "extractkit.project-map/v1" },
     "surfaces": {
       "type": "array",
       "items": { "$ref": "#/$defs/surface" }

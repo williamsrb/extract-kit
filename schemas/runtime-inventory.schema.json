@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.runtime-inventory/v1",
+  "$id": "extractkit.runtime-inventory/v1",
   "title": "runtime CMS inventory",
   "type": "object",
   "required": ["schema", "env", "host", "branch", "guillotine", "pages"],
   "properties": {
-    "schema": { "const": "99x.extract.runtime-inventory/v1" },
+    "schema": { "const": "extractkit.runtime-inventory/v1" },
     "env": { "type": "string", "enum": ["local", "review", "production"] },
     "host": { "type": "string", "minLength": 1 },
     "branch": { "type": "string", "enum": ["draft", "master"] },

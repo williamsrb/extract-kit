@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.result/v1",
+  "$id": "extractkit.result/v1",
   "title": "extractkit --json result v1",
   "description": "One document per command. Commands add their own keys (agent payloads, headless stages); the keys here are always present.",
   "type": "object",
@@ -9,7 +9,7 @@
     "wrote", "skips", "problems", "error", "next_command", "config"
   ],
   "properties": {
-    "schema": { "const": "99x.extract.result/v1" },
+    "schema": { "const": "extractkit.result/v1" },
     "ok": { "type": "boolean" },
     "command": { "type": "string", "minLength": 1 },
     "exit": { "enum": [0, 1, 3] },

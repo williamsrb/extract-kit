@@ -63,7 +63,7 @@ kit reads the rules and never infers them; you write them from evidence.
 
 Edit only the `live_config` key of `{sidecar}/context/profile.yaml`. Leave
 `_comment`, `extends` and `exclude` alone, and write nothing under
-`{source}`. Do not set `configenv_path`; the stack profile already has it.
+`{source}`. Set `configenv_path` only when the source shows a Config Env admin tool; a stack profile does not set it.
 
 ```yaml
 live_config:

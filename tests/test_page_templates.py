@@ -133,7 +133,7 @@ class PageTemplateUnitTests(unittest.TestCase):
         self.assertEqual(result.template_path, "/en/_templates/default-template")
 
     def test_no_match_is_none(self) -> None:
-        result = pt.resolve_page("no.seeds.as:orphan", {}, self.templates)
+        result = pt.resolve_page("com.example.app:orphan", {}, self.templates)
         self.assertEqual(result.source, "none")
         self.assertEqual(result.effective, {})
 

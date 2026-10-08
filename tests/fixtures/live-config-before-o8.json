@@ -13,7 +13,7 @@
       "redacted": "true"
     }
   ],
-  "configenv": "<HOST>/admin/tool/no.seeds.configenv/module-config",
+  "configenv": "<HOST>/admin/tool/example.configenv/module-config",
   "endpoints": [
     {
       "direction": "outbound",

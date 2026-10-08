@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.bounded-contexts/v1",
+  "$id": "extractkit.bounded-contexts/v1",
   "title": "bounded-contexts v1",
   "type": "object",
   "required": ["schema", "contexts"],
   "properties": {
-    "schema": { "const": "99x.extract.bounded-contexts/v1" },
+    "schema": { "const": "extractkit.bounded-contexts/v1" },
     "contexts": {
       "type": "array",
       "items": {

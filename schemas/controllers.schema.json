@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.controllers/v1",
+  "$id": "extractkit.controllers/v1",
   "title": "controllers v1",
   "type": "object",
   "required": ["schema", "controllers"],
@@ -8,7 +8,7 @@
     "line": { "type": "integer", "minimum": 1 }
   },
   "properties": {
-    "schema": { "const": "99x.extract.controllers/v1" },
+    "schema": { "const": "extractkit.controllers/v1" },
     "controllers": {
       "type": "array",
       "items": {

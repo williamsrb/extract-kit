@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.content-volume/v1",
+  "$id": "extractkit.content-volume/v1",
   "title": "content volume v1",
   "type": "object",
   "required": ["schema", "host", "branch", "types", "languages", "media", "projects"],
@@ -8,7 +8,7 @@
     "count": { "type": ["integer", "null"], "minimum": 0 }
   },
   "properties": {
-    "schema": { "const": "99x.extract.content-volume/v1" },
+    "schema": { "const": "extractkit.content-volume/v1" },
     "host": { "type": "string" },
     "branch": { "type": "string" },
     "types": {

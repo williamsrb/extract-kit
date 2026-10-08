@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.profile/v1",
+  "$id": "extractkit.profile/v1",
   "title": "extractkit profile (composed)",
   "type": "object",
   "required": ["name", "pipeline", "adapters"],

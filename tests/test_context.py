@@ -19,7 +19,7 @@ from tests.support import (
     run,
     sidecar_run_dir,
 )
-from tests.test_cms import PAGE_AS_JSON, _storage_state, graphql_server
+from tests.test_cms import CONFIGENV_PATH, PAGE_AS_JSON, _storage_state, graphql_server
 
 CI = "build:\n  script:\n    - cd xp && ./gradlew build\n"
 
@@ -364,6 +364,7 @@ class AsReconstructionTests(unittest.TestCase):
                 cms = [
                     "--branch", "draft", "--xp-host", url, "--guillotine", url,
                     "--storage-state", str(state), "--cms-key", "/en",
+                    "--configenv", f"{url}{CONFIGENV_PATH}",
                 ]
                 first = run("run", "--source", str(source), *STATIC_UNTIL)
                 self.assertEqual(first.returncode, 0, first.stderr + first.stdout)

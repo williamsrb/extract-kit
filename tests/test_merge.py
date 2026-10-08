@@ -12,7 +12,7 @@ from steps.core.merge import _merge_report, merge_surfaces
 from tests.support import STATIC_UNTIL, copy_fixture, run, sidecar_run_dir
 
 RUNTIME = {
-    "schema": "99x.extract.runtime-inventory/v1",
+    "schema": "extractkit.runtime-inventory/v1",
     "env": "local",
     "host": "http://127.0.0.1:9",
     "branch": "draft",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.agent-task/v1",
+  "$id": "extractkit.agent-task/v1",
   "title": "agent task v1",
   "type": "object",
   "required": ["id", "title", "after", "reads", "writes"],

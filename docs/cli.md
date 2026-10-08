@@ -359,7 +359,8 @@ The table is in [profiles](profiles.md#enonic). A key given with
 
 `--xp-host`, `--guillotine`, `--configenv` and `--site-url` must be local
 (`localhost`, `127.0.0.1`, `::1`, `0.0.0.0`, `*.localhost`) or review
-(`*.k8s.seeds.no`). Anything else is production and refused.
+(a host ending in a suffix listed in `EXTRACTKIT_REVIEW_SUFFIXES`, comma-separated, e.g.
+`.review.example.test`; none by default). Anything else is production and refused.
 
 `--cms-key` pins Site Config harvest. Enonic also samples
 `cms.sample_per_type` (default 3) contents per type without walking the

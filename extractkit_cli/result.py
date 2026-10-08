@@ -24,7 +24,7 @@ from typing import Any
 
 from .errors import ExtractkitError
 
-SCHEMA_ID = "99x.extract.result/v1"
+SCHEMA_ID = "extractkit.result/v1"
 SECRET_WORDS = ("token", "key", "secret", "password")
 # `--cms-key` names a content path, not a credential.
 NOT_SECRET = frozenset({"--cms-key"})

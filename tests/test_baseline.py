@@ -19,7 +19,7 @@ from steps.enonic import baseline
 from steps.enonic.baseline import EnonicBaselineStep, parse_requests, slugify
 
 RUNTIME = {
-    "schema": "99x.extract.runtime-inventory/v1",
+    "schema": "extractkit.runtime-inventory/v1",
     "env": "local", "host": "http://localhost:8080", "branch": "draft",
     "guillotine": "http://localhost:8080/admin/site/preview/en/draft",
     "pages": [

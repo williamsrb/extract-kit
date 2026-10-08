@@ -18,7 +18,7 @@ from extractkit_cli.outtree import EXTRACT_DIRNAME, HEADLESS_DIRNAME
 from steps.core.behavior import walk_fields
 from steps.core.viewscan import expr as ex
 
-SCHEMA_ID = "99x.extract.view-rules/v1"
+SCHEMA_ID = "extractkit.view-rules/v1"
 KINDS = (
     "visibility", "eligibility", "calculation", "validation", "formatting", "selection",
     "routing", "market",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.resources/v1",
+  "$id": "extractkit.resources/v1",
   "title": "extractkit resources file v1",
   "description": "What a pipeline supplies to extractkit: the XP instance, the auth state and the agent CLI. Operator-owned; agents never write it.",
   "type": "object",

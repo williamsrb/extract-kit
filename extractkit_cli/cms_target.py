@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import os
 from urllib.parse import urlparse
 
 from .errors import ExtractkitError
 
 BRANCHES = ("draft", "master")
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
-REVIEW_SUFFIX = ".k8s.seeds.no"
+REVIEW_SUFFIXES_ENV = "EXTRACTKIT_REVIEW_SUFFIXES"
 
 
 def normalize_url(raw: str) -> str:
@@ -25,6 +26,12 @@ def hostname_of(raw: str) -> str:
     return (parsed.hostname or "").lower()
 
 
+def review_suffixes() -> tuple[str, ...]:
+    """Host suffixes of review XP instances, from a comma-separated env variable. None by default."""
+    raw = os.environ.get(REVIEW_SUFFIXES_ENV, "")
+    return tuple(s for s in (part.strip().lower() for part in raw.split(",")) if len(s) > 1 and s.startswith("."))
+
+
 def classify(raw: str) -> str:
     """Return local | review | production."""
     # Chromium reads `\` as `/`, so `prod\@localhost` would leave the host urlparse sees.
@@ -35,7 +42,7 @@ def classify(raw: str) -> str:
         return "production"
     if host in LOCAL_HOSTS or host.endswith(".localhost"):
         return "local"
-    if host.endswith(REVIEW_SUFFIX):
+    if host.endswith(review_suffixes()):
         return "review"
     return "production"
 
@@ -49,8 +56,8 @@ def assert_allowed(raw: str, *, allow_production: bool, what: str) -> str:
     url = normalize_url(raw) or raw
     raise ExtractkitError(
         f"{what} {url} is a production host; runtime inventory is deny-by-default",
-        "point --xp-host / --guillotine at localhost or a *.k8s.seeds.no "
-        "review host; --allow-production is not used in the definition of done",
+        f"point --xp-host / --guillotine at localhost or a review host (suffixes in {REVIEW_SUFFIXES_ENV}); "
+        "--allow-production is not used in the definition of done",
         code="production_host",
     )
 

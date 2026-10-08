@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.route-map/v1",
+  "$id": "extractkit.route-map/v1",
   "title": "route-map v1",
   "type": "object",
   "required": ["schema", "routes"],
@@ -128,7 +128,7 @@
     }
   },
   "properties": {
-    "schema": { "const": "99x.extract.route-map/v1" },
+    "schema": { "const": "extractkit.route-map/v1" },
     "routes": {
       "type": "array",
       "items": { "$ref": "#/$defs/surface" }
