@@ -488,7 +488,7 @@ class Headless:
         text = log.read_text(encoding="utf-8", errors="replace")
         usage = agent_usage(text, self.s.entry.get("usage"))
         self.usage.append(usage)
-        for warning in model_warnings(text, usage, os.environ.get("ANTHROPIC_MODEL")):
+        for warning in model_warnings(text, usage, self.s.model or os.environ.get("ANTHROPIC_MODEL")):
             self._say(f"warning: {warning}", indent=1)
         self._say(f"agent finished {task} in {live.duration(time.monotonic() - start)}{_spent(usage)}", indent=1)
         self._line(stage, task, attempt, True, 0, None, "agent finished", start, log, usage, agent=True)
@@ -566,8 +566,7 @@ class Headless:
         self.log.add(
             stage=stage, task=task, attempt=attempt, ok=ok, exit=code_exit, code=code,
             message=message, duration_s=round(time.monotonic() - start, 3), log=self.log.rel(log),
-            **({"model": self.s.model or "default", "effort": self.s.effort or "default"} if agent else {}),
-            **(usage or {}),
+            **{**({"model": self.s.model or "default", "effort": self.s.effort or "default"} if agent else {}), **(usage or {})},
         )
 
     # -- stages -----------------------------------------------------------------

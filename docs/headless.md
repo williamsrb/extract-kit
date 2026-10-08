@@ -195,7 +195,7 @@ of the two cases failed.
 The agent log and `reports/headless.jsonl` record the model each agent run
 reports (the keys of `modelUsage` for `claude`). Headless warns when the log
 holds `unrecognized_model`, or when the reported model differs from
-`ANTHROPIC_MODEL`.
+`--agent-model` (else `ANTHROPIC_MODEL`).
 
 Re-running headless on the same source resumes the latest sidecar. A stage
 whose outputs exist reports `ok (already done)` and starts no agent. The
@@ -283,7 +283,8 @@ with `agent_option_unsupported`, as does a model for an entry without
 `model_args`. `ANTHROPIC_MODEL` still reaches `claude` through `env_prefixes`,
 but `--agent-model` wins because it comes later on the command line. The
 resolved values are in the `agent ... started` line, every agent line of
-`reports/headless.jsonl` and the run summary (`default` when unset).
+`reports/headless.jsonl` and the run summary (`default` when unset). On an
+agent line the reported model replaces the requested one when the run reports it.
 
 ## Blockers and exit 3
 
