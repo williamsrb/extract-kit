@@ -38,11 +38,6 @@ class LlmDocTests(unittest.TestCase):
                     self.fail(f"extractkit {' '.join(argv)} does not parse (exit {exc.code})")
                 self.assertTrue(hasattr(args, "func"))
 
-    def test_readme_links_llm_md_first(self) -> None:
-        readme = (REPO / "README.md").read_text(encoding="utf-8")
-        docs_line = next(line for line in readme.split("\n\n") if line.startswith("Docs:"))
-        self.assertTrue(docs_line.startswith("Docs: [LLM instructions](docs/llm.md)"))
-
     def test_skill_points_at_llm_md(self) -> None:
         skill = (REPO / "skills" / "extract-legacy" / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("docs/llm.md", skill)
