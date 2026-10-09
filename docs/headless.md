@@ -411,6 +411,10 @@ overwritten by each build, so a pipeline that needs a fixed toolchain should
 build and tag its own image. A rebuild can pick up a newer `cursor-agent`
 than the one this page names, because its installer is unpinned.
 
+`docker/smoke.sh IMAGE` checks a build. For one with another agent list, set
+`SMOKE_AGENTS` to its `AGENTS` value (`SMOKE_AGENTS=claude` for the slim one
+above); for one built with `WITH_1PASSWORD=0`, set `SMOKE_WITHOUT_1PASSWORD=1`.
+
 ### How a pipeline starts the image
 
 The entrypoint ([`docker/entrypoint.sh`](../docker/entrypoint.sh)) follows the
