@@ -241,6 +241,7 @@ class _Settings:
     timeout: int
     max_fix: int
     online: bool
+    profile: str
 
 
 class Headless:
@@ -300,6 +301,7 @@ class Headless:
             timeout=int(getattr(args, "task_timeout", None) or 1800),
             max_fix=2 if getattr(args, "max_fix_attempts", None) is None else int(args.max_fix_attempts),
             online=bool(getattr(args, "storage_state", None)),
+            profile=str(getattr(args, "devkit_profile", None) or ""),
         )
 
     # -- calling extractkit -----------------------------------------------------
@@ -434,8 +436,10 @@ class Headless:
         }
         model_part = (entry.get("model_args") or []) if self.s.model else []
         effort_part = (entry.get("effort_args") or []) if self.s.effort else []
-        argv = [*(entry.get("argv") or []), *model_part, *effort_part, *extra]
-        return [self._fill(token, values) for token in argv]
+        argv = [self._fill(token, values) for token in [*(entry.get("argv") or []), *model_part, *effort_part, *extra]]
+        if self.s.profile and entry.get("wrapper"):
+            argv[0] = self._fill(entry["wrapper"], {"profile": self.s.profile})
+        return argv
 
     @staticmethod
     def _fill(token: str, values: dict[str, str]) -> str:
@@ -474,7 +478,8 @@ class Headless:
             ) from None
         except OSError as exc:
             self._line(stage, task, attempt, False, 1, "agent_failed", str(exc), start, log, agent=True)
-            raise StageFailed("agent_failed", f"could not start {argv[0]}: {exc}", f"install {argv[0]}") from None
+            fix = f"devkit profile create {self.s.profile} --headless --apply" if self.s.profile else f"install {argv[0]}"
+            raise StageFailed("agent_failed", f"could not start {argv[0]}: {exc}", fix) from None
         if child.returncode != 0:
             self._line(stage, task, attempt, False, child.returncode, "agent_failed", f"{argv[0]} exited {child.returncode}", start, log, agent=True)
             raise AgentExit(

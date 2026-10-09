@@ -13,12 +13,11 @@ your own command with that flag added.
 | --- | --- |
 | `profile list` / `show NAME [--out DIR]` | Inspect YAML types; with `--out`, the profile as that sidecar's run sees it, overlays included |
 | `doctor [--profile NAME] [--source DIR]` | Validate kit, composed profiles, and phases; with `--source`, also the deps, the target's agent tooling and the stack it would detect |
-| `deps [--profile NAME]` | Every dep run, not just found: binaries, Python version and modules |
+| `deps [--profile NAME]` | Every dep run, not just found: binaries, Python version and modules. `devkit` is a required row |
 | `context --source DIR [--out DIR]` | Detect the stack and record the build scope (phase 2); `run` and `resume` call it when the sidecar has none |
 | `run --source DIR [--profile NAME]` | Pipeline; `--from` / `--until` |
 | `step STEP --source DIR [--profile NAME]` | One phase or one slot |
 | `agent list\|show ID\|next [--out DIR] [--json]` | List, render and pick agent tasks. The kit never calls a model |
-| `kb list\|show ID` | List and print the bundled How-tos in `kb/`: logging in to an XP7 and traversing its CMS, for the CMS phase |
 | `check --out DIR` | Schema, coverage, `x-source`, spec FR, `BUSINESS.md` when present |
 | `status [--source DIR] [--out DIR]` | Phase checklist (alias `next`) |
 | `resume --source DIR [--profile NAME]` | Continue from first incomplete slot |

@@ -83,6 +83,8 @@ def _first_error_line(stderr: str) -> str:
 
 
 def _install_fix(dep: dict) -> str | None:
+    if dep.get("fix"):
+        return dep["fix"]
     hints = dep["install"]
     if not hints:
         return None

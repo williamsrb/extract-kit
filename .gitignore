@@ -2,6 +2,9 @@
 .extract/
 graphify-out/
 
+# devkit checkout the image build reads (CI)
+.devkit/
+
 # Python
 __pycache__/
 *.pyc

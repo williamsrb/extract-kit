@@ -106,10 +106,12 @@ extractkit resume --source <legacy> --branch draft --storage-state <state.json>
 <!-- markdownlint-enable MD013 -->
 
 Local or review XP only. Skip it with `--from merge` in the next phase.
-Before this step, read the How-tos for the CMS: `extractkit kb list`, then
-`extractkit kb show xp7-admin` (log in, get a storage state) and
-`extractkit kb show xp7-cms` (Guillotine, Content Studio REST, Site Config,
-what to pin with `--cms-key`).
+Before this step, read the How-tos for the CMS in devkit's kb, under
+`~/.local/share/devkit/current/core/kb/implementation/`:
+`How-to-log-in-to-an-xp7-admin-and-keep-the-session.md` (log in, get a
+storage state) and
+`How-to-traverse-an-xp7-cms-through-guillotine-and-content-studio.md`
+(Guillotine, Content Studio REST, Site Config, what to pin with `--cms-key`).
 `enonic.cms` also writes `inventory/live-config-candidates.json`: the
 Site Config and Config Env keys whose value is a URL or a host map, and
 whether the current `live_config` rules cover them. The task
@@ -204,6 +206,7 @@ operator asks.
 <!-- markdownlint-disable MD013 -->
 | Symptom | Cause | Fix |
 | --- | --- | --- |
+| `devkit` MISSING in `deps`, `doctor` or the headless `doctor` stage | devkit (99x-dev-kit) is not installed | Report the printed `fix:` (clone devkit, run its `bootstrap.sh` and `install.py` with `--profile extract`); installing it is the operator's call |
 | `BROKEN` in `deps` | The tool is on PATH but its probe failed (for example `graphify` with a missing package) | Report the printed `fix:`; reinstall is the operator's call |
 | `./extractkit: No such file or directory` or `extractkit: command not found` | The kit is not on PATH; `./extractkit` only works inside the kit repo | Ask the operator to run `./extractkit install` once in a kit checkout, then use `extractkit`. The checkout can be deleted afterwards |
 | `extractkit on PATH` MISSING | `~/.local/bin` is not on PATH | Report the printed `export PATH=` line; editing shell profiles is the operator's call |

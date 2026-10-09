@@ -45,7 +45,7 @@ LAUNCHER_TAG = "# extractkit-launcher"
 ROOT_FILES = ("extractkit", "extractkit.yaml")
 ROOT_TREES = (
     "extractkit_cli", "steps", "profiles", "schemas", "agent-tasks",
-    "templates", "headless", "skills", "kb",
+    "templates", "headless", "skills",
 )
 DOCS_GLOB = "docs/*.md"
 SKIP_PARTS = frozenset({"__pycache__", ".git", "tests", "graft"})

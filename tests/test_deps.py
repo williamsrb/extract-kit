@@ -142,6 +142,25 @@ class DepsCommandTests(unittest.TestCase):
         self.assertIn("MISSING", text)
 
 
+class DevkitDependencyTests(unittest.TestCase):
+    def test_missing_devkit_is_required_and_prints_the_fix(self) -> None:
+        # A laptop has the real devkit in ~/.local/bin: drop every directory holding one.
+        kept = [d for d in os.environ["PATH"].split(os.pathsep) if not (Path(d) / "devkit").exists()]
+        with tempfile.TemporaryDirectory() as home, mock.patch.dict(
+            os.environ, {"PATH": os.pathsep.join(kept), "HOME": home},
+        ):
+            row = {r.name: r for r in deps.check_deps(manifest.load("core"))}["devkit"]
+        self.assertEqual(row.state, "MISSING")
+        self.assertTrue(row.failed)
+        self.assertIn("./bootstrap.sh --profile extract --apply", row.fix)
+
+    def test_devkit_row_is_inherited_by_stack_profiles(self) -> None:
+        for name in ("core", "enonic", "php"):
+            rows = {r["name"]: r for r in manifest.dependency_rows(manifest.load(name))}
+            self.assertTrue(rows["devkit"]["required"], name)
+            self.assertEqual(rows["devkit"]["probe"], ["devkit", "--help"], name)
+
+
 class DependencyRowTests(unittest.TestCase):
     def test_shipped_profiles_validate_and_core_rows_are_declared(self) -> None:
         for name in ("core", "enonic", "php"):

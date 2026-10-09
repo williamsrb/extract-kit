@@ -31,13 +31,12 @@ follows it as a procedure.
 
 ## Knowledge base
 
-`kb/<bucket>/How-to-*.md` holds How-tos in the devkit KB layout (frontmatter
-plus a generated `llm-index.md` per bucket). `extractkit kb list` and
-`kb show ID` print them. The CMS phase reads `kb/enonic/` (log in to an XP7,
-traverse its CMS). The source of each file is `~/.agents/kb/implementation/`;
-edit it there, then copy it here and rebuild the index with devkit's
-`llm_index.py`. The How-tos keep the KB's long lines, so they do not pass
-markdownlint at 80 columns.
+The kit bundles no How-tos. They live in devkit's `kb.core`, which every
+devkit profile projects, under `~/.local/share/devkit/current/core/kb/implementation/`.
+The CMS phase reads the two XP7 How-tos there (log in to an XP7, traverse its
+CMS). The source of each file is `~/.agents/kb/implementation/`; edit it
+there and mirror it into devkit per
+`~/.agents/kb/implementation/How-to-mirror-a-devkit-core-change-into-the-harness.md`.
 
 ## Agent tasks
 

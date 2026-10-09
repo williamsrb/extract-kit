@@ -8,6 +8,9 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      additional_contexts:
+        # A checkout of 99x-dev-kit; the image installs its `extract` profile.
+        devkit: ${DEVKIT_DIR:?set DEVKIT_DIR in docker/.env to a 99x-dev-kit checkout}
     env_file: .env
     volumes:
       # The legacy checkout. Headless writes <checkout>/.extract/ and the

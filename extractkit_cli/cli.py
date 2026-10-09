@@ -21,7 +21,6 @@ from . import (
     guide,
     headless,
     install,
-    kb,
     kitguard,
     profiles,
     progress,
@@ -261,13 +260,6 @@ def build_parser() -> argparse.ArgumentParser:
     agent_flags(a_next)
     a_next.set_defaults(func=agent_tasks.cmd_next)
 
-    kb_group = group("kb", "List and print the bundled How-tos (CMS access and traversal).")
-    k_list = kb_group.add_parser("list", help="Every bundled How-to with its id, size and path.")
-    k_list.set_defaults(func=kb.cmd_list)
-    k_show = kb_group.add_parser("show", help="Print one How-to.")
-    k_show.add_argument("name", metavar="ID", help="A How-to id, or a part of it that matches one.")
-    k_show.set_defaults(func=kb.cmd_show)
-
     ins = flat("install", "Copy the kit into ~/.local/share/extractkit, add the launcher to ~/.local/bin and the skills to ~/.agents/skills and ~/.claude/skills.")
     ins.add_argument("--force", action="store_true",
                      help="Replace a symlink that points somewhere else. Never touches a real file or folder.")
@@ -411,6 +403,8 @@ def build_parser() -> argparse.ArgumentParser:
     _add_profile_flag(hl)
     hl.add_argument("--agent", metavar="NAME",
                     help="Agent CLI from the agents: block of extractkit.yaml (default: claude).")
+    hl.add_argument("--devkit-profile", dest="devkit_profile", metavar="NAME",
+                    help="Start the agent CLI as this devkit profile's wrapper (claude-NAME, from the agent's wrapper: key). Default: the stock CLI.")
     hl.add_argument("--agent-permissions", dest="agent_permissions", choices=("allowlist", "bypass"),
                     metavar="MODE", help="allowlist (default) or bypass. Bypass is the operator's call.")
     hl.add_argument("--agent-model", dest="agent_model", metavar="MODEL",

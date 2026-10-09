@@ -26,10 +26,12 @@ login that fails) the `cms` stage is `skipped` and the run continues offline:
 merge, synthesis, the agent tasks and check.
 
 The default container image ([`docker/Dockerfile`](../docker/Dockerfile))
-bundles the tools: Python 3.12 with `pyyaml` and `jsonschema`, git, Node with graft,
-Graphify, Serena, Playwright with Chromium, PHP with Composer, the `claude`,
+bundles the tools: Python 3.12 with `pyyaml` and `jsonschema`, git, and, installed
+by [devkit](https://git.seeds.no/williams/99x-dev-kit) in headless mode with its
+`extract` profile, Node with graft, Graphify, Serena, `playwright-cli` and 7-Zip;
+then Playwright with Chromium, PHP with Composer, the `claude`,
 `codex` and `cursor-agent` CLIs, and for the
-[attachments](#attachments) the 1Password CLI (`op`), 7-Zip and
+[attachments](#attachments) the 1Password CLI (`op`) and
 `/filter-by-name.sh`. The Compose example starts it, with an optional
 `enonic/xp` service that is only useful when you also supply the
 application and a content dump. [Building and reusing the
@@ -128,6 +130,7 @@ variable meant for headless
 | `EXTRACTKIT_JSON`, `EXTRACTKIT_VERBOSE`, `EXTRACTKIT_QUIET` | `--json`, `-v`, `-q` | most commands |
 | `EXTRACTKIT_PROGRESS` | `--progress` | `resume`, `run`, `step` |
 | `EXTRACTKIT_AGENT`, `EXTRACTKIT_AGENT_PERMISSIONS`, `EXTRACTKIT_AGENT_MODEL`, `EXTRACTKIT_AGENT_EFFORT`, `EXTRACTKIT_ALLOWED_TOOLS`, `EXTRACTKIT_AGENT_ENV` | `--agent`, `--agent-permissions`, `--agent-model`, `--agent-effort`, `--allowed-tools`, `--agent-env` | `headless` (`EXTRACTKIT_AGENT` also `assets`) |
+| `EXTRACTKIT_DEVKIT_PROFILE` | `--devkit-profile` | `headless`. The image sets it to `extract` |
 | `EXTRACTKIT_MAX_FIX_ATTEMPTS`, `EXTRACTKIT_TASK_TIMEOUT` | `--max-fix-attempts` (0 or more), `--task-timeout` (1 or more) | `headless` |
 | `EXTRACTKIT_PROMOTE` | `--promote` | `headless` |
 | `EXTRACTKIT_NO_ENRICH` | `--no-enrich` | `headless` |
@@ -195,7 +198,10 @@ whose outputs exist reports `ok (already done)` and starts no agent. The
 ## Agent CLIs and permissions
 
 The agent CLIs are data: the `agents:` block of `extractkit.yaml` gives each
-one an `argv` template (the prompt is always sent on stdin), the flags for
+one an `argv` template (the prompt is always sent on stdin), an optional
+`wrapper:` (the command to start instead of `argv[0]` when `--devkit-profile NAME`
+is set, for example `claude-{profile}`, the devkit profile wrapper that exports
+`CLAUDE_CONFIG_DIR` and `AGENTS_HOME`), the flags for
 `allowlist` and `bypass` permissions and a default tool allowlist.
 `claude`, `codex` and `cursor` ship, with argv checked against `claude`
 2.1.280, `codex-cli` 0.151.0 and `cursor-agent` 2026.10.01. Another CLI is a
@@ -214,6 +220,7 @@ CLI (run `extractkit --help`, write a file, call a Serena tool):
 | `--agent` value | `claude` | `codex` | `cursor` (binary `cursor-agent`) |
 | `allowlist` mode | per-tool: `allowed_tools` | `workspace-write` sandbox; `allowed_tools` is ignored | `--force` with `--sandbox enabled`; `allowed_tools` is ignored |
 | `bypass` mode | `bypassPermissions` | `--dangerously-bypass-approvals-and-sandbox` | `--force --sandbox disabled` |
+| `wrapper:` | `claude-{profile}` | `codex-{profile}` | `cursor-{profile}` |
 | Serena MCP in headless | needs the server in the agent's own config | same | same |
 | In the default container image | yes, pinned | yes, pinned | yes, unpinned (official installer); key in `CURSOR_API_KEY` |
 <!-- markdownlint-enable MD013 -->
@@ -251,9 +258,8 @@ artifact. Those logs are agent output and may echo prompts.
 Preflight needs the Serena MCP and, for the Graphify skill fallback, the
 graphify skill configured for the agent on the runner. Headless detects a
 missing readiness item and fails with `readiness_missing`; it does not
-install tools. The container image has them, and registers Serena as a
-user-scope MCP server for `claude`; for `codex` and `cursor` the server still
-has to be added to that agent's own config.
+install tools. The container image has them: the devkit `extract` profile
+registers Serena as an MCP server for `claude`, `codex` and `cursor` alike.
 
 ### Model and effort
 
@@ -358,14 +364,20 @@ need; each is optional and keeps the default when omitted.
 | `WITH_1PASSWORD` | `1` | `0` leaves out the 1Password CLI (`op`), installed from its apt repository and not pinned |
 | `AGENTS` | `claude codex cursor` | The agent CLIs to install, space separated. An unknown name fails the build |
 | `RUN_AS` | `extract` | `root` starts the container as root, for runners that check the source out as root |
-| `*_VERSION` | pinned in the Dockerfile | Tool versions (`NODE`, `GRAFT`, `SERENA`, `GRAPHIFY`, `CLAUDE_CODE`, `CODEX`, ...). `cursor-agent` has no version argument |
+| `DEVKIT_PROFILE` | `extract` | The devkit profile installed in headless mode. The image sets `EXTRACTKIT_DEVKIT_PROFILE` to it |
+| `*_VERSION` | pinned in the Dockerfile | Tool versions (`PLAYWRIGHT`, `CLAUDE_CODE`, `CODEX`, `UV`, ...). `cursor-agent` has no version argument. node, graft, Serena, Graphify and `playwright-cli` are pinned in devkit's `profiles/extract.json` |
 <!-- markdownlint-enable MD013 -->
+
+The image needs a checkout of devkit as the `devkit` build context. Build from
+the kit root:
 
 ```bash
 # the default, full image
-docker build -f docker/Dockerfile -t extractkit-ci:latest .
+docker build -f docker/Dockerfile --build-context devkit=../99x-dev-kit \
+  -t extractkit-ci:latest .
 # a slim image for the core profile, Claude only
-docker build -f docker/Dockerfile -t extractkit-ci:core-claude \
+docker build -f docker/Dockerfile --build-context devkit=../99x-dev-kit \
+  -t extractkit-ci:core-claude \
   --build-arg WITH_PLAYWRIGHT=0 --build-arg WITH_PHP=0 \
   --build-arg AGENTS=claude .
 ```

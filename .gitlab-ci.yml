@@ -7,6 +7,14 @@ variables:
   DOCKER_BUILDKIT: "1"
   DOCKERHUB_USER: leanon
   DOCKERHUB_REPO: leanon/extractkit-ci
+  # The image installs devkit (99x-dev-kit) with its `extract` profile. Pin
+  # DEVKIT_REF to a devkit tag, or to a commit SHA until one is tagged; `master`
+  # is a placeholder that does not give a reproducible build. Fetching needs the
+  # job token (CI_JOB_TOKEN), which works when 99x-dev-kit lists this project
+  # under Settings > CI/CD > Job token permissions. If that is refused, the
+  # masked variable CI_DEVKIT_TOKEN (read_repository on 99x-dev-kit) is used.
+  DEVKIT_URL: https://git.seeds.no/williams/99x-dev-kit.git
+  DEVKIT_REF: master
   PYYAML_VERSION: 6.0.2
   JSONSCHEMA_VERSION: 4.23.0
   RUFF_VERSION: 0.16.8
@@ -32,6 +40,7 @@ test:
 # The kit is copied into the image at build time, so any change to the kit
 # rebuilds it. Docs, tests, the README and docker/README.md alone do not.
 .image-sources: &image-sources
+  - .gitlab-ci.yml
   - docker/Dockerfile
   - docker/*.sh
   - extractkit
@@ -62,8 +71,19 @@ docker-build:
         RUN_AS: extract
       - TAG: root
         RUN_AS: root
+  before_script:
+    - apk add --no-cache git
+    - git init -q .devkit
+    - |
+      fetch_devkit() {
+        git -C .devkit fetch -q --depth 1 "$(printf '%s' "$DEVKIT_URL" | sed "s#^https://#https://gitlab-ci-token:${1}@#")" "$DEVKIT_REF"
+      }
+      fetch_devkit "$CI_JOB_TOKEN" 2>/dev/null \
+        || { test -n "${CI_DEVKIT_TOKEN:-}" && fetch_devkit "$CI_DEVKIT_TOKEN"; } \
+        || { echo "cannot fetch devkit: add this project to the job token allowlist of 99x-dev-kit, or set CI_DEVKIT_TOKEN" >&2; exit 1; }
+    - git -C .devkit checkout -q FETCH_HEAD
   script:
-    - docker build -f docker/Dockerfile --build-arg RUN_AS="$RUN_AS" -t "$DOCKERHUB_REPO:$TAG" .
+    - docker build -f docker/Dockerfile --build-context devkit=.devkit --build-arg RUN_AS="$RUN_AS" -t "$DOCKERHUB_REPO:$TAG" .
     - sh docker/smoke.sh "$DOCKERHUB_REPO:$TAG"
     - echo "$CI_DOCKER_TOKEN" | docker login --username "$DOCKERHUB_USER" --password-stdin
     - docker push "$DOCKERHUB_REPO:$TAG"

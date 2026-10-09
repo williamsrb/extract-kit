@@ -4,6 +4,8 @@ schema_versions: [1]
 
 # Agent CLIs `extractkit headless` can start. Each entry is data:
 #   argv            the command; the prompt always arrives on stdin
+#   wrapper         optional: the argv[0] used instead of argv[0] when a devkit profile is selected
+#                   (`--devkit-profile`); {profile} is the profile name, e.g. claude-{profile}
 #   allowlist_args  appended unless agent.permissions is `bypass`
 #   bypass_args     appended only when agent.permissions is `bypass`
 #   allowed_tools   default tool allowlist for an agent task
@@ -28,6 +30,7 @@ schema_versions: [1]
 # plus one stdin run of each in a scratch git folder).
 agents:
   claude:
+    wrapper: "claude-{profile}"
     argv: [claude, -p, --output-format, json]
     model_args: [--model, "{model}"]
     effort_args: [--effort, "{effort}"]
@@ -43,6 +46,7 @@ agents:
       tokens: [usage.input_tokens, usage.output_tokens, usage.cache_creation_input_tokens, usage.cache_read_input_tokens]
       cost_usd: total_cost_usd
   codex:
+    wrapper: "codex-{profile}"
     argv: [codex, exec, --cd, "{source}"]
     model_args: [--model, "{model}"]
     effort_args: [-c, "model_reasoning_effort={effort}"]
@@ -59,6 +63,7 @@ agents:
   # therefore its sandbox: --force with --sandbox enabled. Its `json` and
   # `stream-json` results carry no token or cost fields, so it has no usage: block.
   cursor:
+    wrapper: "cursor-{profile}"
     argv: [cursor-agent, -p, --output-format, text, --trust, --approve-mcps]
     model_args: [--model, "{model}"]
     api_key_env: CURSOR_API_KEY

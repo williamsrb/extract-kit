@@ -40,7 +40,8 @@
             "type": "array",
             "items": { "type": "string", "minLength": 1 }
           },
-          "python": { "type": "string", "pattern": "^(>=|>|<=|<|==)\\d+(\\.\\d+)*$" }
+          "python": { "type": "string", "pattern": "^(>=|>|<=|<|==)\\d+(\\.\\d+)*$" },
+          "fix": { "type": "string", "minLength": 1 }
         },
         "additionalProperties": true
       }

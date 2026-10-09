@@ -141,7 +141,11 @@ confirms its own work.
 
 ## For operators
 
-Install once with `./extractkit install` in this repo; it copies the kit to
+Install devkit (99x-dev-kit) first: clone `git@git.seeds.no:williams/99x-dev-kit.git`,
+then run `./bootstrap.sh --profile extract --apply` and
+`./install.py --profile extract --headless --apply` in it. `extractkit deps`
+and `doctor` fail with that fix when `devkit` is missing. Then install once with
+`./extractkit install` in this repo; it copies the kit to
 `~/.local/share/extractkit`, puts `extractkit` on PATH and the two skills
 where your assistant finds them. The install is detached, so you can delete
 this checkout afterwards; run it again from a fresh checkout to update. Then

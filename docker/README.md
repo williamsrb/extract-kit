@@ -25,7 +25,24 @@ standard documents (Spec Kit, OpenAPI, DESIGN.md). This image runs it
 headless in a CI pipeline, calling an agent CLI for each agent task.
 
 Included: the kit, the `claude`, `codex` and `cursor-agent` CLIs, Playwright
-with Chromium, PHP and Composer, the 1Password CLI (`op`) and 7-Zip (`7z`).
+with Chromium, PHP and Composer, the 1Password CLI (`op`), and what devkit's
+`extract` profile installs in headless mode: node, graft, Serena, Graphify,
+`playwright-cli` and 7-Zip (`7z`). The agent starts as the profile wrapper
+(`claude-extract`).
+
+Build it with a checkout of devkit (99x-dev-kit) as the `devkit` build context:
+
+```bash
+docker build -f docker/Dockerfile --build-context devkit=<path-to-99x-dev-kit> \
+  -t extractkit-ci .
+```
+
+In GitLab CI the `docker-build` job fetches devkit at `DEVKIT_REF` from
+`DEVKIT_URL` with the job token. That works when 99x-dev-kit lists this project
+under Settings > CI/CD > Job token permissions. If it does not, an operator
+creates the masked CI variable `CI_DEVKIT_TOKEN` (a token with
+`read_repository` on 99x-dev-kit), which the job uses as a fallback. Pin
+`DEVKIT_REF` to a devkit tag or commit before the first run.
 
 ### `latest`
 

@@ -9,7 +9,7 @@ from tests.support import run
 
 
 class HelpContractTests(unittest.TestCase):
-    GROUPS = ("profile", "kb")
+    GROUPS = ("profile",)
 
     def test_bare_equals_help(self) -> None:
         bare, helped = run(), run("--help")

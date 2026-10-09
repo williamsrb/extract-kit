@@ -152,7 +152,7 @@ def provided_binaries(profile: dict, include_optional: bool = True) -> list[str]
 def dependency_rows(profile: dict) -> list[dict]:
     """One normalized row per provided binary, in declaration order.
 
-    Keys: name, required, probe, python_modules, python, install. The probe,
+    Keys: name, required, probe, python_modules, python, install, fix. The probe,
     modules and Python bound belong to the dep's first binary.
     """
     rows: list[dict] = []
@@ -173,6 +173,7 @@ def dependency_rows(profile: dict) -> list[dict]:
                 "python_modules": list(dep.get("python_modules") or []) if first else [],
                 "python": dep.get("python") if first else None,
                 "install": install,
+                "fix": dep.get("fix"),
             })
     return rows
 

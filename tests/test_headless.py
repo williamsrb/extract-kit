@@ -12,6 +12,7 @@ import tempfile
 import unittest
 from argparse import Namespace
 from pathlib import Path
+from typing import ClassVar
 from unittest import mock
 
 import yaml
@@ -471,6 +472,48 @@ class CredentialFallbackTests(HeadlessCase):
         self.assertTrue(headless._reported_error('{"is_error": true, "result": "limit"}'))
         self.assertFalse(headless._reported_error('{"is_error": false}'))
         self.assertFalse(headless._reported_error("ok"))
+
+
+class WrapperTests(HeadlessCase):
+    """`--devkit-profile` starts the agent as the entry's `wrapper:` instead of its argv[0]."""
+
+    TABLE: ClassVar[dict] = {"fake": {**FAKE_TABLE["fake"], "argv": ["fake"], "wrapper": "fake-{profile}"}}
+
+    def argv(self, table: dict, profile: str | None) -> list[str]:
+        with mock.patch.object(headless, "agent_table", return_value=table), \
+                mock.patch.object(headless.outtree, "resolve_source", return_value=self.source):
+            return headless.Headless(Namespace(
+                source=str(self.source), agent="fake", devkit_profile=profile))._argv(["Read"])
+
+    def test_wrapper_and_profile_fill_argv0(self) -> None:
+        argv = self.argv({"fake": {**self.TABLE["fake"], "argv": ["fake", "-p"]}}, "demo")
+        self.assertEqual(argv, ["fake-demo", "-p"])
+
+    def test_no_profile_leaves_argv_unchanged(self) -> None:
+        self.assertEqual(self.argv(self.TABLE, None), ["fake"])
+
+    def test_a_profile_with_no_wrapper_key_leaves_argv_unchanged(self) -> None:
+        bare = {"fake": {k: v for k, v in self.TABLE["fake"].items() if k != "wrapper"}}
+        self.assertEqual(self.argv(bare, "demo"), ["fake"])
+
+    def test_the_agent_runs_through_the_profile_wrapper(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            stub = Path(raw) / "fake-demo"
+            stub.write_text(f'#!/bin/sh\necho wrapper >> "{raw}/used"\nexec {sys.executable} {FAKE} "$@"\n')
+            stub.chmod(0o755)
+            with mock.patch.object(headless, "agent_table", return_value=self.TABLE), \
+                    mock.patch.dict(os.environ, {"PATH": f"{raw}{os.pathsep}{os.environ['PATH']}"}):
+                code, doc = self.headless("--until", "agent:context", "--devkit-profile", "demo")
+            self.assertEqual(code, 0, doc)
+            self.assertTrue((Path(raw) / "used").is_file())
+
+    def test_a_missing_wrapper_names_the_devkit_fix(self) -> None:
+        with mock.patch.object(headless, "agent_table", return_value=self.TABLE):
+            code, doc = self.headless("--until", "agent:context", "--devkit-profile", "nowrapper")
+        self.assertNotEqual(code, 0)
+        text = json.dumps(doc)
+        self.assertIn("agent_failed", text)
+        self.assertIn("devkit profile create nowrapper --headless --apply", text)
 
 
 class RefusalTests(unittest.TestCase):

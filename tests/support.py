@@ -22,6 +22,12 @@ from extractkit_cli import install as _install
 
 _install.install(home=TEST_HOME)
 
+# `devkit` is a required dependency; the suite gets a stub instead of the real one.
+_STUB_DEVKIT = TEST_HOME / ".local" / "bin" / "devkit"
+_STUB_DEVKIT.parent.mkdir(parents=True, exist_ok=True)
+shutil.copy(REPO / "tests" / "fixtures" / "fake_devkit.py", _STUB_DEVKIT)
+_STUB_DEVKIT.chmod(0o755)
+
 # Subprocess runs go through the installed launcher, the way an operator runs
 # the kit: they exercise the detached copy, not the working tree.
 CLI = [sys.executable, str(_install.launcher_path(TEST_HOME))]
