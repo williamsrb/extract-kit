@@ -21,7 +21,7 @@ Extractor types are YAML files under `profiles/`.
 | `pipeline` | Ordered slot ids. |
 | `phases` | `id`, `title`, and either `slots` (list) or `command` (`doctor`, `check`, `promote`). |
 | `adapters` | Slot → plugin id, or `null` for unbound. |
-| `deps` | Entries with `provides` (binaries on PATH), `optional: true`, install hints `apt` / `dnf` / `pacman`, `probe` (argv list; exit 0 within 5 s is ok), `python_modules` (importable names) and `python` (a version bound such as `">=3.12"`). `core` declares `python3`, `git`, `graft`, `serena` and `graphify`; every profile inherits them. |
+| `deps` | Entries with `provides` (binaries on PATH), `optional: true`, install hints `apt` / `dnf` / `pacman`, `probe` (argv list; exit 0 within 5 s is ok), `python_modules` (importable names) and `python` (a version bound such as `">=3.12"`). A dep can carry `fix:`, a text printed instead of the install hints. `core` declares `python3`, `git`, `devkit` (required, with a `fix:`), `graft`, `serena` and `graphify`; every profile inherits them. |
 | `todo` | Unfinished work, printed when `run` refuses. |
 | `optional_slots` | Slots that may stay unbound or empty without blocking `run`, `status` or `resume` (`inventory.baseline`, `report.compat`). |
 | `cms` | Enonic CMS defaults (below). |

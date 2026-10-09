@@ -6,7 +6,8 @@ them.
 
 ## Operator path
 
-Install once with `./extractkit install` in the kit repo, then work from the
+Install devkit first (`deps` and `doctor` fail without it), then install once
+with `./extractkit install` in the kit repo, and work from the
 legacy checkout, in an agent session opened there. The install copies the kit
 into your home, so the kit checkout can be deleted afterwards, and the CLI
 refuses to run an extract from the kit repo.
@@ -92,7 +93,7 @@ the phase; it only makes the output thinner.
 <!-- markdownlint-disable MD013 -->
 | # | Phase | Required input | Optional input | Output |
 | --- | --- | --- | --- | --- |
-| 1 | `preflight` | Python 3.12+ with PyYAML and jsonschema; with `--source`: the checkout's Serena onboarding (`.serena/`) and Graphify index (`graphify-out/`) | graft index (`graft/`, a warning when absent); `--profile` (which deps to probe) | **No sidecar.** The install check, and a report with the stack it would detect and the build scope |
+| 1 | `preflight` | Python 3.12+ with PyYAML and jsonschema; `devkit` on PATH; with `--source`: the checkout's Serena onboarding (`.serena/`) and Graphify index (`graphify-out/`) | graft index (`graft/`, a warning when absent); `--profile` (which deps to probe) | **No sidecar.** The install check, and a report with the stack it would detect and the build scope |
 | 2 | `context` | `--source`; one stack marker unless `--profile` is given | `--profile` (skips detection); `--exclude`; `<checkout>/.extractkit/profile.yaml` | **`context/build-scope.json`**, **`context/profile.yaml`** (the overlay) |
 | 3 | `static` | `--source`; the overlay from phase 2 (`run` writes it when missing) | `graft/`, `graphify-out/` (`map.code`, `map.semantic`); `--exclude`; the `exclude` decided by `context.exclude` | **`inventory/static.json`**, `inventory/controllers.json`, `inventory/templates.json`, **`map/*.json`**, **`integrations/openapi.yaml`**, `integrations/swagger-ui/`, `MANIFEST.yaml` |
 | 4 | `cms` (optional phase) | A local or review XP; `--branch draft\|master`; `--storage-state` (a Playwright login) | `--guillotine`, `--xp-host`, `--project` (default `http://localhost:8080`, project `en`); `--cms-key` (default `/en`); `--configenv`; `--round2`; the overlay's `live_config`; `playwright-cli` and `--site-url` for `inventory.baseline` | **`inventory/runtime.json`**, `inventory/live-config-candidates.json`, `inventory/content-volume.{json,md}`, `x-production-endpoints` in `openapi.yaml`; `baseline/` (optional slot) |

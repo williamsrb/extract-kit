@@ -11,17 +11,17 @@ phases and sidecar lineage. The README diagram (how it works) is separate.
 
 - [extractkit-flow.excalidraw](extractkit-flow.excalidraw)
 - [extractkit-flow.png](extractkit-flow.png)
-- Open: <https://excalidraw.com/#json=SF9ZfaEMABdwCSaedjh0v,DCd7sOP3fXj1JwN2oRKpwQ>
+- Open: <https://excalidraw.com/#json=V2_8BWw_qv1BXk24h2xhZ,mJmssw5ikE0iBX8auGxjsQ>
 
 ## Individual
 
 | Panel | Source | Preview | Open |
 | --- | --- | --- | --- |
 | How it works (README) | [how-it-works.excalidraw](how-it-works.excalidraw) | [how-it-works.png](how-it-works.png) | [excalidraw.com](https://excalidraw.com/#json=CgbajXnyzM7-CHPKY6VNP,FXaohl_SOOt34Qp99684Zw) |
-| Install and where to run | [install-layout.excalidraw](install-layout.excalidraw) | [install-layout.png](install-layout.png) | [excalidraw.com](https://excalidraw.com/#json=A54UdRnExYtH8yUY_5Gwr,xhsHN4ksTQgTkkteitFZyA) |
+| Install and where to run | [install-layout.excalidraw](install-layout.excalidraw) | [install-layout.png](install-layout.png) | [excalidraw.com](https://excalidraw.com/#json=9Dk7QZDtitrYmc3ilCcnN,dYvpLG2ZC1ZgkqCdDnwxVA) |
 | Operator path | [operator-path.excalidraw](operator-path.excalidraw) | [operator-path.png](operator-path.png) | [excalidraw.com](https://excalidraw.com/#json=jdPyvKFgw96D-qEDHCCNw,lYai_UblZcwkcVdencu5Nw) |
-| Headless pipeline | [headless-pipeline.excalidraw](headless-pipeline.excalidraw) | [headless-pipeline.png](headless-pipeline.png) | [excalidraw.com](https://excalidraw.com/#json=yKd9OziT_Cdd_Lp8unI49,4SBK_0HSBwCQf6xmBNaUIA) |
-| Phases | [phases.excalidraw](phases.excalidraw) | [phases.png](phases.png) | [excalidraw.com](https://excalidraw.com/#json=75q1UyfrmmlQ9hUQE092V,6IHLa5VQArfFq3jxwX9Auw) |
+| Headless pipeline | [headless-pipeline.excalidraw](headless-pipeline.excalidraw) | [headless-pipeline.png](headless-pipeline.png) | [excalidraw.com](https://excalidraw.com/#json=95YBJyK6liGN99qfcYE2U,s2_YV3BgTsJFbyf-c1oQ7g) |
+| Phases | [phases.excalidraw](phases.excalidraw) | [phases.png](phases.png) | [excalidraw.com](https://excalidraw.com/#json=cvE7i06ADa5rLObHQZarb,_UeFz_OL_o0dyGPjF1qC1Q) |
 | Sidecar lineage | [sidecar-lineage.excalidraw](sidecar-lineage.excalidraw) | [sidecar-lineage.png](sidecar-lineage.png) | [excalidraw.com](https://excalidraw.com/#json=UZgDhl2KG8Kkdha2bzID3,EduNWGcD_lwBxxiY3LAtNQ) |
 
 The local `.excalidraw` and `.png` files show the detached install, the
@@ -36,7 +36,11 @@ lineage. Since 6 Oct they also show the `constitution` agent task, the
 canvas also show the `assets` stage (twelve stages) and the rule that a
 missing attachment skips stages instead of failing the run. Their
 excalidraw.com links were re-exported that day; the other four open the
-6 Oct version, which is still accurate. After a rebuild, re-export with
+6 Oct version. Since 9 Oct the install panel shows devkit as a
+prerequisite, the Phases panel lists it in the preflight input, and the
+headless agent loop names the devkit wrapper (`claude-extract`). Those four
+drawings were re-exported that day; operator path, sidecar lineage and how
+it works still open the 6 Oct version. After a rebuild, re-export with
 `excalidraw-cli export <file>.excalidraw` (that uploads the drawing) and
 replace the links.
 

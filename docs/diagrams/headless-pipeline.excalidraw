@@ -1028,7 +1028,7 @@
       "y": 670,
       "width": 610,
       "height": 130,
-      "text": "agent loop (every yellow stage)\nagent next --json, one fresh agent process per task\nthen the task rerun, then check\nfix attempts up to --max-fix-attempts, default 2",
+      "text": "agent loop (every yellow stage)\nagent next --json, one fresh agent process per task\n(in the image: the devkit wrapper claude-extract)\nthen the task rerun, then check\nfix attempts up to --max-fix-attempts, default 2",
       "fontSize": 16,
       "fontFamily": 5,
       "textAlign": "center",

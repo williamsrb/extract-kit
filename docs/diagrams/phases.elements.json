@@ -104,7 +104,7 @@
    "type": 3
   },
   "label": {
-   "text": "Python 3.12, PyYAML, jsonschema\n--source: Serena onboarding\nand a Graphify index",
+   "text": "Python 3.12, PyYAML, jsonschema\ndevkit on PATH; --source: Serena\nonboarding and a Graphify index",
    "fontSize": 14,
    "fontFamily": 5
   }

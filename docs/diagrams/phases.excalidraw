@@ -128,7 +128,7 @@
       "y": 145,
       "width": 310,
       "height": 58,
-      "text": "Python 3.12, PyYAML, jsonschema\n--source: Serena onboarding\nand a Graphify index",
+      "text": "Python 3.12, PyYAML, jsonschema\ndevkit on PATH; --source: Serena\nonboarding and a Graphify index",
       "fontSize": 14,
       "fontFamily": 5,
       "textAlign": "center",

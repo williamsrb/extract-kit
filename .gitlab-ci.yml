@@ -8,13 +8,13 @@ variables:
   DOCKERHUB_USER: leanon
   DOCKERHUB_REPO: leanon/extractkit-ci
   # The image installs devkit (99x-dev-kit) with its `extract` profile. Pin
-  # DEVKIT_REF to a devkit tag, or to a commit SHA until one is tagged; `master`
-  # is a placeholder that does not give a reproducible build. Fetching needs the
+  # DEVKIT_REF to a devkit tag, or to a commit SHA until one is tagged, so a
+  # rebuild gets the same devkit. Fetching needs the
   # job token (CI_JOB_TOKEN), which works when 99x-dev-kit lists this project
   # under Settings > CI/CD > Job token permissions. If that is refused, the
   # masked variable CI_DEVKIT_TOKEN (read_repository on 99x-dev-kit) is used.
   DEVKIT_URL: https://git.seeds.no/williams/99x-dev-kit.git
-  DEVKIT_REF: master
+  DEVKIT_REF: f8ab1afbbf3567761f9ac5f1c3228e94240bad2b
   PYYAML_VERSION: 6.0.2
   JSONSCHEMA_VERSION: 4.23.0
   RUFF_VERSION: 0.16.8

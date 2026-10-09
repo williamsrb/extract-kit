@@ -544,5 +544,33 @@
   "fontSize": 14,
   "strokeColor": "#c92a2a",
   "fontFamily": 5
+ },
+ {
+  "type": "text",
+  "id": "l4",
+  "x": 960,
+  "y": 124,
+  "text": "needed first",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "dk",
+  "x": 960,
+  "y": 150,
+  "width": 360,
+  "height": 90,
+  "backgroundColor": "#ffffff",
+  "fillStyle": "solid",
+  "label": {
+   "text": "devkit on PATH (99x-dev-kit)\ndeps and doctor fail without it",
+   "fontSize": 16,
+   "fontFamily": 5
+  },
+  "roundness": {
+   "type": 3
+  }
  }
 ]
