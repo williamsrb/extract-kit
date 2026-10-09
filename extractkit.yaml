@@ -14,10 +14,12 @@ schema_versions: [1]
 #                   or default_model); without it, a set model fails with agent_option_unsupported
 #   effort_args     optional: the same for the effort (--agent-effort, agent.effort or default_effort)
 #   default_model   optional: the model when nothing is set; unset means the CLI's own default
+#   model_env       optional: the CLI's own model variable; headless compares the reported model with it
+#                   when no model is set, and warns on a mismatch
 #   default_effort  optional: the same for the effort
 #   usage           optional: how to read tokens and cost from the agent's log
 #   api_key_env     optional: the variable the CLI reads its credential from; headless fills it
-#                   from an agent_api_key attachment (see docs/headless.md)
+#                   from an agent_api_key attachment or EXTRACTKIT_AGENT_API_KEY (see docs/headless.md)
 #   conflicting_env optional: variables that outrank api_key_env, removed from the agent's environment
 #   denied_tools    optional: tool patterns the agent may never use ({denied_tools}, comma-joined);
 #                   here the flags that lift the kit's own guards
@@ -34,6 +36,7 @@ agents:
     argv: [claude, -p, --output-format, json]
     model_args: [--model, "{model}"]
     effort_args: [--effort, "{effort}"]
+    model_env: ANTHROPIC_MODEL
     api_key_env: CLAUDE_CODE_OAUTH_TOKEN
     conflicting_env: [ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN]
     env_prefixes: [ANTHROPIC_, CLAUDE_]

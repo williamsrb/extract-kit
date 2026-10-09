@@ -18,7 +18,7 @@ no resource type for either.
 | Legacy checkout | The folder to extract. Mounted or checked out; the run writes `extract/` there | `--source` / `EXTRACTKIT_SOURCE` | `doctor --source` |
 | XP instance (optional) | A local or review XP with the app and a content dump. Production hosts are refused. Without it the run is offline and skips the CMS phase | `xp:` in the resources file, or the CMS flags | `xp host`, `guillotine` rows |
 | Auth (needed for the XP) | A Playwright storage state for that XP | `auth.storage_state`, `--storage-state`, or `EXTRACTKIT_STORAGE_STATE_JSON` (the file contents, or the path a CI file variable gives); or a `cms_url` [attachment](#attachments), which headless logs in with | `storage state` row |
-| Agent | An agent CLI that is logged in or has an API key | `agent:` in the resources file, `--agent`; the key as an `agent_api_key` [attachment](#attachments) | `agent cli`, `agent api key` rows |
+| Agent | An agent CLI that is logged in or has an API key | `agent:` in the resources file, `--agent`; the key in `EXTRACTKIT_AGENT_API_KEY` or as an `agent_api_key` [attachment](#attachments) | `agent cli`, `agent api key` rows |
 <!-- markdownlint-enable MD013 -->
 
 Headless needs a storage state to run the CMS phase. With none resolved (or a
@@ -130,6 +130,7 @@ variable meant for headless
 | `EXTRACTKIT_JSON`, `EXTRACTKIT_VERBOSE`, `EXTRACTKIT_QUIET` | `--json`, `-v`, `-q` | most commands |
 | `EXTRACTKIT_PROGRESS` | `--progress` | `resume`, `run`, `step` |
 | `EXTRACTKIT_AGENT`, `EXTRACTKIT_AGENT_PERMISSIONS`, `EXTRACTKIT_AGENT_MODEL`, `EXTRACTKIT_AGENT_EFFORT`, `EXTRACTKIT_ALLOWED_TOOLS`, `EXTRACTKIT_AGENT_ENV` | `--agent`, `--agent-permissions`, `--agent-model`, `--agent-effort`, `--allowed-tools`, `--agent-env` | `headless` (`EXTRACTKIT_AGENT` also `assets`) |
+| `EXTRACTKIT_AGENT_API_KEY` | none (a secret has no flag): the agent credential, exported as the entry's `api_key_env` | `headless`. See [Agent credential](#agent-credential) |
 | `EXTRACTKIT_DEVKIT_PROFILE` | `--devkit-profile` | `headless`. The image sets it to `extract` |
 | `EXTRACTKIT_MAX_FIX_ATTEMPTS`, `EXTRACTKIT_TASK_TIMEOUT` | `--max-fix-attempts` (0 or more), `--task-timeout` (1 or more) | `headless` |
 | `EXTRACTKIT_PROMOTE` | `--promote` | `headless` |
@@ -195,7 +196,8 @@ of the two cases failed.
 The agent log and `reports/headless.jsonl` record the model each agent run
 reports (the keys of `modelUsage` for `claude`). Headless warns when the log
 holds `unrecognized_model`, or when the reported model differs from
-`--agent-model` (else `ANTHROPIC_MODEL`).
+`--agent-model` (else the variable named by the entry's `model_env`,
+`ANTHROPIC_MODEL` for `claude`).
 
 Re-running headless on the same source resumes the latest sidecar. A stage
 whose outputs exist reports `ok (already done)` and starts no agent. The
@@ -267,6 +269,18 @@ missing readiness item and fails with `readiness_missing`; it does not
 install tools. The container image has them: the devkit `extract` profile
 registers Serena as an MCP server for `claude`, `codex` and `cursor` alike.
 
+### Agent credential
+
+`EXTRACTKIT_AGENT_API_KEY` holds the credential for whichever agent is
+selected, so a pipeline sets the same masked variable whatever `--agent` is.
+Headless exports it under the entry's `api_key_env` (`CLAUDE_CODE_OAUTH_TOKEN`,
+`OPENAI_API_KEY`, `CURSOR_API_KEY`) and removes the entry's `conflicting_env`,
+for the agent process only. For `claude` the value is a `claude setup-token`
+token, as in an attachment. An `agent_api_key` attachment wins over it; with
+neither, the agent CLI's own variable from the job environment is used, so
+`ANTHROPIC_API_KEY` still works for `claude`. Setting it for an entry with no
+`api_key_env` fails at the start with `agent_option_unsupported`.
+
 ### Model and effort
 
 `--agent-model` and `--agent-effort` (or `EXTRACTKIT_AGENT_MODEL`,
@@ -280,7 +294,8 @@ The entry's `model_args` and `effort_args` say how the value reaches the CLI
 (`{model}` and `{effort}` are filled in) and are placed before the permission
 args. `cursor` has no `effort_args`, so an effort set for it fails at the start
 with `agent_option_unsupported`, as does a model for an entry without
-`model_args`. `ANTHROPIC_MODEL` still reaches `claude` through `env_prefixes`,
+`model_args`. The CLI's own model variable (`model_env`, `ANTHROPIC_MODEL` for
+`claude`) still reaches it through `env_prefixes`,
 but `--agent-model` wins because it comes later on the command line. The
 resolved values are in the `agent ... started` line, every agent line of
 `reports/headless.jsonl` and the run summary (`default` when unset). On an
@@ -440,7 +455,8 @@ extract:
     EXTRACTKIT_UNTIL: check
     # File-type CI/CD variable: the storage-state contents.
     # EXTRACTKIT_STORAGE_STATE_JSON
-    # The agent credential and the XP login: see "Attachments" below.
+    # Masked CI/CD variable: EXTRACTKIT_AGENT_API_KEY, for any agent.
+    # Or the credential and the XP login as attachments: see "Attachments".
   script:
     # The checkout is the legacy project, so cwd is the source.
     - extractkit headless --source "$CI_PROJECT_DIR" --json | tee extract-result.json

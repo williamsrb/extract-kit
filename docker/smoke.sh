@@ -55,8 +55,13 @@ check "graft" "[0-9]" "$(docker run --rm "$image" graft --version 2>&1 || true)"
 check "serena" "[0-9]" "$(docker run --rm "$image" serena --version 2>&1 || true)"
 check "graphify" "[a-z]" "$(docker run --rm "$image" graphify --help 2>&1 || true)"
 # `claude-extract` is the devkit profile wrapper; a version proves it does not loop into itself
-# (set SMOKE_WITHOUT_CLAUDE=1 for an image built without claude in AGENTS)
-if [ "${SMOKE_WITHOUT_CLAUDE:-}" = 1 ]; then
+# (set SMOKE_AGENTS to the AGENTS build-arg of an image built with another agent list)
+agents="${SMOKE_AGENTS:-$(sed -n 's/^ARG AGENTS="\(.*\)"$/\1/p' "$(dirname "$0")/Dockerfile")}"
+case " $agents " in
+*" claude "*) has_claude=1 ;;
+*) has_claude=0 ;;
+esac
+if [ "$has_claude" = 0 ]; then
 	echo "skip  claude-extract (built without claude)"
 else
 	# the version the Dockerfile pins (a build with another CLAUDE_CODE_VERSION sets SMOKE_CLAUDE_VERSION)

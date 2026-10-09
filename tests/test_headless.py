@@ -29,6 +29,7 @@ FAKE_TABLE = {
         "model_args": ["--model", "{model}"], "effort_args": ["--effort", "{effort}"],
         "allowed_tools": ["Read"], "preflight_tools": ["Read"],
         "api_key_env": "FAKE_TOKEN", "conflicting_env": ["FAKE_CONFLICT"], "env_prefixes": ["FAKE_"],
+        "model_env": "FAKE_MODEL",
     },
 }
 CI = "build:\n  script:\n    - cd xp && ./gradlew build\n"
@@ -194,6 +195,13 @@ class StageTests(HeadlessCase):
             self.assertEqual((line["model"], line["effort"]), ("m1", "high"))
         _, doc = self.headless("--until", "agent:context")
         self.assertEqual(doc["summary"]["agent"]["model"], "default")
+
+    def test_with_no_model_set_the_entrys_model_env_is_the_one_compared(self) -> None:
+        with mock.patch.dict(os.environ, {"FAKE_MODEL": "env-model"}), \
+                mock.patch.object(headless, "model_warnings", wraps=headless.model_warnings) as warnings:
+            self.headless("--until", "agent:context")
+        self.assertTrue(warnings.call_args_list)
+        self.assertEqual({c.args[2] for c in warnings.call_args_list}, {"env-model"})
 
     def agent_runs(self) -> list[dict]:
         return [l for l in self.lines() if l["message"] == "agent finished"]
@@ -392,6 +400,37 @@ class AssetsStageTests(HeadlessCase):
         seen = json.loads((self.source / "fake-env.json").read_text())
         self.assertIsNone(seen["CI_JOB_TOKEN"])
         self.assertEqual(seen["NAMED_EXTRA"], "named")
+
+    def test_the_generic_key_reaches_the_agent_as_its_own_variable(self) -> None:
+        env = {"EXTRACTKIT_AGENT_API_KEY": "generic-key", "FAKE_CONFLICT": "x",
+               "FAKE_AGENT_REPORT_ENV": "FAKE_TOKEN,FAKE_CONFLICT,EXTRACTKIT_AGENT_API_KEY"}
+        with mock.patch.dict(os.environ, env):
+            code, doc = self.headless("--until", "preflight")
+        self.assertEqual(code, 0, doc)
+        seen = json.loads((self.source / "fake-env.json").read_text())
+        self.assertEqual(seen, {"FAKE_TOKEN": "generic-key", "FAKE_CONFLICT": None, "EXTRACTKIT_AGENT_API_KEY": None})
+        self.assertNotIn("generic-key", json.dumps(doc))
+
+    def test_an_attachment_credential_wins_over_the_generic_key(self) -> None:
+        folder = self.assets(**{"one.yaml": resource("agent_api_key", token=self.TOKEN, agent="fake")})
+        with mock.patch.dict(os.environ, {"EXTRACTKIT_AGENT_API_KEY": "generic-key", "FAKE_AGENT_REPORT_ENV": "FAKE_TOKEN"}):
+            code, doc = self.headless("--until", "preflight", "--assets-dir", str(folder))
+        self.assertEqual(code, 0, doc)
+        self.assertEqual(json.loads((self.source / "fake-env.json").read_text())["FAKE_TOKEN"], self.TOKEN)
+
+    def test_the_generic_key_counts_as_a_credential_when_attachments_hold_none(self) -> None:
+        with mock.patch.dict(os.environ, {"EXTRACTKIT_AGENT_API_KEY": "generic-key"}):
+            code, doc = self.headless("--until", "assets", "--assets-dir", str(self.assets()))
+        self.assertEqual(code, 0, doc)
+        self.assertNotIn("no credential", self.stage(doc, "assets")["message"])
+
+    def test_the_generic_key_fails_at_start_for_an_entry_with_no_api_key_env(self) -> None:
+        table = {"fake": {"argv": ["a"], "allowlist_args": [], "allowed_tools": [], "preflight_tools": []}}
+        with mock.patch.dict(os.environ, {"EXTRACTKIT_AGENT_API_KEY": "k"}), \
+                mock.patch.object(headless, "agent_table", return_value=table), \
+                self.assertRaises(headless.ExtractkitError) as caught:
+            headless.Headless(Namespace(source=str(self.source), agent="fake"))
+        self.assertEqual(caught.exception.code, "agent_option_unsupported")
 
     def test_an_unexpected_failure_while_reading_is_a_problem_and_the_stage_still_passes(self) -> None:
         folder = self.assets(**{"a.yaml": resource("something_else")})

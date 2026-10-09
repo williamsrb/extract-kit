@@ -77,6 +77,8 @@ CMS_VALUES = (
 CMS_LISTS = (("--cms-key", "cms_keys"), ("--round2", "round2"))
 # What opens the vault never reaches a child process.
 VAULT_TOKEN_PREFIX = "OP_SERVICE_ACCOUNT_TOKEN"
+# One credential variable for any agent: headless exports it as the selected entry's api_key_env.
+AGENT_API_KEY_ENV = "EXTRACTKIT_AGENT_API_KEY"
 NO_AGENT_CREDENTIAL = "skipped: no agent credential (see the assets stage)"
 PROBE_PROMPT = "Reply with the single word: ok"
 PROBE_TIMEOUT = 90
@@ -260,12 +262,11 @@ class Headless:
         self.records: list[StageRecord] = []
         self._number = ""
         self.usage: list[dict] = []
-        self.agent_env: dict[str, str] = {}
         self.credentials: list[assets.Credential] = []
         self.credential_at = 0
-        self.drop_env: list[str] = []
         self.agent_ready = True
         self.s = self._settings()
+        self.agent_env, self.drop_env = self._env_credential()
 
     # -- settings ---------------------------------------------------------------
 
@@ -302,6 +303,20 @@ class Headless:
             online=bool(getattr(args, "storage_state", None)),
             profile=str(getattr(args, "devkit_profile", None) or ""),
         )
+
+    def _env_credential(self) -> tuple[dict[str, str], list[str]]:
+        """`EXTRACTKIT_AGENT_API_KEY` as the selected agent's `api_key_env`, and the variables that would outrank it."""
+        token = os.environ.get(AGENT_API_KEY_ENV, "").strip()
+        if not token:
+            return {}, []
+        var = self.s.entry.get("api_key_env")
+        if not var:
+            raise ExtractkitError(
+                f"agent {self.s.agent} declares no api_key_env in extractkit.yaml, so {AGENT_API_KEY_ENV} has nowhere to go",
+                f"unset {AGENT_API_KEY_ENV} and log the agent CLI in another way, or add api_key_env to its agents: entry",
+                code="agent_option_unsupported",
+            )
+        return {str(var): token}, [str(name) for name in self.s.entry.get("conflicting_env") or []]
 
     # -- calling extractkit -----------------------------------------------------
 
@@ -488,7 +503,7 @@ class Headless:
         text = log.read_text(encoding="utf-8", errors="replace")
         usage = agent_usage(text, self.s.entry.get("usage"))
         self.usage.append(usage)
-        for warning in model_warnings(text, usage, self.s.model or os.environ.get("ANTHROPIC_MODEL")):
+        for warning in model_warnings(text, usage, self.s.model or os.environ.get(self.s.entry.get("model_env") or "")):
             self._say(f"warning: {warning}", indent=1)
         self._say(f"agent finished {task} in {live.duration(time.monotonic() - start)}{_spent(usage)}", indent=1)
         self._line(stage, task, attempt, True, 0, None, "agent finished", start, log, usage, agent=True)
@@ -635,11 +650,13 @@ class Headless:
                 )
         except Exception as exc:  # noqa: BLE001 - the stage must not stop the run, whatever a file or a tool did
             bundle, outcome = assets.Bundle(), assets.Outcome(problems=[f"attachments could not be processed ({type(exc).__name__})"])
-        self.agent_env, self.drop_env = outcome.agent_env, outcome.drop_env
+        if outcome.agent_env:
+            self.agent_env, self.drop_env = outcome.agent_env, outcome.drop_env
         self.credentials = outcome.credentials
         if len(self.credentials) > 1 and not self._pick_credential(0):
             outcome.problems.append(f"none of the {len(self.credentials)} {assets.TYPE_AGENT} credentials for agent {self.s.agent} answered")
-            self.agent_env, self.credentials = {}, []
+            self.agent_env, self.drop_env = self._env_credential()
+            self.credentials = []
         elif len(self.credentials) > 1 and self.credential_at:
             outcome.notes.append(f"credential {self.credential_at + 1} of {len(self.credentials)} is in use; the ones before it did not answer")
         if outcome.storage_state:
@@ -649,7 +666,7 @@ class Headless:
         if var and var not in self.agent_env and not os.environ.get(var):
             self.agent_ready = False
             outcome.problems.append(
-                f"no credential for agent {self.s.agent}: no usable {assets.TYPE_AGENT} and {var} is not set, "
+                f"no credential for agent {self.s.agent}: no usable {assets.TYPE_AGENT}, and neither {AGENT_API_KEY_ENV} nor {var} is set, "
                 "so the agent stages are skipped"
             )
         for problem in outcome.problems:
@@ -969,7 +986,7 @@ def _model_names(value: object) -> list[str]:
 
 
 def model_warnings(text: str, usage: dict, wanted: str | None) -> list[str]:
-    """Warnings for a run whose CLI did not know the model, or ran another one than `ANTHROPIC_MODEL`."""
+    """Warnings for a run whose CLI did not know the model, or ran another one than the configured model."""
     found: list[str] = []
     if "unrecognized_model" in text:
         found.append("the agent CLI printed unrecognized_model: it does not know the configured model; bump the pinned CLI version")

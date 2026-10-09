@@ -70,7 +70,7 @@ tags.
 ```bash
 docker run --rm \
   -v "$PWD:/work" --user "$(id -u):$(id -g)" \
-  -e ANTHROPIC_API_KEY \
+  -e EXTRACTKIT_AGENT=claude -e EXTRACTKIT_AGENT_API_KEY \
   leanon/extractkit-ci:latest --source /work
 ```
 
@@ -95,7 +95,8 @@ extract:
       - extract-result.json
 ```
 
-The job needs the selected agent's credential, either in its environment or as
+The job needs the selected agent's credential, either in its environment
+(`EXTRACTKIT_AGENT_API_KEY`, a masked variable, works for any agent) or as
 an attachment (`EXTRACTKIT_OP_VAULT` and `EXTRACTKIT_OP_ITEM`; see
 `docs/headless.md`, section Attachments).
 The image
