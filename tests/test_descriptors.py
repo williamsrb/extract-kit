@@ -11,7 +11,14 @@ from pathlib import Path
 from extractkit_cli.check import check_tree
 from extractkit_cli.schema import validate
 from steps.enonic.descriptors import collect_resources
-from tests.support import FIXTURE, REPO, STATIC_UNTIL, copy_fixture, run, sidecar_run_dir
+from tests.support import (
+    FIXTURE,
+    REPO,
+    STATIC_UNTIL,
+    copy_fixture,
+    run,
+    sidecar_run_dir,
+)
 
 RES = "xp/src/main/resources/"
 

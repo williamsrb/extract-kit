@@ -9,7 +9,8 @@ from typing import ClassVar
 
 from extractkit_cli.schema import validate
 from steps.core import templates, view_rules
-from steps.core.viewscan import dead, expr as ex
+from steps.core.viewscan import dead
+from steps.core.viewscan import expr as ex
 from tests.support import REPO
 
 MINI = REPO / "tests" / "fixtures" / "templates-mini"

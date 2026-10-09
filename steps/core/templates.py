@@ -15,8 +15,8 @@ from pathlib import Path
 
 from extractkit_cli import schema, scope
 from extractkit_cli.common import load_json
-from steps.enonic.descriptors import iter_resources_roots
 from steps.core.viewscan import controller, dead, detect, markup, script, server
+from steps.enonic.descriptors import iter_resources_roots
 
 RENDER_LIBS = ("thymeleaf", "mustache", "freemarker", "handlebars", "pebble")
 SCHEMA_ID = "extractkit.templates/v1"

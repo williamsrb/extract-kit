@@ -191,7 +191,7 @@ def export_names(raw: str) -> list[dict]:
     for match in _MODULE_EXPORTS.finditer(text):
         span = _brace_block(text, match.end() - 1)
         if span is not None:
-            for key, _value in _object_props(text[span[0]:span[1]]).items():
+            for key in _object_props(text[span[0]:span[1]]):
                 rows.setdefault(key, lines.at(match.start()))
     return [{"name": n, "line": rows[n]} for n in sorted(rows, key=lambda k: (rows[k], k))]
 

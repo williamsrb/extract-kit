@@ -197,7 +197,7 @@ def apply(templates: dict, surfaces: list[dict]) -> tuple[list[dict], list[dict]
             continue
         views = _view_files(surface, by_folder, by_path)
         if views:
-            surface["templates"] = [_template_ref(e) for e in dict(((e["path"], e) for e in views)).values()]
+            surface["templates"] = [_template_ref(e) for e in {e["path"]: e for e in views}.values()]
         for entry in views[:1]:
             if entry["path"] in joined:
                 continue

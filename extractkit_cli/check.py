@@ -267,7 +267,7 @@ def _items(text: str) -> list[tuple[int, str]]:
 
 def _inline_refs(item: str) -> list[str]:
     """Refs after the last `Evidence:` of a bullet: backticked, else comma separated."""
-    head, sep, tail = item.rpartition("Evidence:")
+    _, sep, tail = item.rpartition("Evidence:")
     if not sep:
         return []
     return BACKTICKED.findall(tail) or [part.strip() for part in tail.split(",") if part.strip()]

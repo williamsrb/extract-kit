@@ -8,7 +8,6 @@ agent task has run and this step runs before it. The agent maps modules to capab
 
 from __future__ import annotations
 
-import posixpath
 from collections.abc import Iterable
 from pathlib import Path
 from urllib.parse import parse_qsl, urlsplit, urlunsplit
