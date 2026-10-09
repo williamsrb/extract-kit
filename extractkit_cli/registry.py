@@ -41,6 +41,7 @@ def _load() -> dict[str, type]:
     from steps.enonic.controllers import EnonicControllersStep
     from steps.enonic.descriptors import EnonicDescriptorsStep
     from steps.enonic.docs import EnonicDocsStep
+    from steps.enonic.domain_packet import EnonicDomainPacketStep
     from steps.enonic.integrations import EnonicIntegrationsStep
     from steps.php import PhpPlaceholderStep
 
@@ -58,6 +59,7 @@ def _load() -> dict[str, type]:
         EnonicBaselineStep,
         EnonicCompatStep,
         EnonicDocsStep,
+        EnonicDomainPacketStep,
         ImpeccableStep,
         SynthesizeStep,
         UseCasesStep,

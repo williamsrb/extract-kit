@@ -155,9 +155,11 @@ skill runs this loop.
 | `context.exclude` | `exclude` in `context/profile.yaml` | the overlay has an `exclude` key; `[]` counts. It is already `[]` when the build scope has nothing to decide |
 | `context.live_config` | `live_config` in `context/profile.yaml` | the overlay has a `live_config` key, or there is no `inventory/live-config-candidates.json` (no live harvest) |
 | `rules.name` | `rules/review.md` (names and intents) | no business rule in `rules/view-rules.json` is still `extracted` |
-| `business` | `business/BUSINESS.md`, then re-runs `step product.impeccable` | the file exists |
+| `business` | `business/BUSINESS.md` and `business/capabilities.json`, then re-runs `step product.impeccable` | both files exist |
 | `constitution` | `spec-kit/constitution/project.md`, then re-runs `step spec.kit` | the file exists |
-| `spec.enrich` | `spec-kit/specs/`, `use-cases/` (prose only), then `reports/spec-enrich.md` | optional, never blocks; done while the report says `Status: complete` and is newer than every `spec.md` |
+| `domain.behavior` | `domain/<capability>.md` (states, formulas, calls, emails, jobs, retries) | every capability in `business/capabilities.json` has its file |
+| `donotport` | `reports/do-not-port.md` (security behavior, defects, dead code) | the file exists |
+| `spec.capabilities` | `spec-kit/specs/<capability>/spec.md` (spec-kit layout, stack independent) | every capability has its spec |
 | `spec.review` | `reports/spec-review.md` (findings only; edits no spec) | optional, never blocks |
 <!-- markdownlint-enable MD013 -->
 
@@ -223,7 +225,7 @@ operator asks.
 | `redirect_refused` | The XP answered with a redirect to another host, or a URL that is not http(s) | Point `--xp-host`, `--guillotine` or `--site-url` at the final host; do not follow it by hand |
 | `unsafe_output` | `<source>/.extract` or `<source>/extract` is a symlink, so the sidecar would land outside the source | Report it; the operator removes the link |
 | `kit_failed` | A `headless` child command exited without a JSON result | Read the message it carries; it names the command and its last stderr lines |
-| `task_blocked` (exit 3) | An agent wrote `<sidecar>/reports/blockers/<id>.md`, or `check` still failed after the fix attempts | A person reads the blocker, fixes the input, and re-runs headless |
+| `task_blocked` (exit 3) | An agent wrote `<sidecar>/reports/blockers/<id>.md`, `check` still failed after the fix attempts, or `check` passed but the task is still not done (the blocker names which) | A person reads the blocker, fixes the input, and re-runs headless |
 | `task_inputs_missing` | In the final `agent` stage a task waits on a file no earlier stage wrote | A pipeline failure, not a question: run the phases that write it |
 | `agent_timeout`, `agent_failed`, `unknown_agent` | The agent CLI ran past `--task-timeout`, exited non-zero, or is not in the `agents:` block | See `reports/headless/*.log`; check the CLI login or API key |
 | `credentials_exhausted` | Every `agent_api_key` for the agent stopped answering (quota, expiry) | Run headless again later or with more credentials; finished tasks are kept |
@@ -234,6 +236,8 @@ operator asks.
 | `no stack marker found` or `markers for more than one stack` | Detection found no `application.xml`, `site/site.xml` or root `composer.json`, or found both stacks | Run the printed `fix:` (it passes `--profile`); pick the stack the operator wants |
 | `context/profile.yaml: … is in neither the source nor the harvested live config` | The agent wrote a key, URL path or host it did not see | Remove it, or cite where it is; do not widen the source. Fix only the overlay, then `check` again |
 | `context/profile.yaml: exclude '…' is not in context/build-scope.json out_of_scope` | `exclude` names a folder the build scope did not report | Choose from `out_of_scope` only |
+| `… has no evidence`, `does not resolve to a path:line`, `reads as a call graph`, `does not use MUST` | A `domain/`, `spec-kit/specs/` or `reports/do-not-port.md` file broke its gate | Fix the line it names; cite a source `path:line` that exists, and write behavior, not `Calls`/`Exports` bullets |
+| `holds the literal of credential key` | A sidecar Markdown file contains a secret value from the source config | Remove the value; write the key and `path:line` only. Never print the value |
 | `enonic.cms.configenv` skip, HTTP 404 | The Config Env admin tool is not installed on that XP | Harmless. Pass `--configenv <url>` if it lives elsewhere |
 | `profile overlay … sets 'adapters'` | An overlay set a key other than `exclude` or `live_config` | Remove the key; the stack is not an overlay's to change |
 | `exclude … is not a path relative to the source` | An absolute `--exclude` or one with `..` | Name the folder relative to `--source` |

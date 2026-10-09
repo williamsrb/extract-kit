@@ -22,7 +22,8 @@ WRAPPER_ROOTS = {
     "item", "data", "content", "params", "config", "app", "site", "page", "input", "args",
 }
 
-_STRING = re.compile(r"""(['"])((?:\\.|(?!\1).)*)\1""", re.DOTALL)
+# A backtick template counts as a literal only when it interpolates nothing.
+_STRING = re.compile(r"""(['"]|`(?![^`]*\$\{))((?:\\.|(?!\1).)*)\1""", re.DOTALL)
 _NUMBER = re.compile(r"(?<![\w.$#])\d+(?:\.\d+)?(?![\w.])")
 _DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}(?:T[\d:.]+Z?)?\b")
 _PATH = re.compile(
@@ -173,6 +174,7 @@ def shape(expr: str) -> str:
 
     text = _PATH.sub(operand, text)
     text = _NUMBER.sub(lambda m: m.group(0).rstrip("0").rstrip(".") if "." in m.group(0) else m.group(0), text)
-    text = re.sub(r"\x00(\d+)\x00", lambda m: f'"{strings[int(m.group(1))]}"', text)
     text = re.sub(r"\s*(==|!=|>=|<=|&&|\|\||[<>+\-*/%!])\s*", r" \1 ", text)
+    # Strings come back last, so an operator inside a literal (`"pre-paid"`) is never spaced.
+    text = re.sub(r"\x00(\d+)\x00", lambda m: f'"{strings[int(m.group(1))]}"', text)
     return " ".join(text.split())

@@ -51,6 +51,15 @@
         "fieldSet": {
           "type": "string"
         },
+        "helpText": {
+          "type": "string"
+        },
+        "default": {
+          "type": "string"
+        },
+        "expanded": {
+          "type": "boolean"
+        },
         "mixin": {
           "type": "string"
         },
@@ -67,6 +76,9 @@
                 "type": "string"
               },
               "label": {
+                "type": "string"
+              },
+              "default": {
                 "type": "string"
               },
               "items": {

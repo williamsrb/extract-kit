@@ -3,10 +3,10 @@ name: extract-agentic
 description: >
   Run the agent tasks of an extractkit sidecar after synthesis: name the
   view-layer business rules, write BUSINESS.md (the general business flow),
-  write the project constitution, optionally enrich specs. Also decides the project context
+  write the project constitution, the domain behavior of each capability, the do-not-port list and one spec per capability. Also decides the project context
   (`context.exclude`, `context.live_config`). Use when `extractkit status` shows the agent
   phase as current, or when asked to run agent steps, write BUSINESS.md or
-  the constitution, name rules, or enrich a spec. Not for the deterministic pipeline (use
+  the constitution, name rules, or write capability specs. Not for the deterministic pipeline (use
   extract-legacy) and not for XP8/React4XP ports.
 ---
 
@@ -45,7 +45,8 @@ lines) and stop. The analyst gates stay: never tick a review box, never set
    otherwise a new session. Pass the rendered prompt and nothing else.
 4. When the task declares `rerun`, run `extractkit <rerun>` with
    `--source` and `--out` added, plus `--profile` when detection needs it
-   (`agent list --json` shows the tokens). `rules.name` needs this:
+   (`agent list --json` shows the tokens). `rules.name` names the rules in
+   batches with `extractkit agent name-rules <file> --out <sidecar>`, then needs this:
    `rules/view-rules.json` only changes on re-run, and that is what marks the
    task done. `business` re-runs `product.impeccable` and `constitution`
    re-runs `spec.kit`, so PRODUCT.md and `spec-kit/constitution.md` pick up
@@ -67,10 +68,15 @@ their own key, and cite their evidence in YAML comments. `check` rejects an
 unsure whether a folder is part of the product, keep it: an exclusion cannot
 be undone in the same sidecar.
 
-`spec.enrich` is optional and `agent next` never returns it. Run it only when
-the operator asks: `extractkit agent show spec.enrich --out <sidecar>`
-(`extractkit headless` runs it unless `--no-enrich`). It extends
-`reports/spec-enrich.md` after each file and ends it with `Status: complete`.
+After `constitution`, three more required tasks run in this order:
+`domain.behavior` (one `domain/<capability>.md` per capability in
+`business/capabilities.json`, every bullet with a source `path:line`),
+`donotport` (`reports/do-not-port.md`: security behavior, defects, dead code,
+never a secret value) and `spec.capabilities` (one spec-kit spec per
+capability, stack independent, MUST requirements with evidence, never citing
+an item `do-not-port` lists). `business` now also writes
+`business/capabilities.json`, one row per capability, with a
+`platform-and-operations` row. `spec.enrich` is retired.
 `spec.review` is optional too, and `agent next` never returns it. It reviews the
 generated specs for meaning and writes only `reports/spec-review.md`; it
 edits no spec, and `promote` never copies the report. Run it when the

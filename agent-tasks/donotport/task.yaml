@@ -1,0 +1,16 @@
+id: donotport
+title: List what a migration must not carry over (security behavior, defects, dead code)
+after: spec.kit
+reads:
+  - business/capabilities.json
+  - domain/packet/INDEX.json
+  - rules/view-rules.json
+  - map/route-map.json
+  - integrations/openapi.yaml
+writes:
+  - reports/do-not-port.md
+done:
+  - reports/do-not-port.md
+checks:
+  - do_not_port
+  - secrets

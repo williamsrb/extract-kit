@@ -18,7 +18,12 @@ from tests.support import (
     run,
     sidecar_run_dir,
     valid_business,
+    valid_capabilities,
+    valid_capability_spec,
     valid_constitution,
+    valid_do_not_port,
+    valid_domain_file,
+    write_agent_outputs,
 )
 
 
@@ -140,7 +145,8 @@ class BusinessCheckTests(unittest.TestCase):
         if text is not None:
             self.file.parent.mkdir(exist_ok=True)
             self.file.write_text(text, encoding="utf-8")
-        return [p for p in check.check_tree(self.out) if "BUSINESS.md" in p]
+            (self.file.parent / "capabilities.json").write_text(valid_capabilities(), encoding="utf-8")
+        return [p for p in check.check_tree(self.out) if "BUSINESS.md" in p or "capabilities.json" in p]
 
     def test_absent_file_passes(self) -> None:
         self.assertEqual(self._check(None), [])
@@ -207,7 +213,10 @@ class BusinessCheckTests(unittest.TestCase):
         self.assertIn("section '## Open questions' has an `_(inferred)_` paragraph without", problems[0])
 
     def test_every_named_check_exists(self) -> None:
-        self.assertEqual(set(check.NAMED_CHECKS), {"context_grounded", "business", "constitution", "spec_fr", "spec_review"})
+        self.assertEqual(set(check.NAMED_CHECKS), {
+            "context_grounded", "business", "constitution", "spec_fr", "spec_review",
+            "capability_spec", "domain_behavior", "do_not_port", "secrets",
+        })
 
 
 class ConstitutionCheckTests(unittest.TestCase):
@@ -266,6 +275,8 @@ class SpecReviewCheckTests(unittest.TestCase):
         cls.addClassCleanup(cls._tmp.cleanup)
         cls.source, cls.out = build_sidecar(Path(cls._tmp.name))
         cls.file = cls.out / "reports" / "spec-review.md"
+        (cls.out / "spec-kit" / "specs" / "mini").mkdir(parents=True)
+        (cls.out / "spec-kit" / "specs" / "mini" / "spec.md").write_text(valid_capability_spec("Mini"), encoding="utf-8")
         specs = sorted((cls.out / "spec-kit" / "specs").glob("*/spec.md"))
         cls.spec = specs[0].relative_to(cls.out).as_posix()
 
@@ -349,3 +360,135 @@ class SpecReviewCheckTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DomainGateTests(unittest.TestCase):
+    """FR-15: capability_spec, domain_behavior, do_not_port and secrets."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(cls._tmp.cleanup)
+        cls.source, cls.out = build_sidecar(Path(cls._tmp.name))
+
+    def setUp(self) -> None:
+        write_agent_outputs(self.out)
+        for rel in ("spec-kit/specs", "domain", "reports"):
+            shutil.rmtree(self.out / rel, ignore_errors=True)
+        self.addCleanup(self._clean)
+
+    def _clean(self) -> None:
+        for rel in ("spec-kit/specs", "domain", "reports"):
+            shutil.rmtree(self.out / rel, ignore_errors=True)
+        (self.out / "business" / "capabilities.json").unlink(missing_ok=True)
+
+    def _write(self, rel: str, text: str) -> Path:
+        path = self.out / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    def _problems(self, gate: str) -> list[str]:
+        return check.NAMED_CHECKS[gate](self.out)
+
+    def test_every_new_file_passes_when_valid(self) -> None:
+        self._write("spec-kit/specs/article-publishing/spec.md", valid_capability_spec())
+        self._write("domain/article-publishing.md", valid_domain_file())
+        self._write("reports/do-not-port.md", valid_do_not_port())
+        for gate in ("capability_spec", "domain_behavior", "do_not_port", "secrets"):
+            self.assertEqual(self._problems(gate), [], gate)
+        self.assertEqual(check.check_tree(self.out), [])
+
+    def test_a_spec_needs_the_spec_kit_sections(self) -> None:
+        self._write("spec-kit/specs/a/spec.md", "# A\n\n## Requirements\n\n- **FR-001**: System MUST x.\n")
+        problems = self._problems("capability_spec")
+        for title in ("User Scenarios & Testing", "Key Entities", "Success Criteria", "Edge Cases", "Evidence"):
+            self.assertTrue(any(f"missing the section '## {title}'" in p for p in problems), title)
+
+    def test_a_requirement_without_evidence_or_with_a_bad_ref_fails(self) -> None:
+        spec = valid_capability_spec().replace(
+            "- FR-002: `xp/src/main/resources/site/content-types/mini-article/mini-article.xml:13`, "
+            "`com.example.mini:content-type:mini-article`\n", "- FR-002: `xp/nowhere.js:3`\n",
+        ).replace("- FR-001: `xp/src/main/resources/site/content-types/mini-article/mini-article.xml:5`\n", "")
+        self._write("spec-kit/specs/a/spec.md", spec)
+        problems = self._problems("capability_spec")
+        self.assertTrue(any("FR-001 has no evidence" in p for p in problems), problems)
+        self.assertTrue(any("FR-002 Evidence ref `xp/nowhere.js:3` does not resolve" in p for p in problems), problems)
+
+    def test_a_call_graph_requirement_and_a_missing_must_fail(self) -> None:
+        spec = valid_capability_spec().replace(
+            "System MUST let an article link to other articles.", "Calls `contentLib.query` to list articles.",
+        )
+        self._write("spec-kit/specs/a/spec.md", spec)
+        problems = self._problems("capability_spec")
+        self.assertTrue(any("FR-002 reads as a call graph" in p for p in problems), problems)
+        self.assertTrue(any("FR-002 does not use MUST" in p for p in problems), problems)
+        self._write("spec-kit/specs/a/spec.md", valid_capability_spec().replace("Exports", "x").replace(
+            "require a title", "Exports `get` to require a title"))
+        self.assertTrue(any("FR-001 reads as a call graph" in p for p in self._problems("capability_spec")))
+
+    def test_a_spec_over_60_kb_fails(self) -> None:
+        self._write("spec-kit/specs/a/spec.md", valid_capability_spec() + "\n" + "filler line\n" * 6000)
+        self.assertTrue(any("over the 61440 byte limit" in p for p in self._problems("capability_spec")))
+
+    def test_a_domain_bullet_needs_a_source_ref_that_resolves(self) -> None:
+        text = valid_domain_file().replace(
+            "Evidence: `xp/src/main/resources/lib/mini-http.js:4`", "Evidence: `xp/src/main/resources/lib/mini-http.js:999`",
+        ).replace(" Evidence: `xp/src/main/resources/cron/mini-cron/index.js:11`", "")
+        self._write("domain/a.md", text)
+        problems = self._problems("domain_behavior")
+        self.assertTrue(any("mini-http.js:999` does not resolve" in p for p in problems), problems)
+        self.assertTrue(any("bullet has no `Evidence:` ref" in p for p in problems), problems)
+
+    def test_a_domain_file_needs_its_sections(self) -> None:
+        self._write("domain/a.md", "# A\n\n## Formulas\n\nNone found in the extracted module facts.\n")
+        problems = self._problems("domain_behavior")
+        self.assertTrue(any("missing the section '## State machines'" in p for p in problems))
+
+    def test_do_not_port_entries_need_evidence_and_a_known_capability(self) -> None:
+        text = valid_do_not_port().replace("Capability: `platform-and-operations`", "Capability: `nope`").replace(
+            "Evidence: `xp/src/main/resources/services/mini-script-only/mini-script-only.js:1`", "Evidence:",
+        )
+        self._write("reports/do-not-port.md", text)
+        problems = self._problems("do_not_port")
+        self.assertTrue(any("DNP-001 has no `Evidence:` ref" in p for p in problems), problems)
+        self.assertTrue(any("DNP-001 names no capability" in p for p in problems), problems)
+
+    def test_a_requirement_may_not_cite_a_listed_defect_or_dead_code(self) -> None:
+        ref = "xp/src/main/resources/lib/mini-http.js:4"
+        self._write("reports/do-not-port.md", valid_do_not_port().replace(
+            "## Dead code\n\nNone found.",
+            f"## Dead code\n\n- **DNP-002** The helper is never called. Reason: dead. Capability: `page-rendering`. Evidence: `{ref}`",
+        ))
+        self._write("spec-kit/specs/article-publishing/spec.md", valid_capability_spec().replace(
+            "mini-article.xml:5`", f"mini-article.xml:5`, `{ref}`", 1))
+        problems = self._problems("do_not_port")
+        self.assertTrue(any(f"cites `{ref}`" in p and "DNP-002" in p for p in problems), problems)
+
+    def test_a_credential_literal_in_any_markdown_fails_naming_the_key_not_the_value(self) -> None:
+        secret = "s3cr3t-Value-12345"
+        (self.source / "xp" / "src" / "main" / "resources" / "app.cfg").write_text(
+            f"sharedKey = {secret}\npassword = ${{env.PASSWORD}}\n", encoding="utf-8",
+        )
+        self.addCleanup((self.source / "xp" / "src" / "main" / "resources" / "app.cfg").unlink)
+        self._write("reports/do-not-port.md", valid_do_not_port() + f"\nThe key is {secret}.\n")
+        problems = self._problems("secrets")
+        self.assertEqual(len(problems), 1, problems)
+        self.assertIn("reports/do-not-port.md", problems[0])
+        self.assertIn("`sharedKey`", problems[0])
+        self.assertIn("app.cfg:1", problems[0])
+        self.assertNotIn(secret, problems[0])
+        self._write("reports/do-not-port.md", valid_do_not_port())
+        self.assertEqual(self._problems("secrets"), [])
+
+    def test_business_needs_a_matching_capability_list_with_platform_and_operations(self) -> None:
+        path = self.out / "business" / "capabilities.json"
+        path.unlink()
+        self.assertTrue(any("capabilities.json is missing" in p for p in check._business_gaps(self.out)))
+        path.write_text(valid_capabilities().replace(
+            '    {"id": "page-rendering", "title": "Page rendering"},\n', "").replace(
+            '"platform-and-operations", "title": "Platform and operations"', '"extra", "title": "Extra"'), encoding="utf-8")
+        problems = check._business_gaps(self.out)
+        self.assertTrue(any("no row for the capability 'Page rendering'" in p for p in problems), problems)
+        self.assertTrue(any("row 'extra' (Extra) has no '### Extra' heading" in p for p in problems), problems)
+        self.assertTrue(any("no 'platform-and-operations' capability" in p for p in problems), problems)

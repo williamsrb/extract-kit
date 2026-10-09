@@ -30,11 +30,12 @@ its slot.
 | synthesis | `product.impeccable` | `product.impeccable` | `product/PRODUCT.md`, `design/DESIGN.md` |
 | synthesis | `docs.synthesize` | `docs.synthesize` | `docs/technical/overview.md`, `docs/guide/overview.md` |
 | synthesis | `use_cases` | `use_cases` | a non-empty `use-cases/` |
+| synthesis | `domain.packet` | `enonic.domain_packet` | `domain/packet/INDEX.json`, `domain/packet/<module>.json` (optional slot; the PHP profile leaves it unbound) |
 | synthesis | `spec.kit` | `spec.kit` | `spec-kit/constitution.md` |
 | synthesis | `report.compat` | `enonic.compat` | `reports/xp8-compat.md` (optional slot) |
 <!-- markdownlint-enable MD013 -->
 
-**Optional slots** (`inventory.baseline`, `report.compat`; profile key
+**Optional slots** (`domain.packet`, `inventory.baseline`, `report.compat`; profile key
 `optional_slots`) never block `status`, `resume` or the `complete` state.
 When their marker is absent, `status` marks the phase row `optional, not
 captured` and prints the `step` command that would produce it.
@@ -353,7 +354,7 @@ non-200 project list writes `projects: null` and `projectsReason`
 the Enonic extras listed in
 [output](output.md#enonic-extras-not-a-phpcore-contract). Live provider
 URLs go to `runtime.json` `endpoints` and are merged into
-`integrations/openapi.yaml` `x-production-endpoints` (and `spec.js`).
+`integrations/openapi.yaml` `x-observed-endpoints` (and `spec.js`).
 Those URLs are never fetched.
 
 ## inventory.baseline (`enonic.baseline`)
@@ -520,6 +521,18 @@ to reading the extract.
   entry, then the bounded contexts
 - `docs/guide/overview.md`: how to read the extract
 
+## domain.packet (`enonic.domain_packet`)
+
+**Writes.** `domain/packet/<module>.json` and `domain/packet/INDEX.json`, one
+packet per source module: `lib/modules/<name>`, other `lib/<folder>`s, and one
+each for `services`, `tasks`, `cron` and `main.js`. A packet holds what the
+module exports, the platform and library calls it makes (first sources only),
+the HTTP requests it sends, the inputs, responses and auth checks of its
+services, the jobs, listeners and external callers that start it, the rules
+in it, and its config and i18n keys, each with `path:line`. No source text.
+It is keyed by module, not capability, because capabilities exist only after
+the `business` task. `domain.behavior` maps modules to capabilities.
+
 ## use_cases
 
 **Writes.** `use-cases/<context>.md`, from extracted facts only.
@@ -546,7 +559,10 @@ Without `map/bounded-contexts.json` it writes only `use-cases/README.md`.
 - as-is `spec-kit/constitution.md`: a title, the project part from
   `spec-kit/constitution/project.md` (the `constitution` agent task) or a
   note that it has not run, then a Governance section
-- `spec-kit/specs/<context>/spec.md` with one `FR-N` per surface
+- `spec-kit/evidence/<context>.md` with one `FR-N` per surface. These are an
+  index of the extract, evidence for the capability specs the
+  `spec.capabilities` agent task writes to `spec-kit/specs/<capability>/spec.md`;
+  `promote` copies only those and the constitution
 
 Each FR has a heading, one sentence, `Acceptance:` bullets when any
 were extracted, and an `Evidence:` line. The bullets come from the
@@ -572,8 +588,8 @@ outputs, every row with an `x-source` cite. Divergent rule groups end the
 spec as `## Open questions`. `check` fails a `business` rule that no spec
 cites unless `rules/review.md` marks it `out-of-scope: yes`.
 
-Without contexts it writes `spec-kit/specs/default/spec.md`. `--tasks`
-adds a stub `tasks.md` per context.
+Without contexts it writes `spec-kit/evidence/default.md`. `--tasks`
+adds a stub `<context>.tasks.md` per context.
 
 ## report.compat (`enonic.compat`)
 
@@ -657,7 +673,11 @@ that is in neither the checkout nor the harvested config (see
 `rules/review.md` and `rules/view-rules.json`, and the source at each cited
 `path:line`. The agent writes a `name:` and a one-sentence `intent:` for
 each business rule, names every copy of a divergent group without picking
-one, and never ticks `[x]` or sets `out-of-scope: yes`.
+one, and never ticks `[x]` or sets `out-of-scope: yes`. A run can hold
+hundreds of business rules (server rules in `lib` and `services` add most of
+them), so the agent names them in batches of 25 to 40: it writes a JSON list
+of `{id, name, intent}` and applies it with `extractkit agent name-rules`,
+not one edit per rule.
 
 **Writes.** `rules/review.md`. Then it re-runs
 `run --from merge --until synthesis` so the names reach
@@ -707,31 +727,52 @@ Open questions. Then it re-runs `step spec.kit`, which composes
 
 **Skip.** Like `business`, while a required input is missing.
 
-### spec.enrich
+### domain.behavior
 
-**Does.** Optional. After `spec.kit`. Rewrites the prose of a `spec.md` FR
-or a `use-cases/*.md` journey so it reads better: first the FRs with no
-extracted behavior, then those that are only a field list. Every FR keeps
-its `Acceptance:` bullets and `Evidence:` line, and every added sentence
-ends with `_(inferred)_`.
+**Does.** Required. After `spec.kit`. Reads `business/capabilities.json`,
+`business/BUSINESS.md`, `domain/packet/`, `rules/view-rules.json`,
+`map/route-map.json` and `integrations/openapi.yaml`, then the source at the
+`path:line` each fact cites. Writes what each capability does: state
+machines, formulas worked out end to end, external calls with message
+fields, emails, scheduled and external jobs with their schedule source,
+idempotency and retries.
 
-**Writes.** `spec-kit/specs/` and `use-cases/`, prose only, and
-`reports/spec-enrich.md`, which it extends after each file it rewrites.
-`check` then fails an FR without an `Evidence:` line.
+**Writes.** `domain/<capability-id>.md`, one per capability. Every bullet
+ends with `Evidence:` refs that are source `path:line`; `check` fails one
+that does not resolve (gate `domain_behavior`).
 
-**Done when.** `reports/spec-enrich.md` has the line `Status: complete` and is
-newer than every `spec.md`, so a later `spec.kit` run makes it pending again.
-Without that line the report is the progress ledger of a run that stopped
-midway: the next run skips the files it lists.
+**Done when.** Every capability in `business/capabilities.json` has its file.
 
-**Skip.** Never returned by `agent next`. Run it with
-`extractkit agent show spec.enrich --out <sidecar>`; `headless` runs it after
-the required tasks unless `--no-enrich`. Re-running `spec.kit` rewrites the
-specs, so enrich after the last run of that slot.
+### donotport
+
+**Does.** Required. After `spec.kit`. Lists what a migration must not carry
+over, with evidence: security behavior, defects, dead code (the rules marked
+`dead` or `unreferenced`, jobs and endpoints nothing wires).
+
+**Writes.** `reports/do-not-port.md` with the sections Security behavior,
+Defects and Dead code. `check` (gates `do_not_port` and `secrets`) fails an
+entry without resolvable evidence, a capability spec that cites a listed
+defect or dead item as behavior, and any sidecar Markdown that holds the
+literal of a credential key of the source's config (the problem names the
+file and the key, never the value).
+
+### spec.capabilities
+
+**Does.** Required. After `spec.kit`. Writes one spec-kit spec per
+capability from the domain files, the do-not-port list and the evidence
+specs: prioritized user stories with independent tests, `FR-###`
+requirements that use MUST and name no legacy file or call, key entities,
+measurable success criteria, edge cases and an Evidence appendix.
+
+**Writes.** `spec-kit/specs/<capability-id>/spec.md`, at most 60 KB each.
+`check` (gate `capability_spec`) validates the sections, MUST, the absence
+of `Calls \`` / `Exports \`` requirements and the evidence of every FR.
+
+**Done when.** Every capability has its spec.
 
 ### spec.review
 
-**Does.** Optional. After `spec.kit`. Reads `spec-kit/specs/`,
+**Does.** Optional. After `spec.kit`. Reads the capability specs in `spec-kit/specs/`,
 `business/BUSINESS.md` (skipped when absent), `rules/view-rules.json` and
 `map/bounded-contexts.json`. Reviews the generated specs for meaning: an FR
 that misreads its cited line, a context split in the wrong place, duplicate

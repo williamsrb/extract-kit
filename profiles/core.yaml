@@ -44,9 +44,11 @@ pipeline:
   - product.impeccable
   - docs.synthesize
   - use_cases
+  - domain.packet
   - spec.kit
   - report.compat
 optional_slots:
+  - domain.packet
   - inventory.baseline
   - report.compat
 phases:
@@ -67,7 +69,7 @@ phases:
     slots: [maps.merge, rules.view, inventory.docs]
   - id: synthesis
     title: Synthesis
-    slots: [product.impeccable, docs.synthesize, use_cases, spec.kit, report.compat]
+    slots: [product.impeccable, docs.synthesize, use_cases, domain.packet, spec.kit, report.compat]
   - id: agent
     title: Agent
     command: agent
@@ -93,5 +95,6 @@ adapters:
   product.impeccable: product.impeccable
   docs.synthesize: docs.synthesize
   use_cases: use_cases
+  domain.packet: null
   spec.kit: spec.kit
   report.compat: null

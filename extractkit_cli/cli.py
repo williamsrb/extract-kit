@@ -260,6 +260,14 @@ def build_parser() -> argparse.ArgumentParser:
     agent_flags(a_next)
     a_next.set_defaults(func=agent_tasks.cmd_next)
 
+    a_names = agent.add_parser(
+        "name-rules",
+        help="Write a JSON batch of rule names into rules/review.md (a list of {id, name, intent}).",
+    )
+    a_names.add_argument("file", metavar="FILE", help="JSON list of {id, name, intent}, one line each.")
+    agent_flags(a_names)
+    a_names.set_defaults(func=agent_tasks.cmd_name_rules)
+
     ins = flat("install", "Copy the kit into ~/.local/share/extractkit, add the launcher to ~/.local/bin and the skills to ~/.agents/skills and ~/.claude/skills.")
     ins.add_argument("--force", action="store_true",
                      help="Replace a symlink that points somewhere else. Never touches a real file or folder.")
@@ -426,7 +434,7 @@ def build_parser() -> argparse.ArgumentParser:
     hl.add_argument("--promote", action="store_true",
                     help="Also run promote at the end (never --force).")
     hl.add_argument("--no-enrich", dest="no_enrich", action="store_true",
-                    help="Skip the optional spec.enrich task the agent stage runs after the required ones.")
+                    help="Accepted and ignored: spec.enrich is retired. Kept so a job that passes it still runs.")
     hl.add_argument("--max-fix-attempts", dest="max_fix_attempts", type=_whole_number(0), default=2, metavar="N",
                     help="Fix attempts per agent task after a failed check (default 2).")
     hl.add_argument("--task-timeout", dest="task_timeout", type=_whole_number(1), default=1800, metavar="SECONDS",

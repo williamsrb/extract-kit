@@ -18,6 +18,7 @@ your own command with that flag added.
 | `run --source DIR [--profile NAME]` | Pipeline; `--from` / `--until` |
 | `step STEP --source DIR [--profile NAME]` | One phase or one slot |
 | `agent list\|show ID\|next [--out DIR] [--json]` | List, render and pick agent tasks. The kit never calls a model |
+| `agent name-rules FILE [--out DIR] [--json]` | Write a JSON list of `{id, name, intent}` into `rules/review.md` by rule id, with the `_(inferred)_` ending. A ticked rule is left as it is; an unknown id is reported and fails the command after the rest are applied |
 | `check --out DIR` | Schema, coverage, `x-source`, spec FR, `BUSINESS.md` when present |
 | `status [--source DIR] [--out DIR]` | Phase checklist (alias `next`) |
 | `resume --source DIR [--profile NAME]` | Continue from first incomplete slot |
@@ -38,7 +39,7 @@ your own command with that flag added.
 | `run`, `step`, `resume`, `status` profile | `--profile`, else `MANIFEST.yaml` `source.profile`, else the stack detected from the checkout (see [Context](#context)). No marker, or markers for both stacks, is refused with a `fix:` that passes `--profile` |
 | `resume` | First slot that is not done, through the end or `--until` |
 | `check` | Reads the sidecar only |
-| `agent` | Latest sidecar under `<source>/.extract/` or `<source>/extract/` when `--source` is given; otherwise `--out` is required. `next` lists required tasks only; `show spec.enrich` or `show spec.review` runs an optional one |
+| `agent` | Latest sidecar under `<source>/.extract/` or `<source>/extract/` when `--source` is given; otherwise `--out` is required. `next` lists required tasks only; `show spec.review` runs the optional one |
 <!-- markdownlint-enable MD013 -->
 
 `resume` never starts at an optional slot (`inventory.baseline`,
@@ -105,7 +106,7 @@ as well as a slot or plugin id.
 | 3 | `static` | map.code, map.semantic, inventory.descriptors, inventory.controllers, inventory.templates, maps.normalize, inventory.integrations |
 | 4 | `cms` | inventory.runtime, inventory.baseline (optional) |
 | 5 | `merge` | maps.merge, rules.view, inventory.docs |
-| 6 | `synthesis` | product.impeccable, docs.synthesize, use_cases, spec.kit, report.compat (optional) |
+| 6 | `synthesis` | product.impeccable, docs.synthesize, use_cases, domain.packet, spec.kit, report.compat (optional) |
 | 7 | `agent` | `agent` (command) |
 | 8 | `check` | `check` (command) |
 | 9 | `promote` | `promote` (command) |
@@ -185,8 +186,9 @@ for `rules.name`, no business rule in `rules/view-rules.json` is still
 `context.exclude` is ready after the static phase and `context.live_config`
 after the CMS slot, so `next` offers `agent show context.exclude` while the
 pipeline is still before the CMS and merge phases. The agent
-phase is done when every required task is done. `spec.enrich` and
-`spec.review` are optional and never block it.
+phase is done when every required task is done. `spec.review` is optional
+and never blocks it. `spec.enrich` is retired; `headless --no-enrich` stays
+accepted and does nothing.
 
 While a required task is pending, `status`, `run`, `step` and `resume` end
 with `Agent is next` and `agent next`, plus `or skip to check`. `check`
@@ -386,7 +388,7 @@ tree.
   `children`, `dataSource`, `status`)
 - a `business` rule in `rules/view-rules.json` is cited by no spec while a
   spec exists, and `rules/review.md` does not mark it `out-of-scope: yes`
-- a `spec-kit/specs/**/spec.md` has no `FR-N` heading, an FR section has
+- a `spec-kit/evidence/<context>.md` has no `FR-N` heading, an FR section has
   no `Evidence:` line, or a paragraph marked `_(inferred)_` has no
   `Evidence:` line in it or right after it
 - `context/profile.yaml` names an `exclude` entry outside

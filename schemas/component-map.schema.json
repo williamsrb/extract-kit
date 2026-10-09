@@ -51,6 +51,15 @@
         "fieldSet": {
           "type": "string"
         },
+        "helpText": {
+          "type": "string"
+        },
+        "default": {
+          "type": "string"
+        },
+        "expanded": {
+          "type": "boolean"
+        },
         "mixin": {
           "type": "string"
         },
@@ -67,6 +76,9 @@
                 "type": "string"
               },
               "label": {
+                "type": "string"
+              },
+              "default": {
                 "type": "string"
               },
               "items": {
@@ -152,6 +164,16 @@
         },
         "configKeys": { "type": "array", "items": { "type": "string" } },
         "listeners": { "type": "array", "items": { "type": "string" } },
+        "schedule": { "type": "object" },
+        "binding": { "type": "object" },
+        "listenerRefs": { "type": "array", "items": { "type": "object" } },
+        "templates": { "type": "array", "items": { "type": "object" } },
+        "starts": { "type": "array", "items": { "type": "object" } },
+        "tasks": { "type": "array", "items": { "type": "object" } },
+        "actions": { "type": "array", "items": { "type": "object" } },
+        "callers": { "type": "array", "items": { "type": "object" } },
+        "schedules": { "type": "array", "items": { "type": "object" } },
+        "includedBy": { "type": "array", "items": { "type": "string" } },
         "usage": { "type": ["integer", "null"] }
       },
       "additionalProperties": true

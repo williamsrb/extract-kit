@@ -25,8 +25,8 @@ schema_versions: [1]
 #                   a short base list (PATH, HOME, proxies, certificates) and `--agent-env`, nothing else
 # Templates accept {allowed_tools} (comma-joined), {source}, {model} and {effort}. The model
 # and effort args go before the permission args, which may end with the stdin `-`. Another
-# CLI is a new entry here, with no code change. Argv verified 2026-10-02 against
-# claude 2.1.280, codex-cli 0.151.0 and cursor-agent 2026.10.01 (`--help`,
+# CLI is a new entry here, with no code change. Argv verified 2026-10-09 against
+# claude 2.1.284, codex-cli 0.151.0 and cursor-agent 2026.10.01 (`--help`,
 # plus one stdin run of each in a scratch git folder).
 agents:
   claude:
@@ -45,6 +45,7 @@ agents:
     usage:
       tokens: [usage.input_tokens, usage.output_tokens, usage.cache_creation_input_tokens, usage.cache_read_input_tokens]
       cost_usd: total_cost_usd
+      model: modelUsage
   codex:
     wrapper: "codex-{profile}"
     argv: [codex, exec, --cd, "{source}"]

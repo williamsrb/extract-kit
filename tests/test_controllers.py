@@ -141,6 +141,7 @@ class FixtureTests(unittest.TestCase):
             sorted(rows),
             [
                 "admin/tools/mini-tool/mini-tool.js",
+                "cron/mini-cron/index.js",
                 "error/error.js",
                 "idprovider/idprovider.js",
                 "main.js",
@@ -164,7 +165,84 @@ class FixtureTests(unittest.TestCase):
         self.assertEqual(part["i18n"], [{"key": "mini.title", "line": 12}])
         self.assertEqual({k["key"] for k in part["configKeys"]}, {"miniMode", "fallback"})
         self.assertNotIn("remove", json.dumps(part))
-        self.assertEqual(rows["main.js"]["listeners"], [{"type": "node.pushed", "line": 4}])
+        self.assertEqual(rows["main.js"]["listeners"], [{"type": "node.pushed", "line": 5}, {"type": "custom.booking.paid", "line": 11, "calls": ["Booking.sweep"]}])
+
+
+class RequestFactsTests(unittest.TestCase):
+    def test_inputs_come_from_params_body_headers_and_cookies(self) -> None:
+        facts = scan_text(
+            "exports.post = function (req) {\n"
+            "  const id = req.params.id;\n"
+            "  const mode = req.params['mode'];\n"
+            "  const body = JSON.parse(req.body);\n"
+            "  const amount = body.amount + body['currency'];\n"
+            "  const { name, city: town } = JSON.parse(req.body);\n"
+            "  return req.headers['X-Key'] + req.cookies.sid;\n"
+            "};\n"
+        )
+        got = [(i["source"], i["name"], i["line"]) for i in facts["inputs"]]
+        self.assertEqual(got, [
+            ("param", "id", 2), ("param", "mode", 3), ("body", "amount", 5), ("body", "currency", 5),
+            ("body", "city", 6), ("body", "name", 6), ("cookie", "sid", 7), ("header", "X-Key", 7),
+        ])
+
+    def test_aliases_of_params_and_body_and_a_whole_params_hand_over(self) -> None:
+        facts = scan_text(
+            "exports.post = function (req) {\n"
+            "  const reqParams = req.params || {}\n"
+            "  const jsonBody = req.body || '{}'\n"
+            "  const data = JSON.parse(jsonBody)\n"
+            "  const other = JSON.parse(unrelated)\n"
+            "  go(req.params)\n"
+            "  return reqParams.callback + data.amount + other.bad\n"
+            "}\n"
+        )
+        got = [(i["source"], i["name"], i["line"]) for i in facts["inputs"]]
+        self.assertEqual(got, [("param", "*", 6), ("body", "amount", 7), ("param", "callback", 7)])
+
+    def test_a_body_key_written_not_read_is_not_an_input(self) -> None:
+        facts = scan_text("const b = JSON.parse(req.body);\nb.seen = true;\nreturn b.real;\n")
+        self.assertEqual([i["name"] for i in facts["inputs"]], ["real"])
+
+    def test_responses_record_literal_status_redirect_and_content_type(self) -> None:
+        facts = scan_text(
+            "return { status: 404 };\n"
+            "return { contentType: 'application/json', status: 200 };\n"
+            "return { redirect: '/en/thanks' };\n"
+            "return portal.redirect(url);\n"
+            "return { status: code };\n"
+        )
+        got = [(r["kind"], r["value"], r["line"]) for r in facts["responses"]]
+        self.assertEqual(got, [
+            ("status", "404", 1), ("contentType", "application/json", 2), ("status", "200", 2),
+            ("redirect", "/en/thanks", 3), ("redirect", None, 4),
+        ])
+
+    def test_auth_signals_and_elevation(self) -> None:
+        facts = scan_text(
+            "if (!Auth.hasRole('role:system.admin')) return { status: 403 };\n"
+            "const u = Auth.getUser();\n"
+            "Context.run({ principals: ['role:system.admin', 'role:su'], repository: 'r' }, f);\n"
+            "Context.run({ user: { login: 'su', idProvider: 'system' } }, f);\n"
+            "// Auth.hasRole('role:commented')\n"
+        )
+        got = [(a["kind"], a["value"], a["line"]) for a in facts["auth"]]
+        self.assertEqual(got, [
+            ("role-check", "role:system.admin", 1), ("user-check", "getUser", 2),
+            ("elevated", "role:su", 3), ("elevated", "role:system.admin", 3),
+            ("elevated", "user:su", 4),
+        ])
+
+    def test_listener_rows_record_the_functions_the_callback_calls(self) -> None:
+        facts = scan_text(
+            "const event = require('/lib/xp/event');\n"
+            "const Booking = require('/lib/booking');\n"
+            "event.listener({\n  type: 'custom.paid',\n  callback: function (e) {\n"
+            "    Booking.confirm(e);\n  },\n});\n"
+        )
+        self.assertEqual(facts["listeners"], [
+            {"type": "custom.paid", "line": 4, "calls": ["Booking.confirm"]},
+        ])
 
 
 class SidecarTests(unittest.TestCase):
@@ -193,8 +271,8 @@ class SidecarTests(unittest.TestCase):
             _source, out = self._static(Path(raw))
             spec = yaml.safe_load((out / "integrations/openapi.yaml").read_text())
             item = spec["paths"]["/_/service/com.example.mini/mini-service"]
-            self.assertEqual(list(item), ["get"])
-            self.assertTrue(item["get"]["x-source"][0].endswith("mini-service.js:3"))
+            self.assertEqual(list(item), ["get", "post"])
+            self.assertTrue(item["get"]["x-source"][0].endswith("mini-service.js:4"))
 
     def test_script_only_service_is_an_inbound_operation(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

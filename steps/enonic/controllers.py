@@ -42,6 +42,7 @@ TREE_KINDS: tuple[tuple[str, str], ...] = (
     ("site/processors", "response-processor"),
     ("webapp", "webapp"),
     ("idprovider", "id-provider"),
+    ("cron", "cron"),
 )
 
 HTTP_METHODS = {
@@ -172,6 +173,29 @@ def _queries(text: str, lines: _Lines) -> list[dict]:
     return sorted(rows, key=lambda r: (r["line"], r["field"], r["value"]))
 
 
+_MODULE_EXPORTS = re.compile(r"\bmodule\.exports\s*=\s*\{")
+
+
+def export_names(raw: str) -> list[dict]:
+    """Every name a module exports, with its line: `exports.x =`, `export ...`, `module.exports = {...}`."""
+    text = strip_comments(raw)
+    lines = _Lines(text)
+    rows: dict[str, int] = {}
+    for match in _EXPORT_ASSIGN.finditer(text):
+        rows.setdefault(match.group(1), lines.at(match.start()))
+    for match in _EXPORT_DECL.finditer(text):
+        rows.setdefault(match.group(1), lines.at(match.start()))
+    for match in _EXPORT_LIST.finditer(text):
+        for _imported, local in _names(match.group(1)):
+            rows.setdefault(local, lines.at(match.start()))
+    for match in _MODULE_EXPORTS.finditer(text):
+        span = _brace_block(text, match.end() - 1)
+        if span is not None:
+            for key, _value in _object_props(text[span[0]:span[1]]).items():
+                rows.setdefault(key, lines.at(match.start()))
+    return [{"name": n, "line": rows[n]} for n in sorted(rows, key=lambda k: (rows[k], k))]
+
+
 def _methods(text: str, lines: _Lines) -> list[dict]:
     rows: dict[str, int] = {}
 
@@ -233,7 +257,111 @@ def _config_keys(text: str, lines: _Lines) -> list[dict]:
     return sorted(rows, key=lambda r: (r["line"], r["key"]))
 
 
-def _listeners(text: str, lines: _Lines, imports: list[dict]) -> list[dict]:
+_REQ = r"(?:req|request)"
+_PARAM = re.compile(rf"""\b{_REQ}\.params(?:\.(?P<dot>[\w$]+)|\[\s*(?P<q>['"])(?P<key>[^'"]+)(?P=q)\s*\])""")
+_HEADER = re.compile(rf"""\b{_REQ}\.headers(?:\.(?P<dot>[\w$]+)|\[\s*(?P<q>['"])(?P<key>[^'"]+)(?P=q)\s*\])""")
+_COOKIE = re.compile(rf"""\b{_REQ}\.cookies(?:\.(?P<dot>[\w$]+)|\[\s*(?P<q>['"])(?P<key>[^'"]+)(?P=q)\s*\])""")
+_BODY_VAR = re.compile(
+    rf"""(?:const|let|var)\s+(?:(?P<name>[\w$]+)|\{{(?P<names>[^}}]*)\}})\s*=\s*JSON\.parse\(\s*(?:{_REQ}\.body|(?P<alias>[\w$]+))""",
+)
+_STATUS = re.compile(r"\bstatus\s*:\s*(\d{3})\b")
+_CONTENT_TYPE = re.compile(r"""\bcontentType\s*:\s*(?P<q>['"`])(?P<v>(?:\\.|(?!(?P=q)).)*)(?P=q)""")
+_REDIRECT = re.compile(r"""\bredirect\s*:\s*(?:(?P<q>['"])(?P<v>[^'"]*)(?P=q))?|\.redirect\s*\(""")
+_HAS_ROLE = re.compile(r"""\bhasRole\s*\(\s*(?:(?P<q>['"])(?P<v>[^'"]*)(?P=q))?""")
+_USER_CHECK = re.compile(r"\b(?P<v>getUser|isAuthenticated|isUnauthori[sz]ed\w*)\s*\(")
+_PRINCIPALS = re.compile(r"\bprincipals\s*:\s*\[(?P<v>[^\]]*)\]")
+_LOGIN = re.compile(r"""\buser\s*:\s*\{[^}]*?\blogin\s*:\s*(?P<q>['"])(?P<v>[^'"]+)(?P=q)""")
+
+
+_PARAM_ALIAS = re.compile(rf"(?:const|let|var)\s+(?P<name>[\w$]+)\s*=\s*{_REQ}\.params\b")
+_BODY_ALIAS = re.compile(rf"(?:const|let|var)\s+(?P<name>[\w$]+)\s*=\s*{_REQ}\.body\b")
+_PARAMS_WHOLE = re.compile(rf"\b{_REQ}\.params\b(?!\s*(?:\.|\[))")
+
+
+def _name(match: re.Match) -> str:
+    return match.group("dot") or match.group("key")
+
+
+def _inputs(text: str, lines: _Lines) -> list[dict]:
+    rows: list[dict] = []
+    for source, pattern in (("param", _PARAM), ("header", _HEADER), ("cookie", _COOKIE)):
+        rows += [
+            {"source": source, "name": _name(m), "line": lines.at(m.start())}
+            for m in pattern.finditer(text)
+        ]
+    for match in _PARAM_ALIAS.finditer(text):
+        var = re.escape(match.group("name"))
+        rows += [
+            {"source": "param", "name": _name(read), "line": lines.at(match.end() + read.start())}
+            for read in re.finditer(
+                rf"""(?<![\w$.]){var}(?:\.(?P<dot>[\w$]+)(?![\w$])|\[\s*(?P<q>['"])(?P<key>[^'"]+)(?P=q)\s*\])""",
+                text[match.end():],
+            )
+        ]
+    aliased = {m.end() - len("params") for m in _PARAM_ALIAS.finditer(text)}
+    rows += [
+        {"source": "param", "name": "*", "line": lines.at(m.start())}
+        for m in _PARAMS_WHOLE.finditer(text) if m.end() - len("params") not in aliased
+    ]
+    body_vars = {m.group("name") for m in _BODY_ALIAS.finditer(text)}
+    for match in _BODY_VAR.finditer(text):
+        if match.group("alias") and match.group("alias") not in body_vars:
+            continue
+        line = lines.at(match.start())
+        if match.group("names") is not None:
+            rows += [
+                {"source": "body", "name": imported, "line": line}
+                for imported, _local in _names(match.group("names"))
+            ]
+            continue
+        var = re.escape(match.group("name"))
+        for read in re.finditer(
+            rf"""(?<![\w$.]){var}(?:\.(?P<dot>[\w$]+)(?![\w$])|\[\s*(?P<q>['"])(?P<key>[^'"]+)(?P=q)\s*\])(?!\s*=[^=])""",
+            text[match.end():],
+        ):
+            rows.append({
+                "source": "body", "name": _name(read), "line": lines.at(match.end() + read.start()),
+            })
+    return sorted(rows, key=lambda r: (r["line"], r["source"], r["name"]))
+
+
+def _responses(text: str, lines: _Lines) -> list[dict]:
+    rows = [
+        {"kind": "status", "value": m.group(1), "line": lines.at(m.start())}
+        for m in _STATUS.finditer(text)
+    ]
+    rows += [
+        {"kind": "contentType", "value": m.group("v"), "line": lines.at(m.start())}
+        for m in _CONTENT_TYPE.finditer(text)
+    ]
+    rows += [
+        {"kind": "redirect", "value": m.group("v") if m.groupdict().get("v") else None,
+         "line": lines.at(m.start())}
+        for m in _REDIRECT.finditer(text)
+    ]
+    return sorted(rows, key=lambda r: (r["line"], r["kind"], r["value"] or ""))
+
+
+def _auth(text: str, lines: _Lines) -> list[dict]:
+    rows = [
+        {"kind": "role-check", "value": m.group("v"), "line": lines.at(m.start())}
+        for m in _HAS_ROLE.finditer(text)
+    ]
+    rows += [
+        {"kind": "user-check", "value": m.group("v"), "line": lines.at(m.start())}
+        for m in _USER_CHECK.finditer(text)
+    ]
+    for match in _PRINCIPALS.finditer(text):
+        for item in _STRING.finditer(match.group("v")):
+            rows.append({"kind": "elevated", "value": item.group("v"), "line": lines.at(match.start())})
+    rows += [
+        {"kind": "elevated", "value": f"user:{m.group('v')}", "line": lines.at(m.start())}
+        for m in _LOGIN.finditer(text)
+    ]
+    return sorted(rows, key=lambda r: (r["line"], r["kind"], r["value"] or ""))
+
+
+def _listeners(text: str, lines: _Lines, imports: list[dict], calls: list[dict]) -> list[dict]:
     aliases = {
         r["alias"] for r in imports
         if r.get("alias") and r["module"] == "/lib/xp/event"
@@ -247,7 +375,15 @@ def _listeners(text: str, lines: _Lines, imports: list[dict]) -> list[dict]:
             block = text[span[0]:span[1]]
             kind = re.search(r"""\btype\s*:\s*(?P<q>['"])(?P<v>[^'"]+)(?P=q)""", block)
             if kind:
-                rows.append({"type": kind.group("v"), "line": lines.at(span[0] + kind.start("v"))})
+                first, last = lines.at(span[0]), lines.at(span[1])
+                effects = sorted({
+                    c["call"] for c in calls
+                    if first <= c["line"] <= last and not c["call"].endswith(".listener")
+                })
+                row = {"type": kind.group("v"), "line": lines.at(span[0] + kind.start("v"))}
+                if effects:
+                    row["calls"] = effects
+                rows.append(row)
     return sorted(rows, key=lambda r: (r["line"], r["type"]))
 
 
@@ -264,7 +400,10 @@ def scan_text(raw: str) -> dict:
         "views": _views(text, lines, imports, calls),
         "i18n": _i18n(text, lines),
         "configKeys": _config_keys(text, lines),
-        "listeners": _listeners(text, lines, imports),
+        "listeners": _listeners(text, lines, imports, calls),
+        "inputs": _inputs(text, lines),
+        "responses": _responses(text, lines),
+        "auth": _auth(text, lines),
     }
 
 
@@ -320,6 +459,8 @@ def http_requests(raw: str) -> list[dict]:
         for match in re.finditer(pattern, text):
             span = _brace_block(text, match.end())
             if span is None or text[match.end():span[0]].strip():
+                # `request(requestObj)`: the options are built elsewhere, the call line is still the cite.
+                rows.append({"line": lines.at(match.start())})
                 continue
             props = _object_props(text[span[0]:span[1]])
             url, method = props.get("url"), props.get("method")
@@ -385,7 +526,7 @@ def collect_controllers(source: Path, exclude: Iterable[str] = ()) -> list[dict]
                 "file": _rel(source, path),
                 "folder": _rel(source, path.parent),
                 "kind": kind,
-                "name": path.parent.name if kind in {k for _, k in FOLDER_KINDS} else path.stem,
+                "name": path.parent.name if kind in {k for _, k in FOLDER_KINDS} | {"cron"} else path.stem,
                 "app": app,
                 **scan_text(text),
             })

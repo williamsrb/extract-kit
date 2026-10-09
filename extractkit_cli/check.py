@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from argparse import Namespace
+from functools import lru_cache
 from pathlib import Path
 
 import yaml
@@ -30,7 +31,7 @@ CONSTITUTION_SECTIONS = (
 )
 SPEC_REVIEW_FILE = "reports/spec-review.md"
 SPEC_REVIEW_SEVERITIES = ("high", "medium", "low")
-SPEC_REVIEW_FIX_IN = ("extractor", "rules/review.md", "spec.enrich", "source")
+SPEC_REVIEW_FIX_IN = ("extractor", "rules/review.md", "spec.capabilities", "source")
 SPEC_REVIEW_FIELDS = ("Spec", "Severity", "Fix in", "Evidence")
 FINDING_HEADING = re.compile(r"^###\s+(SR-\d+)\b.*$", re.MULTILINE)
 SPEC_PATH = re.compile(r"spec-kit/specs/[^/\s`]+/spec\.md")
@@ -42,6 +43,21 @@ EVIDENCE_REFS = re.compile(r"^\s*Evidence\s*:(.*)$", re.MULTILINE)
 BACKTICKED = re.compile(r"`([^`]+)`")
 SOURCE_REF = re.compile(r"^(.+):(\d+)$")
 RULE_ID = re.compile(r"VR-[0-9a-f]{10}")
+CAPABILITIES_FILE = "business/capabilities.json"
+PLATFORM_CAPABILITY = "platform-and-operations"
+CAPABILITY_SECTIONS = (
+    "User Scenarios & Testing", "Requirements", "Key Entities", "Success Criteria", "Edge Cases", "Evidence",
+)
+DOMAIN_SECTIONS = (
+    "State machines", "Formulas", "External calls", "Emails", "Scheduled and external jobs",
+    "Idempotency and retries",
+)
+DO_NOT_PORT_FILE = "reports/do-not-port.md"
+DO_NOT_PORT_SECTIONS = ("Security behavior", "Defects", "Dead code")
+MAX_SPEC_BYTES = 60 * 1024
+FR_BULLET = re.compile(r"^\s*[-*]\s+\*{0,2}(FR-\d{3,})\*{0,2}\s*[:.\-]\s*(.*)$")
+CALL_GRAPH_FR = re.compile(r"\b(?:Calls|Exports)\s+`")
+DNP_ENTRY = re.compile(r"^\s*[-*]\s+\*{0,2}(DNP-\d+)\*{0,2}\b(.*)$")
 
 
 def _out_dir(raw: str | None) -> Path:
@@ -158,9 +174,14 @@ def _source_ref_resolves(ref: str, source: Path | None) -> bool:
     path = (source / match.group(1)).resolve()
     if not path.is_file() or not path.is_relative_to(source.resolve()):
         return False
+    stat = path.stat()
+    return 1 <= int(match.group(2)) <= _line_count(path, stat.st_mtime_ns, stat.st_size)
+
+
+@lru_cache(maxsize=4096)
+def _line_count(path: Path, _mtime_ns: int, _size: int) -> int:
     with path.open("rb") as handle:
-        lines = sum(1 for _ in handle)
-    return 1 <= int(match.group(2)) <= lines
+        return sum(1 for _ in handle)
 
 
 def _manifest_source(out: Path) -> Path | None:
@@ -182,10 +203,233 @@ def _business_gaps(out: Path) -> list[str]:
     problems = _evidenced_doc_gaps(out, BUSINESS_FILE, text, sections, BUSINESS_SECTIONS)
     surface_ids = _ids_in_maps(out)
     rule_ids = _rule_ids(out)
-    for title, body in _capabilities(sections.get("Capabilities", "")):
+    headings = _capabilities(sections.get("Capabilities", ""))
+    for title, body in headings:
         cited = set(BACKTICKED.findall(body)) | set(RULE_ID.findall(body))
         if not cited & (surface_ids | rule_ids):
             problems.append(f"{BUSINESS_FILE} capability '{title}' cites no rule id or surface id")
+    problems.extend(_capability_list_gaps(out, [title for title, _body in headings]))
+    return problems
+
+
+def _capability_list_gaps(out: Path, headings: list[str]) -> list[str]:
+    """`business/capabilities.json` must list exactly the capabilities BUSINESS.md names."""
+    path = out / CAPABILITIES_FILE
+    if not path.is_file():
+        return [f"{CAPABILITIES_FILE} is missing: the business task writes it beside {BUSINESS_FILE}"]
+    try:
+        payload = load_json(path, CAPABILITIES_FILE)
+        schema.validate(payload, "capabilities", what=CAPABILITIES_FILE)
+    except ExtractkitError as exc:
+        return [str(exc)]
+    rows = payload["capabilities"]
+    problems: list[str] = []
+    titles = {row["title"].strip().casefold(): row["id"] for row in rows}
+    for title in headings:
+        if title.strip().casefold() not in titles:
+            problems.append(f"{CAPABILITIES_FILE} has no row for the capability '{title}' of {BUSINESS_FILE}")
+    wanted = {title.strip().casefold() for title in headings}
+    problems.extend(
+        f"{CAPABILITIES_FILE} row '{row['id']}' ({row['title']}) has no '### {row['title']}' heading in {BUSINESS_FILE}"
+        for row in rows if row["title"].strip().casefold() not in wanted
+    )
+    ids = [row["id"] for row in rows]
+    problems.extend(f"{CAPABILITIES_FILE} lists the id '{i}' twice" for i in sorted({i for i in ids if ids.count(i) > 1}))
+    if PLATFORM_CAPABILITY not in ids:
+        problems.append(f"{CAPABILITIES_FILE} has no '{PLATFORM_CAPABILITY}' capability for the cross-cutting facts")
+    return problems
+
+
+def _capability_ids(out: Path) -> list[str]:
+    path = out / CAPABILITIES_FILE
+    if not path.is_file():
+        return []
+    try:
+        return [str(row["id"]) for row in load_json(path, CAPABILITIES_FILE).get("capabilities") or []]
+    except (ExtractkitError, KeyError, TypeError):
+        return []
+
+
+def _known_refs(out: Path) -> set[str]:
+    return _ids_in_maps(out) | _context_ids(out) | _rule_ids(out)
+
+
+def _items(text: str) -> list[tuple[int, str]]:
+    """Bullet items with their first line number: a bullet and the indented lines that continue it."""
+    items: list[tuple[int, list[str]]] = []
+    for number, line in enumerate(text.splitlines(), 1):
+        if re.match(r"^\s*[-*]\s+\S", line):
+            items.append((number, [line.strip()]))
+        elif line.strip() and items and line.startswith((" ", "\t")):
+            items[-1][1].append(line.strip())
+    return [(number, " ".join(lines)) for number, lines in items]
+
+
+def _inline_refs(item: str) -> list[str]:
+    """Refs after the last `Evidence:` of a bullet: backticked, else comma separated."""
+    head, sep, tail = item.rpartition("Evidence:")
+    if not sep:
+        return []
+    return BACKTICKED.findall(tail) or [part.strip() for part in tail.split(",") if part.strip()]
+
+
+def _capability_spec_gaps(out: Path) -> list[str]:
+    """`spec-kit/specs/<capability>/spec.md`: Spec Kit sections, MUST requirements, evidence, size."""
+    root = out / "spec-kit" / "specs"
+    specs = sorted(root.glob("*/spec.md")) if root.is_dir() else []
+    problems: list[str] = []
+    known = _known_refs(out)
+    source = _manifest_source(out)
+    for spec in specs:
+        rel = spec.relative_to(out).as_posix()
+        raw = spec.read_bytes()
+        if len(raw) > MAX_SPEC_BYTES:
+            problems.append(f"{rel} is {len(raw)} bytes, over the {MAX_SPEC_BYTES} byte limit; keep the P1 stories and cut")
+        text = raw.decode("utf-8", errors="replace")
+        sections = _split_h2(text)
+        problems.extend(f"{rel} is missing the section '## {t}'" for t in CAPABILITY_SECTIONS if t not in sections)
+        frs: dict[str, str] = {}
+        for _number, item in _items(sections.get("Requirements", "")):
+            match = FR_BULLET.match(item)
+            if match:
+                frs[match.group(1)] = match.group(2)
+        if "Requirements" in sections and not frs:
+            problems.append(f"{rel} has no '- **FR-###**: ...' requirement under '## Requirements'")
+        for ident, body in frs.items():
+            if "MUST" not in body:
+                problems.append(f"{rel} {ident} does not use MUST")
+            if CALL_GRAPH_FR.search(body):
+                problems.append(f"{rel} {ident} reads as a call graph (Calls/Exports), not as behavior")
+        appendix = {m.group(1): m.group(2) for _n, i in _items(sections.get("Evidence", ""))
+                    if (m := FR_BULLET.match(i))}
+        for ident in frs:
+            refs = [r for r in BACKTICKED.findall(appendix.get(ident, "")) if r]
+            if not refs:
+                problems.append(f"{rel} {ident} has no evidence in '## Evidence'")
+            problems.extend(
+                f"{rel} {ident} Evidence ref `{ref}` does not resolve to a source path:line, a map id or a rule id"
+                for ref in refs if ref not in known and not _source_ref_resolves(ref, source)
+            )
+    return problems
+
+
+def _domain_behavior_gaps(out: Path) -> list[str]:
+    """`domain/<capability>.md`: the sections, and a source `path:line` on every bullet."""
+    root = out / "domain"
+    files = sorted(p for p in root.glob("*.md")) if root.is_dir() else []
+    problems: list[str] = []
+    source = _manifest_source(out)
+    for path in files:
+        rel = path.relative_to(out).as_posix()
+        text = path.read_text(encoding="utf-8")
+        sections = _split_h2(text)
+        problems.extend(f"{rel} is missing the section '## {t}'" for t in DOMAIN_SECTIONS if t not in sections)
+        for number, item in _items(text):
+            refs = _inline_refs(item)
+            if not refs:
+                problems.append(f"{rel}:{number} bullet has no `Evidence:` ref")
+            problems.extend(
+                f"{rel}:{number} Evidence ref `{ref}` does not resolve to a path:line in the source"
+                for ref in refs if not _source_ref_resolves(ref, source)
+            )
+    return problems
+
+
+def _do_not_port_gaps(out: Path) -> list[str]:
+    """`reports/do-not-port.md`: evidence on every entry, and no capability FR that cites a listed item."""
+    path = out / DO_NOT_PORT_FILE
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8")
+    sections = _split_h2(text)
+    problems = [f"{DO_NOT_PORT_FILE} is missing the section '## {t}'" for t in DO_NOT_PORT_SECTIONS if t not in sections]
+    known_rules = _rule_ids(out)
+    source = _manifest_source(out)
+    capabilities = set(_capability_ids(out))
+    listed: dict[str, str] = {}
+    for title in DO_NOT_PORT_SECTIONS:
+        for _number, item in _items(sections.get(title, "")):
+            match = DNP_ENTRY.match(item)
+            if not match:
+                continue
+            ident, refs = match.group(1), _inline_refs(item)
+            if not refs:
+                problems.append(f"{DO_NOT_PORT_FILE} {ident} has no `Evidence:` ref")
+            for ref in refs:
+                if ref in known_rules or _source_ref_resolves(ref, source):
+                    if title in ("Defects", "Dead code"):
+                        listed[ref] = ident
+                else:
+                    problems.append(f"{DO_NOT_PORT_FILE} {ident} Evidence ref `{ref}` does not resolve")
+            cap = re.search(r"Capability:\s*`([^`]+)`", item)
+            if capabilities and (cap is None or cap.group(1) not in capabilities | {PLATFORM_CAPABILITY}):
+                problems.append(f"{DO_NOT_PORT_FILE} {ident} names no capability from {CAPABILITIES_FILE}")
+    root = out / "spec-kit" / "specs"
+    for spec in sorted(root.glob("*/spec.md")) if root.is_dir() else []:
+        sections_s = _split_h2(spec.read_text(encoding="utf-8"))
+        for _number, item in _items(sections_s.get("Requirements", "")) + _items(sections_s.get("Evidence", "")):
+            for ref in {*BACKTICKED.findall(item), *RULE_ID.findall(item)} & set(listed):
+                match = FR_BULLET.match(item)
+                where = match.group(1) if match else "a requirement"
+                problems.append(
+                    f"{spec.relative_to(out).as_posix()} {where} cites `{ref}`, which {DO_NOT_PORT_FILE} "
+                    f"lists as {listed[ref]}: do not port it"
+                )
+    return problems
+
+
+CREDENTIAL_KEY = re.compile(
+    r"""["']?(?P<key>[\w.\-]*(?:password|passwd|secret|token|api[_-]?key|shared[_-]?key)[\w.\-]*)["']?\s*[=:]\s*"""
+    r"""["']?(?P<value>[^\s"'#,}<]{8,})""",
+    re.IGNORECASE,
+)
+CREDENTIAL_XML = re.compile(
+    r"<(?P<key>[\w.\-]*(?:password|passwd|secret|token|api[_-]?key|shared[_-]?key)[\w.\-]*)>\s*(?P<value>[^<\s]{8,})\s*</",
+    re.IGNORECASE,
+)
+CONFIG_SUFFIXES = {".cfg", ".properties", ".env", ".yml", ".yaml", ".json", ".xml", ".toml", ".ini", ".conf", ".gradle"}
+PLACEHOLDER = re.compile(r"^(?:\$\{|\$\(|%\(|<|\{\{|\*+$|x+$|changeme|null$|true$|false$|undefined$)", re.IGNORECASE)
+
+
+def _credential_literals(source: Path) -> dict[str, tuple[str, str]]:
+    """`value -> (key, path:line)` for credential-looking keys in the source's config files."""
+    from . import scope
+
+    found: dict[str, tuple[str, str]] = {}
+    for path in scope.iter_files(source):
+        name = path.name.lower()
+        if path.suffix.lower() not in CONFIG_SUFFIXES and not name.startswith(".env"):
+            continue
+        if name in {"package-lock.json", "yarn.lock", "composer.lock"} or path.stat().st_size > 1_000_000:
+            continue
+        rel = path.relative_to(source).as_posix()
+        for number, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            for pattern in (CREDENTIAL_KEY, CREDENTIAL_XML):
+                for match in pattern.finditer(line):
+                    value = match.group("value")
+                    if not PLACEHOLDER.match(value):
+                        found.setdefault(value, (match.group("key"), f"{rel}:{number}"))
+    return found
+
+
+def _secrets_gaps(out: Path) -> list[str]:
+    """No credential literal of the source's config may appear in any sidecar Markdown. Names the key, never the value."""
+    source = _manifest_source(out)
+    if source is None or not source.is_dir():
+        return []
+    literals = _credential_literals(source)
+    if not literals:
+        return []
+    problems: list[str] = []
+    for path in sorted(out.rglob("*.md")):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for value, (key, where) in literals.items():
+            if value in text:
+                problems.append(
+                    f"{path.relative_to(out).as_posix()} holds the literal of credential key `{key}` "
+                    f"(from {where}); write the key and path:line, never the value"
+                )
+                break
     return problems
 
 
@@ -355,12 +599,24 @@ def _template_gaps(out: Path) -> list[str]:
     return problems
 
 
+EVIDENCE_DIR = "spec-kit/evidence"
+
+
+def _evidence_specs(out: Path) -> list[Path]:
+    """The per-context evidence specs `spec.kit` writes: `spec-kit/evidence/<context>.md`."""
+    root = out / EVIDENCE_DIR
+    return sorted(p for p in root.glob("*.md") if not p.name.endswith(".tasks.md")) if root.is_dir() else []
+
+
 def _rule_gaps(out: Path) -> list[str]:
-    """Business view rules that no spec FR cites and that review.md does not drop."""
+    """Business view rules that no evidence-spec FR cites and that review.md does not drop.
+
+    Server-side rules with no component have no surface to cite them; the domain files carry them.
+    """
     from steps.core import view_rules
 
     rules_path = out / "rules" / "view-rules.json"
-    specs = sorted((out / "spec-kit" / "specs").rglob("spec.md")) if (out / "spec-kit" / "specs").is_dir() else []
+    specs = _evidence_specs(out)
     if not rules_path.is_file() or not specs:
         return []
     review = out / "rules" / "review.md"
@@ -374,6 +630,7 @@ def _rule_gaps(out: Path) -> list[str]:
         "out-of-scope in rules/review.md"
         for rule in load_json(rules_path, "rules/view-rules.json").get("rules") or []
         if rule["bucket"] == "business" and rule["id"] not in dropped and rule["id"] not in cited
+        and (rule.get("scope") != "server" or rule.get("component"))
     ]
 
 
@@ -494,6 +751,10 @@ def check_tree(out: Path) -> list[str]:
     problems.extend(_rule_gaps(out))
     problems.extend(_spec_fr_gaps(out))
     problems.extend(_business_gaps(out))
+    problems.extend(_capability_spec_gaps(out))
+    problems.extend(_domain_behavior_gaps(out))
+    problems.extend(_do_not_port_gaps(out))
+    problems.extend(_secrets_gaps(out))
     problems.extend(_constitution_gaps(out))
     problems.extend(_spec_review_gaps(out))
     problems.extend(context.grounding_gaps(out))
@@ -515,13 +776,12 @@ def _unevidenced_inferred(section: str) -> list[str]:
 
 
 def _spec_fr_gaps(out: Path) -> list[str]:
-    specs_root = out / "spec-kit" / "specs"
-    if not specs_root.is_dir():
+    if not (out / EVIDENCE_DIR).is_dir():
         return []
     problems: list[str] = []
-    specs = sorted(specs_root.rglob("spec.md"))
+    specs = _evidence_specs(out)
     if not specs:
-        problems.append(f"spec-kit/specs exists under {out} but has no spec.md")
+        problems.append(f"{EVIDENCE_DIR} exists under {out} but has no <context>.md")
         return problems
     for spec in specs:
         rel = spec.relative_to(out).as_posix()
@@ -564,6 +824,10 @@ NAMED_CHECKS = {
     "business": _business_gaps,
     "constitution": _constitution_gaps,
     "spec_fr": _spec_fr_gaps,
+    "capability_spec": _capability_spec_gaps,
+    "domain_behavior": _domain_behavior_gaps,
+    "do_not_port": _do_not_port_gaps,
+    "secrets": _secrets_gaps,
     "spec_review": _spec_review_gaps,
 }
 

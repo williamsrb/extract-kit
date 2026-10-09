@@ -72,6 +72,74 @@ def harvest_outbound(source: Path, exclude: Iterable[str] = ()) -> list[dict]:
     return ops
 
 
+CALLER_SUFFIXES = {
+    ".php", ".sh", ".bash", ".py", ".rb", ".pl", ".js", ".mjs", ".cjs", ".ts", ".yml", ".yaml", ".cron", ".crontab",
+}
+SERVICE_URL = re.compile(r"/_/service/(?P<app>[A-Za-z0-9_.\-]+)/(?P<name>[A-Za-z0-9_\-]+)")
+CRON_FIELD = r"(?:\*|[\d,\-*/A-Za-z]+)"
+CRON_LINE = re.compile(rf"^\s*(?P<spec>(?:@\w+|{CRON_FIELD}(?:\s+{CRON_FIELD}){{4}}))\s+(?P<cmd>\S.*)$")
+
+
+def _is_crontab(path: Path) -> bool:
+    return "crontab" in path.name.lower() or path.suffix == ".cron"
+
+
+def _under_resources(path: Path) -> bool:
+    parts = path.parts
+    return any(parts[i:i + 3] == ("src", "main", "resources") for i in range(len(parts)))
+
+
+def _schedules(folder_files: list[Path], names: set[str], source: Path) -> list[dict]:
+    rows: list[dict] = []
+    for path in folder_files:
+        if not _is_crontab(path):
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for index, line in enumerate(text.splitlines(), 1):
+            if line.lstrip().startswith("#"):
+                continue
+            match = CRON_LINE.match(line)
+            if match and any(name in match.group("cmd") for name in names):
+                rows.append({
+                    "cron": match.group("spec"), "command": match.group("cmd").strip(),
+                    "source": f"{_rel(source, path)}:{index}",
+                })
+    return rows
+
+
+def collect_external_callers(source: Path, exclude: Iterable[str] = ()) -> list[dict]:
+    """Non-XP files that call `/_/service/<app>/<name>`, with the crontab line that runs them."""
+    files = [
+        p for p in scope.iter_files(source, exclude)
+        if not _under_resources(p.relative_to(source))
+    ]
+    rows: list[dict] = []
+    for path in files:
+        if path.suffix not in CALLER_SUFFIXES or _is_crontab(path):
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        targets = [
+            {"app": m.group("app"), "service": m.group("name"), "line": _line_no(text, m)}
+            for m in SERVICE_URL.finditer(text)
+        ]
+        if not targets:
+            continue
+        siblings = [p for p in files if p.parent == path.parent]
+        including = {
+            p.name for p in siblings
+            if p != path and not _is_crontab(p) and path.name in p.read_text(encoding="utf-8", errors="replace")
+        }
+        row = {
+            "name": path.stem, "path": _rel(source, path), "app": targets[0]["app"],
+            "targets": targets,
+            "schedules": _schedules(siblings, {path.name, *including}, source),
+        }
+        if including:
+            row["includedBy"] = sorted(including)
+        rows.append(row)
+    return rows
+
+
 def harvest_browser_embed(source: Path, exclude: Iterable[str] = ()) -> list[dict]:
     ops: list[dict] = []
     seen: set[str] = set()
@@ -137,6 +205,8 @@ def harvest_inbound(
                 op["x-source"] = [f"{_controller_file(controllers or [], app, name)}:{line}"]
             if method == "all":
                 op["x-exported-method"] = "all"
+            if found:
+                op.update(_contract(_service_row(controllers or [], app, name)))
             ops.append(op)
     return ops
 
@@ -146,11 +216,104 @@ def _all_method(explicit: set[str]) -> str:
     return next((m for m in ALL_FALLBACK if m not in explicit), "post")
 
 
+def _service_row(controllers: list[dict], app: str, name: str) -> dict:
+    return next(
+        (row for row in controllers
+         if row.get("kind") == "service" and row.get("app") == app and row.get("name") == name),
+        {},
+    )
+
+
+def _auth_modes(rows: list[dict]) -> list[str]:
+    modes: list[str] = []
+    for row in rows:
+        value = row.get("value") or ""
+        if row["kind"] == "role-check":
+            mode = value if value.startswith("role:") else f"role:{value or '<computed>'}"
+        elif row["kind"] == "elevated":
+            mode = f"elevated:{value}"
+        elif row["kind"] == "user-check":
+            mode = "authenticated"
+        else:
+            continue
+        if mode not in modes:
+            modes.append(mode)
+    return modes or ["none"]
+
+
+def _contract(row: dict) -> dict:
+    """Inputs, auth and response codes the controller scan recorded, cited by `path:line`."""
+    file = row.get("file") or ""
+    contract: dict = {
+        "x-inputs": [
+            {"in": i["source"], "name": i["name"], "x-source": f"{file}:{i['line']}"}
+            for i in row.get("inputs") or []
+        ],
+        "x-auth": {
+            "modes": _auth_modes(row.get("auth") or []),
+            "scope": "controller",
+            "x-source": [f"{file}:{a['line']}" for a in row.get("auth") or []],
+        },
+        "x-responses": [
+            {"kind": r["kind"], "value": r["value"], "x-source": f"{file}:{r['line']}"}
+            for r in row.get("responses") or []
+        ],
+    }
+    return contract
+
+
 def _controller_file(controllers: list[dict], app: str, name: str) -> str:
     return next(
         row["file"] for row in controllers
         if row.get("kind") == "service" and row.get("app") == app and row.get("name") == name
     )
+
+
+_PARAM_IN = {"param": "query", "header": "header", "cookie": "cookie"}
+
+
+def _parameters(inputs: list[dict]) -> tuple[list[dict], dict | None]:
+    parameters: list[dict] = []
+    fields: dict[str, dict] = {}
+    seen: set[tuple[str, str]] = set()
+    for item in inputs:
+        if item["in"] == "body":
+            fields.setdefault(item["name"], {"x-source": item["x-source"]})
+            continue
+        location = _PARAM_IN[item["in"]]
+        if (location, item["name"]) in seen:
+            continue
+        seen.add((location, item["name"]))
+        parameters.append({
+            "name": item["name"], "in": location, "required": False,
+            "schema": {"type": "string"}, "x-source": item["x-source"],
+        })
+    body = None
+    if fields:
+        body = {"content": {"application/json": {"schema": {"type": "object", "properties": fields}}}}
+    return parameters, body
+
+
+def _responses_block(rows: list[dict]) -> dict:
+    codes = [r for r in rows if r["kind"] == "status"]
+    types = [r["value"] for r in rows if r["kind"] == "contentType"]
+    redirects = [r for r in rows if r["kind"] == "redirect"]
+    if not codes and not redirects:
+        return {"200": {"description": "Observed at the cited source line. Field-minimal."}}
+    block: dict = {}
+    for row in codes:
+        block.setdefault(row["value"], {
+            "description": f"Literal status at {row['x-source']}.", "x-source": row["x-source"],
+        })
+    for row in redirects:
+        block.setdefault("3XX", {
+            "description": f"Redirect to {row['value'] or 'a computed target'} at {row['x-source']}.",
+            "x-source": row["x-source"],
+        })
+    if types and block:
+        first = next((c for c in block if c.startswith("2")), next(iter(block)))
+        block[first]["content"] = {t: {} for t in types}
+    return block
 
 
 def _operation_block(op: dict) -> dict:
@@ -159,10 +322,15 @@ def _operation_block(op: dict) -> dict:
         "summary": op["summary"],
         "x-source": op["x-source"],
         "x-direction": op["direction"],
-        "responses": {
-            "200": {"description": "Observed at the cited source line. Field-minimal."}
-        },
+        "responses": _responses_block(op.get("x-responses") or []),
     }
+    parameters, body = _parameters(op.get("x-inputs") or [])
+    if parameters:
+        block["parameters"] = parameters
+    if body:
+        block["requestBody"] = body
+    if op.get("x-auth"):
+        block["x-auth"] = op["x-auth"]
     for extra in ("x-embed-url", "x-url", "x-url-expr", "x-exported-method"):
         if op.get(extra):
             block[extra] = op[extra]
@@ -187,11 +355,12 @@ def build_openapi(
             "title": title,
             "version": "extracted",
             "description": (
-                "Field-minimal, source-traceable contracts. Production URLs are "
-                "metadata only. Do not use Try it out against production."
+                "Field-minimal, source-traceable contracts. Observed URLs are "
+                "metadata only, each tagged with the env it came from. "
+                "Do not use Try it out against production."
             ),
         },
-        "x-production-endpoints": [],
+        "x-observed-endpoints": [],
         "paths": paths,
     }
 
@@ -225,7 +394,7 @@ def _copy_swagger_ui(ctx: object, spec: object) -> None:
     write_text(
         readme,
         "Read-only Swagger UI. Try it out is disabled. Open index.html "
-        "(spec is inlined in spec.js so file:// works). Production URLs "
+        "(spec is inlined in spec.js so file:// works). Observed URLs "
         "are metadata only.\n",
     )
 

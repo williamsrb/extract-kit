@@ -158,29 +158,32 @@ def live_config_written(out: Path) -> bool:
     return overlay is not None and "live_config" in overlay
 
 
-ENRICH_COMPLETE = "Status: complete"
+def capability_ids(out: Path) -> list[str]:
+    """Capability ids `business` wrote to `business/capabilities.json`; empty while it is absent."""
+    path = out / "business" / "capabilities.json"
+    if not path.is_file():
+        return []
+    return [str(c["id"]) for c in load_json(path, "business/capabilities.json").get("capabilities") or []]
 
 
-def specs_enriched(out: Path) -> bool:
-    """`reports/spec-enrich.md` says `Status: complete` and is newer than every spec, so no `spec.kit` run undid it.
+def domain_files_written(out: Path) -> bool:
+    """Every capability has a `domain/<id>.md`."""
+    ids = capability_ids(out)
+    return bool(ids) and all((out / "domain" / f"{i}.md").is_file() for i in ids)
 
-    The report is also the progress ledger of a run that stopped midway (an exhausted credential, a timeout):
-    without the status line the task is not done, and the next run skips the files it lists.
-    """
-    report = out / "reports" / "spec-enrich.md"
-    if not report.is_file():
-        return False
-    if ENRICH_COMPLETE not in (line.strip() for line in report.read_text(encoding="utf-8", errors="replace").splitlines()):
-        return False
-    specs = list((out / "spec-kit" / "specs").rglob("spec.md")) if (out / "spec-kit" / "specs").is_dir() else []
-    return all(spec.stat().st_mtime <= report.stat().st_mtime for spec in specs)
+
+def capability_specs_written(out: Path) -> bool:
+    """Every capability has a `spec-kit/specs/<id>/spec.md`."""
+    ids = capability_ids(out)
+    return bool(ids) and all((out / "spec-kit" / "specs" / i / "spec.md").is_file() for i in ids)
 
 
 DONE_CHECKS = {
+    "domain_files_written": domain_files_written,
+    "capability_specs_written": capability_specs_written,
     "rules_named": rules_named,
     "exclude_decided": exclude_decided,
     "live_config_written": live_config_written,
-    "specs_enriched": specs_enriched,
 }
 
 
@@ -190,6 +193,17 @@ def is_done(task: Task, out: Path) -> bool:
     if not task.done:
         return False
     return all(progress._produced(out, rel) for rel in task.done)
+
+
+def not_done_reason(task: Task, out: Path) -> str:
+    """Why `is_done` is false: the missing `done` files, or the done check and what it requires."""
+    if task.done_check:
+        doc = (DONE_CHECKS[task.done_check].__doc__ or "").strip().splitlines()
+        return f"the done check `{task.done_check}` is not met" + (f" ({doc[0].rstrip('.')})" if doc else "")
+    missing = [rel for rel in task.done if not progress._produced(out, rel)]
+    if missing:
+        return "missing " + ", ".join(f"`{rel}`" for rel in missing)
+    return "it declares no output to look for"
 
 
 def missing_reads(task: Task, out: Path) -> list[str]:
@@ -235,6 +249,7 @@ def _row(task: Task, out: Path) -> dict:
         "title": task.title,
         "after": task.after,
         "state": "done" if is_done(task, out) else "pending",
+        "not_done_reason": None if is_done(task, out) else not_done_reason(task, out),
         "optional": task.optional,
         "reads": list(task.reads),
         "missing_reads": missing_reads(task, out),
@@ -303,6 +318,41 @@ def cmd_show(args: Namespace) -> int:
     if task.rerun:
         print("\n## After writing\n")
         print(f"Re-run: extractkit {' '.join(task.rerun)}")
+    return 0
+
+
+def cmd_name_rules(args: Namespace) -> int:
+    """Write a batch of rule names into `rules/review.md`; one call instead of one edit per rule."""
+    from steps.core.view_rules import apply_names
+
+    out = _out(args)
+    review = out / "rules" / "review.md"
+    if not review.is_file():
+        raise ExtractkitError("rules/review.md does not exist", "run the pipeline through synthesis first")
+    data = load_json(Path(args.file), args.file)
+    entries = data.get("rules") if isinstance(data, dict) else data
+    names: dict[str, tuple[str, str]] = {}
+    for entry in entries or []:
+        rule_id = str(entry.get("id") or "") if isinstance(entry, dict) else ""
+        name, intent = (" ".join(str(entry.get(k) or "").split()) for k in ("name", "intent")) if rule_id else ("", "")
+        if not (rule_id and name and intent):
+            raise ExtractkitError(
+                f"{args.file}: every entry needs `id`, `name` and `intent`, one line each",
+                'the file is a JSON list of {"id": "VR-...", "name": "...", "intent": "..."}',
+            )
+        names[rule_id] = (re.sub(r"\s*_\(inferred\)_$", "", name), re.sub(r"\s*_\(inferred\)_$", "", intent))
+    text, applied, unknown, ticked = apply_names(review.read_text(encoding="utf-8"), names)
+    review.write_text(text, encoding="utf-8")
+    summary = {"applied": len(applied), "unknown": unknown, "ticked": ticked}
+    if getattr(args, "json", False):
+        _dump({"sidecar": str(out), **summary}, args)
+    else:
+        print(f"named {len(applied)} rule(s) in {review}; {len(ticked)} already confirmed, left as they are")
+    if unknown:
+        raise ExtractkitError(
+            f"{len(unknown)} id(s) are not in rules/review.md: {', '.join(unknown[:5])}" + (" ..." if len(unknown) > 5 else ""),
+            "copy ids from rules/review.md; the other entries were applied",
+        )
     return 0
 
 

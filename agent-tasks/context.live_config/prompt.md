@@ -40,7 +40,7 @@ Run: `{run_id}`
   the operator says so.
 
 `enonic.cms` turns Site Config and Config Env values into endpoints
-(`endpoints` in `inventory/runtime.json`, `x-production-endpoints` in
+(`endpoints` in `inventory/runtime.json`, `x-observed-endpoints` in
 `integrations/openapi.yaml`). Which keys hold endpoints, which provider each
 belongs to, and how an environment value picks an origin are project facts.
 They live in the `live_config` key of `{sidecar}/context/profile.yaml`. The

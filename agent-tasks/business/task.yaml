@@ -11,8 +11,10 @@ reads:
   - product/PRODUCT.md
 writes:
   - business/BUSINESS.md
+  - business/capabilities.json
 done:
   - business/BUSINESS.md
+  - business/capabilities.json
 promote:
   - from: business/BUSINESS.md
     to: BUSINESS.md

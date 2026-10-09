@@ -206,10 +206,120 @@ None.
 """
 
 
+def valid_capabilities() -> str:
+    """The business/capabilities.json that goes with `valid_business`."""
+    return """{
+  "schema": "99x.extract.capabilities/v1",
+  "capabilities": [
+    {"id": "article-publishing", "title": "Article publishing"},
+    {"id": "page-rendering", "title": "Page rendering"},
+    {"id": "platform-and-operations", "title": "Platform and operations"}
+  ]
+}
+"""
+
+
+def valid_capability_spec(title: str = "Article publishing") -> str:
+    """A spec-kit capability spec that passes `check` on the fixture sidecar."""
+    return f"""# Feature Specification: {title}
+
+## User Scenarios & Testing
+
+### User Story 1 - Editors publish an article (Priority: P1)
+
+An editor saves an article with a title.
+
+**Why this priority**: Every page needs an article.
+
+**Independent Test**: Save an article with a title and read it back.
+
+**Acceptance Scenarios**:
+
+1. **Given** an editor, **When** they save an article without a title, **Then** it is refused.
+
+## Requirements
+
+- **FR-001**: System MUST require a title on every article.
+- **FR-002**: System MUST let an article link to other articles.
+
+## Key Entities
+
+- Article: a title and links to related articles.
+
+## Success Criteria
+
+- SC-001: An article without a title is never stored.
+
+## Edge Cases
+
+- An article that links to itself.
+
+## Evidence
+
+- FR-001: `xp/src/main/resources/site/content-types/mini-article/mini-article.xml:5`
+- FR-002: `xp/src/main/resources/site/content-types/mini-article/mini-article.xml:13`, `com.example.mini:content-type:mini-article`
+"""
+
+
+def valid_domain_file(title: str = "Article publishing") -> str:
+    """A domain/<capability>.md that passes `check` on the fixture sidecar."""
+    return f"""# {title}
+
+## State machines
+
+- An article is created, then published when an editor saves it. Evidence: `xp/src/main/resources/site/content-types/mini-article/mini-article.xml:5`
+
+## Formulas
+
+None found in the extracted module facts.
+
+## External calls
+
+- The mini library reads one external API. Evidence: `xp/src/main/resources/lib/mini-http.js:4`
+
+## Emails
+
+None found in the extracted module facts.
+
+## Scheduled and external jobs
+
+- A cron job sweeps bookings every day at 06:00 (`miniCron`). Evidence: `xp/src/main/resources/cron/mini-cron/index.js:11`
+
+## Idempotency and retries
+
+None found in the extracted module facts.
+"""
+
+
+def valid_do_not_port() -> str:
+    return """# Do not port
+
+## Security behavior
+
+- **DNP-001** The service answers without checking the caller. Reason: anyone can post. Capability: `platform-and-operations`. Evidence: `xp/src/main/resources/services/mini-script-only/mini-script-only.js:1`
+
+## Defects
+
+None found.
+
+## Dead code
+
+None found.
+"""
+
+
 def write_agent_outputs(out: Path) -> None:
     """The files the required `business` and `constitution` tasks write."""
     (out / "business").mkdir(exist_ok=True)
     (out / "business" / "BUSINESS.md").write_text(valid_business(), encoding="utf-8")
+    (out / "business" / "capabilities.json").write_text(valid_capabilities(), encoding="utf-8")
+    for capability in ("article-publishing", "page-rendering", "platform-and-operations"):
+        (out / "domain").mkdir(exist_ok=True)
+        (out / "domain" / f"{capability}.md").write_text(valid_domain_file(), encoding="utf-8")
+        (out / "spec-kit" / "specs" / capability).mkdir(parents=True, exist_ok=True)
+        (out / "spec-kit" / "specs" / capability / "spec.md").write_text(valid_capability_spec(), encoding="utf-8")
+    (out / "reports").mkdir(exist_ok=True)
+    (out / "reports" / "do-not-port.md").write_text(valid_do_not_port(), encoding="utf-8")
     (out / "spec-kit" / "constitution").mkdir(parents=True, exist_ok=True)
     (out / "spec-kit" / "constitution" / "project.md").write_text(valid_constitution(), encoding="utf-8")
 
@@ -242,6 +352,12 @@ Evidence: `com.example.mini:content-type:mini-article`, `content`
 Pages are assembled from parts and layouts.
 
 Evidence: `com.example.mini:part:mini-part`
+
+### Platform and operations
+
+The site runs on Enonic XP with a scheduled sweep job.
+
+Evidence: `com.example.mini:layout:mini-layout`
 
 ## Business flow
 

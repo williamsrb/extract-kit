@@ -20,7 +20,7 @@
           "kind": {
             "enum": [
               "visibility", "eligibility", "calculation", "validation", "formatting", "selection",
-              "routing", "market"
+              "routing", "market", "authorization", "lifecycle"
             ]
           },
           "bucket": { "enum": ["business", "presentational"] },
@@ -43,7 +43,10 @@
             }
           },
           "literals": { "type": "array", "items": { "type": "string" } },
-          "effect": { "enum": ["show", "compute", "validate", "format", "select", "route", "css"] },
+          "effect": {
+            "enum": ["show", "compute", "validate", "format", "select", "route", "css", "authorize", "transition"]
+          },
+          "scope": { "enum": ["view", "server"] },
           "construct": { "type": "string" },
           "component": { "type": ["string", "null"] },
           "context": { "type": "string" },
@@ -56,7 +59,11 @@
           "intent": { "type": "string" },
           "outOfScope": { "type": "boolean" },
           "samples": { "type": "object" },
-          "possiblyDead": { "type": "boolean" }
+          "possiblyDead": { "type": "boolean" },
+          "dead": { "type": "boolean" },
+          "deadAt": { "type": "string", "pattern": ":[0-9]+$" },
+          "deadReason": { "type": "string" },
+          "unreferenced": { "type": "boolean" }
         }
       }
     },

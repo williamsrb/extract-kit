@@ -65,6 +65,20 @@ class ParseFormTests(unittest.TestCase):
         self.assertEqual(fields["related"]["fieldSet"], "Related")
         self.assertIn("mini-mixin", fields)
 
+    def test_help_text_default_and_expanded_are_recorded(self) -> None:
+        root = ET.fromstring(
+            "<x><form>"
+            "<input name='a' type='TextLine'><help-text> Say it </help-text><default>Hi</default></input>"
+            "<option-set name='o'><expanded>true</expanded><options minimum='0' maximum='1'>"
+            "<option name='x'><label>X</label><default>true</default><items/></option>"
+            "<option name='y'><items/></option></options></option-set>"
+            "</form></x>"
+        )
+        fields = {f["name"]: f for f in parse_form(root)}
+        self.assertEqual((fields["a"]["helpText"], fields["a"]["default"]), ("Say it", "Hi"))
+        self.assertIs(fields["o"]["expanded"], True)
+        self.assertEqual([o.get("default") for o in fields["o"]["options"]], ["true", None])
+
     def test_missing_form_and_regions_are_empty(self) -> None:
         root = ET.fromstring("<service/>")
         self.assertEqual(parse_form(root), [])
@@ -88,6 +102,7 @@ class CollectTests(unittest.TestCase):
             [{
                 "name": "com.example.mini:mini-xdata",
                 "allowContentTypes": "com\\.example\\.mini:mini-article",
+                "optional": False,
             }],
         )
 
@@ -96,26 +111,51 @@ class MixinExpansionTests(unittest.TestCase):
     def test_known_mixin_is_expanded_and_tagged(self) -> None:
         mixins = {"a:m": [{"name": "x", "type": "TextLine"}]}
         out = _expand_all([{"mixin": "m"}], "a", mixins)
-        self.assertEqual(out, [{"name": "x", "type": "TextLine", "fromMixin": "a:m"}])
+        self.assertEqual(out, [{"name": "x", "type": "TextLine", "fromMixin": "a:mixin:m"}])
 
     def test_unknown_mixin_stays_a_reference(self) -> None:
         out = _expand_all([{"mixin": "other:gone"}], "a", {})
-        self.assertEqual(out, [{"mixin": "other:gone"}])
+        self.assertEqual(out, [{"mixin": "other:mixin:gone"}])
 
     def test_mixin_cycle_does_not_loop(self) -> None:
         mixins = {"a:m": [{"mixin": "m"}]}
         out = _expand_all([{"mixin": "m"}], "a", mixins)
-        self.assertEqual(out, [{"mixin": "m", "fromMixin": "a:m"}])
+        self.assertEqual(out, [{"mixin": "a:mixin:m", "fromMixin": "a:mixin:m"}])
 
     def test_nested_items_are_expanded(self) -> None:
         mixins = {"a:m": [{"name": "x", "type": "TextLine"}]}
         field = {"name": "set", "type": "item-set", "items": [{"mixin": "m"}]}
         [row] = _expand_all([field], "a", mixins)
-        self.assertEqual(row["items"][0]["fromMixin"], "a:m")
+        self.assertEqual(row["items"][0]["fromMixin"], "a:mixin:m")
 
     def test_index_uses_app_and_name(self) -> None:
         index = _mixin_index([{"kind": "mixin", "app": "a", "name": "m", "form": []}])
         self.assertEqual(list(index), ["a:m"])
+
+
+class ModelFactsTests(unittest.TestCase):
+    def test_content_type_and_site_facts_reach_the_resources(self) -> None:
+        rows = {(r["kind"], r["name"]): r for r in collect_resources(FIXTURE)}
+        article = rows[("content-type", "mini-article")]
+        self.assertEqual(article["description"], "A short article")
+        self.assertEqual(article["displayNameExpression"], "${title}")
+        self.assertEqual(article["superType"], "base:structured")
+        title = next(f for f in article["form"] if f["name"] == "title")
+        self.assertEqual((title["helpText"], title["default"]), ("Shown as the headline", "Untitled"))
+        related = next(f for f in article["form"] if f["name"] == "related")
+        self.assertEqual(related["config"]["allowPath"], ["${site}/*"])
+        self.assertEqual(related["fieldSet"], "Related")
+        self.assertIn("form", rows[("site", "site")])
+
+    def test_the_xdata_surface_carries_its_site_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            source = copy_fixture(Path(raw))
+            result = run("run", "--profile", "enonic", "--source", str(source), *STATIC_UNTIL)
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            model = json.loads((sidecar_run_dir(source) / "map/content-model.json").read_text())
+            xdata = next(t for t in model["types"] if t["kind"] == "x-data")
+            self.assertEqual(xdata["binding"]["allowContentTypes"], "com\\.example\\.mini:mini-article")
+            self.assertEqual(xdata["binding"]["source"], "xp/src/main/resources/site/site.xml")
 
 
 class MapTests(unittest.TestCase):
@@ -132,9 +172,9 @@ class MapTests(unittest.TestCase):
             article = next(t for t in model["types"] if t["id"].endswith(":content-type:mini-article"))
             names = [f.get("name") or f.get("mixin") for f in article["fields"]]
             self.assertIn("seoTitle", names)
-            self.assertIn("com.other.app:external", names)
+            self.assertIn("com.other.app:mixin:external", names)
             seo = next(f for f in article["fields"] if f.get("name") == "seoTitle")
-            self.assertEqual(seo["fromMixin"], "com.example.mini:mini-mixin")
+            self.assertEqual(seo["fromMixin"], "com.example.mini:mixin:mini-mixin")
             layout = next(c for c in components["components"] if c["kind"] == "layout")
             self.assertEqual(layout["regions"], ["left", "right"])
             part = next(c for c in components["components"] if c["kind"] == "part")

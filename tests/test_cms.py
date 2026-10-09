@@ -692,7 +692,7 @@ class CmsCliTests(unittest.TestCase):
             out = sidecar_run_dir(source)
             spec = (out / "integrations" / "openapi.yaml").read_text(encoding="utf-8")
             self.assertIn("https://tourplan.example.test/api", spec)
-            self.assertIn("x-production-endpoints", spec)
+            self.assertIn("x-observed-endpoints", spec)
             self.assertNotIn("do-not-store", spec)
             spec_js = (
                 out / "integrations" / "swagger-ui" / "spec.js"

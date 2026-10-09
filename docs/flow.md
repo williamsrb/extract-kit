@@ -62,7 +62,7 @@ CLI for the preflight and for each agent task, stops at the first failed
 stage, and ends with exit 0 (every stage passed), 1 (a stage failed) or 3 (a
 task is blocked and a person must look). It writes the sidecar to
 `<source>/extract/<run-id>/`, a visible folder with no `.gitignore`, and runs
-the optional `spec.enrich` after the required tasks unless `--no-enrich`. Its
+the required agent tasks (`--no-enrich` is accepted and ignored). Its
 `assets` stage reads the attachments (the agent token, an XP login) and never
 fails the run: a missing one skips the stages that need it. The
 stages, the agent loop and the blocker protocol are in
@@ -96,12 +96,12 @@ the phase; it only makes the output thinner.
 | 1 | `preflight` | Python 3.12+ with PyYAML and jsonschema; `devkit` on PATH; with `--source`: the checkout's Serena onboarding (`.serena/`) and Graphify index (`graphify-out/`) | graft index (`graft/`, a warning when absent); `--profile` (which deps to probe) | **No sidecar.** The install check, and a report with the stack it would detect and the build scope |
 | 2 | `context` | `--source`; one stack marker unless `--profile` is given | `--profile` (skips detection); `--exclude`; `<checkout>/.extractkit/profile.yaml` | **`context/build-scope.json`**, **`context/profile.yaml`** (the overlay) |
 | 3 | `static` | `--source`; the overlay from phase 2 (`run` writes it when missing) | `graft/`, `graphify-out/` (`map.code`, `map.semantic`); `--exclude`; the `exclude` decided by `context.exclude` | **`inventory/static.json`**, `inventory/controllers.json`, `inventory/templates.json`, **`map/*.json`**, **`integrations/openapi.yaml`**, `integrations/swagger-ui/`, `MANIFEST.yaml` |
-| 4 | `cms` (optional phase) | A local or review XP; `--branch draft\|master`; `--storage-state` (a Playwright login) | `--guillotine`, `--xp-host`, `--project` (default `http://localhost:8080`, project `en`); `--cms-key` (default `/en`); `--configenv`; `--round2`; the overlay's `live_config`; `playwright-cli` and `--site-url` for `inventory.baseline` | **`inventory/runtime.json`**, `inventory/live-config-candidates.json`, `inventory/content-volume.{json,md}`, `x-production-endpoints` in `openapi.yaml`; `baseline/` (optional slot) |
+| 4 | `cms` (optional phase) | A local or review XP; `--branch draft\|master`; `--storage-state` (a Playwright login) | `--guillotine`, `--xp-host`, `--project` (default `http://localhost:8080`, project `en`); `--cms-key` (default `/en`); `--configenv`; `--round2`; the overlay's `live_config`; `playwright-cli` and `--site-url` for `inventory.baseline` | **`inventory/runtime.json`**, `inventory/live-config-candidates.json`, `inventory/content-volume.{json,md}`, `x-observed-endpoints` in `openapi.yaml`; `baseline/` (optional slot) |
 | 5 | `merge` | Phase 3 output | `inventory/runtime.json` (without it, surfaces stay `unverified-live`) | **`map/bounded-contexts.json`**, `inventory/merge-report.md`, **`rules/`**, `docs/harvest/` |
 | 6 | `synthesis` | Phase 5 output | `--tasks` (Spec Kit `tasks.md`) | **`spec-kit/`**, `product/PRODUCT.md`, `design/DESIGN.md`, `use-cases/`, `docs/technical/`, `docs/guide/`; `reports/xp8-compat.md` (optional slot) |
-| 7 | `agent` | An AI assistant that runs the task prompts; each task's inputs (below) | `spec.enrich`, `spec.review` | The overlay's **`exclude`** and **`live_config`**, **`rules/review.md`** names, **`business/BUSINESS.md`**, **`spec-kit/constitution/project.md`**; `reports/spec-enrich.md`, `reports/spec-review.md` (optional) |
+| 7 | `agent` | An AI assistant that runs the task prompts; each task's inputs (below) | `spec.review` | The overlay's **`exclude`** and **`live_config`**, **`rules/review.md`** names, **`business/BUSINESS.md`**, **`business/capabilities.json`**, **`spec-kit/constitution/project.md`**, **`domain/<capability>.md`**, **`reports/do-not-port.md`**, **`spec-kit/specs/<capability>/spec.md`**; `reports/spec-review.md` (optional) |
 | 8 | `check` | `--out` of a sidecar with phase 3 done (`MANIFEST.yaml`, the four `map/*-map.json` / `content-model.json` files, `inventory/static.json`, `integrations/openapi.yaml`) | Every later file is checked only when it exists | **No file.** Exit 0, or exit 1 with every problem listed |
-| 9 | `promote` | `--source` as a git work tree whose destinations git can restore | `--out` (default: latest sidecar); `--force` | **`<checkout>/.specify/memory/constitution.md`**, **`<checkout>/specs/<ctx>/spec.md`**, `PRODUCT.md`, `DESIGN.md`, `.impeccable/design.json`, `BUSINESS.md` |
+| 9 | `promote` | `--source` as a git work tree whose destinations git can restore | `--out` (default: latest sidecar); `--force` | **`<checkout>/.specify/memory/constitution.md`**, **`<checkout>/specs/<capability>/spec.md`**, `PRODUCT.md`, `DESIGN.md`, `.impeccable/design.json`, `BUSINESS.md` |
 <!-- markdownlint-enable MD013 -->
 
 The agent tasks, in the order `agent next` offers them. A task is offered
@@ -115,10 +115,12 @@ earlier run).
 | `context.exclude` | Yes, while the build scope leaves folders undecided | `inventory.integrations` (phase 3) | `context/build-scope.json` | **`exclude`** in `context/profile.yaml` | `run --from static --until synthesis` (`--until inventory.integrations` without CMS flags) |
 | `context.live_config` | Yes, after a live harvest; done without one | `inventory.runtime` (phase 4) | `inventory/runtime.json`, `inventory/live-config-candidates.json`, `integrations/openapi.yaml` (the prompt also reads `site/site.xml` in the checkout; it does not gate the task) | **`live_config`** in `context/profile.yaml` | `step inventory.runtime` |
 | `rules.name` | Yes | `rules.view` (phase 5) | `rules/RULES.md`, `rules/review.md`, `rules/view-rules.json` | **names and intents** in `rules/review.md` | `run --from merge --until synthesis` |
-| `business` | Yes | `spec.kit` (phase 6) | `map/bounded-contexts.json`, `use-cases/`, `rules/RULES.md`, `rules/view-rules.json`, `map/content-model.json`, `map/route-map.json`, `product/PRODUCT.md` | **`business/BUSINESS.md`** | `step product.impeccable` |
+| `business` | Yes | `spec.kit` (phase 6) | `map/bounded-contexts.json`, `use-cases/`, `rules/RULES.md`, `rules/view-rules.json`, `map/content-model.json`, `map/route-map.json`, `product/PRODUCT.md` | **`business/BUSINESS.md`**, **`business/capabilities.json`** | `step product.impeccable` |
 | `constitution` | Yes | `spec.kit` | `business/BUSINESS.md`, `map/bounded-contexts.json`, `map/route-map.json`, `map/content-model.json`, `context/build-scope.json`, `rules/view-rules.json` | **`spec-kit/constitution/project.md`** | `step spec.kit` |
-| `spec.enrich` | No (`headless` runs it unless `--no-enrich`) | `spec.kit` | `spec-kit/specs/`, `use-cases/` | prose of `spec-kit/specs/` and `use-cases/`, then `reports/spec-enrich.md` | none |
-| `spec.review` | No | `spec.kit` | `spec-kit/specs/`, `rules/view-rules.json`, `map/bounded-contexts.json`; `business/BUSINESS.md` when present | **`reports/spec-review.md`** (never promoted) | none |
+| `domain.behavior` | Yes | `spec.kit` | `business/capabilities.json`, `business/BUSINESS.md`, `domain/packet/INDEX.json`, `rules/view-rules.json`, `map/route-map.json`, `integrations/openapi.yaml` | **`domain/<capability>.md`** | none |
+| `donotport` | Yes | `spec.kit` | `business/capabilities.json`, `domain/packet/INDEX.json`, `rules/view-rules.json`, `map/route-map.json`, `integrations/openapi.yaml` | **`reports/do-not-port.md`** | none |
+| `spec.capabilities` | Yes | `spec.kit` | `business/capabilities.json`, `business/BUSINESS.md`, `reports/do-not-port.md`, `spec-kit/evidence/`, `rules/view-rules.json` | **`spec-kit/specs/<capability>/spec.md`** | none |
+| `spec.review` | No | `spec.kit` | `spec-kit/specs/` (capability specs), `rules/view-rules.json`, `map/bounded-contexts.json`; `business/BUSINESS.md` when present | **`reports/spec-review.md`** (never promoted) | none |
 <!-- markdownlint-enable MD013 -->
 
 The expected end state of a full run: `check` exits 0, `agent next`
@@ -157,7 +159,7 @@ runs in the merge phase after `maps.merge` and writes `rules/`. `spec.kit`
 and `use_cases` cite its rule ids; `check` fails a business rule that no
 spec cites.
 
-CMS also patches `openapi.yaml` `x-production-endpoints`. Those URLs are
+CMS also patches `openapi.yaml` `x-observed-endpoints`. Those URLs are
 never fetched.
 
 The two optional slots stay in the sidecar. `inventory.baseline` takes

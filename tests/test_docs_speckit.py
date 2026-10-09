@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
 
 from tests.support import (
+    FIXTURE,
+    REPO,
     STATIC_UNTIL,
     copy_fixture,
     git_init,
@@ -62,9 +66,10 @@ class DocsSpeckitTests(unittest.TestCase):
             constitution = (out / "spec-kit" / "constitution.md").read_text()
             self.assertIn("as-is", constitution.lower())
             self.assertNotIn("React4XP port plan", constitution.lower())
-            specs = list((out / "spec-kit" / "specs").glob("*/spec.md"))
+            specs = list((out / "spec-kit" / "evidence").glob("*.md"))
             self.assertTrue(specs)
-            self.assertFalse(list((out / "spec-kit" / "specs").glob("*/tasks.md")))
+            self.assertFalse(list((out / "spec-kit" / "evidence").glob("*.tasks.md")))
+            self.assertFalse((out / "spec-kit" / "specs").exists())
             self.assertFalse((out / "DECISIONS.md").exists())
             self.assertFalse((out / "IMPLEMENTATION.md").exists())
             self.assertEqual(porcelain(source), "")
@@ -100,7 +105,7 @@ class DocsSpeckitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             source = copy_fixture(Path(raw))
             out = _docs_tree(source)
-            spec = next((out / "spec-kit" / "specs").glob("*/spec.md"))
+            spec = next((out / "spec-kit" / "evidence").glob("*.md"))
             spec.write_text("# Broken\n\n### FR-1 No cite\n\nPlain prose.\n", encoding="utf-8")
             check = run("check", "--out", str(out))
             self.assertNotEqual(check.returncode, 0)
@@ -110,7 +115,7 @@ class DocsSpeckitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             source = copy_fixture(Path(raw))
             out = _docs_tree(source)
-            spec = next((out / "spec-kit" / "specs").glob("*/spec.md"))
+            spec = next((out / "spec-kit" / "evidence").glob("*.md"))
             spec.write_text(
                 "# T\n\n### FR-1 Model text\n\nThe part reads a title. _(inferred)_\n\n"
                 "Evidence: `com.example.mini:part:mini-part`\n",
@@ -158,21 +163,21 @@ class DocsSpeckitTests(unittest.TestCase):
                 "--out", str(out), "--tasks", *DOCS_UNTIL,
             )
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
-            self.assertTrue(list((out / "spec-kit" / "specs").glob("*/tasks.md")))
+            self.assertTrue(list((out / "spec-kit" / "evidence").glob("*.tasks.md")))
 
     def test_spec_and_use_cases_state_behavior_with_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             source = copy_fixture(Path(raw))
             out = _docs_tree(source)
-            spec = (out / "spec-kit/specs/presentation/spec.md").read_text()
+            spec = (out / "spec-kit/evidence/presentation.md").read_text()
             self.assertIn("Acceptance:", spec)
             self.assertIn("- Config input `heading` is a TextLine occurring 1..1.", spec)
             self.assertIn("- Exposes region `main`.", spec)
             self.assertIn("- Localises key `mini.title`", spec)
             self.assertIn("mini-part.js:7`", spec)
-            content = (out / "spec-kit/specs/content/spec.md").read_text()
+            content = (out / "spec-kit/evidence/content.md").read_text()
             self.assertIn("limited to content types `com.example.mini:mini-article`", content)
-            self.assertIn("from mixin `com.example.mini:mini-mixin`", content)
+            self.assertIn("from mixin `com.example.mini:mixin:mini-mixin`", content)
             self.assertIn("selecting 1..1 of `wide`, `narrow`", content)
             blocks = [b for b in spec.split("### FR-")[1:]]
             self.assertTrue(blocks)
@@ -219,3 +224,43 @@ class DocsSpeckitTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TemplateInventoryTests(unittest.TestCase):
+    """FR-10: every rendered template, honest engine labels, the listener cite, static HTML."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        import shutil
+
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.source = Path(cls._tmp.name) / "legacy"
+        shutil.copytree(FIXTURE, cls.source)
+        shutil.copytree(REPO / "tests" / "fixtures" / "render-templates", cls.source, dirs_exist_ok=True)
+        cls.out = _docs_tree(cls.source)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls._tmp.cleanup()
+
+    def test_design_lists_every_template_a_component_renders(self) -> None:
+        design = (self.out / "design" / "DESIGN.md").read_text(encoding="utf-8")
+        block = design.split("### `com.example.mini:layout:booking-page`")[1].split("###")[0]
+        self.assertIn("booking-page.html` (thymeleaf)", block)
+        self.assertIn("no-booking.html` (static HTML via thymeleaf)", block)
+
+    def test_the_static_html_is_inventoried_with_how_it_is_loaded(self) -> None:
+        templates = json.loads((self.out / "inventory" / "templates.json").read_text(encoding="utf-8"))
+        rows = {r["path"].rsplit("/", 1)[-1]: r for r in templates["static"]}
+        self.assertEqual(rows["errorStatic.html"]["via"], ["fetch", "resolve"])
+        self.assertEqual(
+            rows["errorStatic.html"]["refs"][0], {"file": "xp/src/main/resources/site/error/error.js", "line": 4},
+        )
+
+    def test_the_listener_requirement_cites_main_js(self) -> None:
+        spec = (self.out / "spec-kit" / "evidence" / "routing.md").read_text(encoding="utf-8")
+        sections = re.split(r"\n(?=### FR-)", spec)
+        site = next(x for x in sections if x.startswith("### FR-") and "site `com.example.mini:site:site`" in x.splitlines()[0])
+        self.assertIn("listens for `custom.booking.paid` events (`xp/src/main/resources/main.js:11`)", site)
+        evidence = site.split("Evidence:")[1]
+        self.assertIn("main.js:11", evidence)

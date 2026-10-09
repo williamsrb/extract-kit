@@ -122,6 +122,43 @@
               "required": ["type", "line"],
               "properties": {
                 "type": { "type": "string" },
+                "calls": { "type": "array", "items": { "type": "string" } },
+                "line": { "$ref": "#/$defs/line" }
+              }
+            }
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["source", "name", "line"],
+              "properties": {
+                "source": { "type": "string", "enum": ["param", "body", "header", "cookie"] },
+                "name": { "type": "string" },
+                "line": { "$ref": "#/$defs/line" }
+              }
+            }
+          },
+          "responses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["kind", "value", "line"],
+              "properties": {
+                "kind": { "type": "string", "enum": ["status", "redirect", "contentType"] },
+                "value": { "type": ["string", "null"] },
+                "line": { "$ref": "#/$defs/line" }
+              }
+            }
+          },
+          "auth": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["kind", "value", "line"],
+              "properties": {
+                "kind": { "type": "string", "enum": ["role-check", "user-check", "elevated"] },
+                "value": { "type": ["string", "null"] },
                 "line": { "$ref": "#/$defs/line" }
               }
             }

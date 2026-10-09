@@ -21,7 +21,7 @@ from steps.core.viewscan import expr as ex
 SCHEMA_ID = "extractkit.view-rules/v1"
 KINDS = (
     "visibility", "eligibility", "calculation", "validation", "formatting", "selection",
-    "routing", "market",
+    "routing", "market", "authorization", "lifecycle",
 )
 DOMAIN_TERMS = (
     "price", "amount", "date", "role", "market", "country", "status", "type", "age", "qty",
@@ -34,6 +34,7 @@ BUSINESS_AT = 2
 EFFECT_KIND = {
     "show": "visibility", "compute": "calculation", "validate": "validation",
     "format": "formatting", "select": "selection", "route": "routing", "css": "visibility",
+    "authorize": "authorization", "transition": "lifecycle",
 }
 _COMPARE = re.compile(r"[<>]=?|[!=]=")
 _WORDS = re.compile(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+")
@@ -87,6 +88,8 @@ def score(
         signals.append((-2, "trivial-default"))
     if any(leaf.lower() in INDEX_TERMS for leaf in leaves):
         signals.append((-2, "index-check"))
+    if effect == "authorize":
+        signals.append((2, "role-check"))
     if effect == "format":
         signals.append((-3, "format-call"))
     if effect == "css" and not domain:
@@ -164,15 +167,21 @@ def build_rules(
         if behavior_file:
             by_controller[behavior_file] = surface["id"]
     raw: list[tuple[str, str | None, dict]] = []
+    server_raw: list[tuple[str, str | None, dict]] = []
     for entry in templates.get("files") or []:
         component = by_file.get(entry["path"])
         raw.extend((entry["path"], component, pred) for pred in entry["scan"]["predicates"])
     for controller in templates.get("controllers") or []:
         component = by_controller.get(controller["path"])
         raw.extend((controller["path"], component, pred) for pred in controller["predicates"])
+    for entry in templates.get("server") or []:
+        component = by_controller.get(entry["path"])
+        server_raw.extend((entry["path"], component, pred) for pred in entry["predicates"])
     rules: list[dict] = []
     seen: set[str] = set()
-    for path, component, pred in raw:
+    for scoped, path, component, pred in (
+        *(("view", *row) for row in raw), *(("server", *row) for row in server_raw),
+    ):
         shape = ex.shape(pred["expr"])
         paths = ex.operands(pred["expr"])
         leaves = [ex.leaf(p) for p in paths]
@@ -196,14 +205,62 @@ def build_rules(
             "effect": pred["effect"],
             "construct": pred["construct"],
             "component": component or None,
-            "context": contexts.get(component or "", "unassigned"),
+            "context": contexts.get(component or "", "server" if scoped == "server" else "unassigned"),
+            "scope": scoped,
             "source": f"{path}:{pred['line']}",
             "repeated": False,
             "divergent": False,
             "group": None,
             "status": "extracted",
+            **_dead_fields(pred),
         })
     return sorted(rules, key=lambda r: (r["source"].rsplit(":", 1)[0], int(r["source"].rsplit(":", 1)[1]), r["id"]))
+
+
+GRAFT_WIRING = Path("graft") / ".graph" / "wiring.json"
+
+
+def unreferenced_functions(source: Path) -> list[dict]:
+    """Exported functions under `lib/` that the source's graft index shows no caller for.
+
+    Empty without `graft/.graph/wiring.json`: the kit never builds the index.
+    """
+    path = source / GRAFT_WIRING
+    if not path.is_file():
+        return []
+    graph = load_json(path, str(GRAFT_WIRING))
+    called = {
+        edge.get("target") for edge in graph.get("edges") or []
+        if edge.get("relation") not in (None, "contains")
+    }
+    rows: list[dict] = []
+    for node in graph.get("nodes") or []:
+        located = re.fullmatch(r"L(\d+)-L(\d+)", str(node.get("span") or ""))
+        if (
+            node.get("kind") != "function" or not node.get("exported") or not located
+            or "/lib/" not in f"/{node.get('path', '')}" or node.get("id") in called
+        ):
+            continue
+        rows.append({
+            "path": node["path"], "name": node["name"],
+            "start": int(located.group(1)), "end": int(located.group(2)),
+        })
+    return sorted(rows, key=lambda r: (r["path"], r["start"]))
+
+
+def mark_unreferenced(rules: list[dict], functions: list[dict]) -> None:
+    for rule in rules:
+        path, _, line = rule["source"].rpartition(":")
+        for function in functions:
+            if function["path"] == path and function["start"] <= int(line) <= function["end"]:
+                rule["unreferenced"] = True
+                break
+
+
+def _dead_fields(pred: dict) -> dict:
+    if not pred.get("dead"):
+        return {}
+    return {"dead": True, "deadAt": pred["deadAt"], "deadReason": pred["deadReason"]}
 
 
 def _file(rule: dict) -> str:
@@ -337,6 +394,38 @@ def parse_review(text: str) -> dict[str, dict]:
     return state
 
 
+def apply_names(text: str, names: dict[str, tuple[str, str]]) -> tuple[str, list[str], list[str], list[str]]:
+    """Write `name:` and `intent:` into `review.md` text by rule id.
+
+    Returns the new text and three id lists: applied, unknown (not in the file) and
+    ticked (an analyst confirmed it, so the agent's words do not replace theirs).
+    """
+    out: list[str] = []
+    current: str | None = None
+    seen: set[str] = set()
+    applied: list[str] = []
+    ticked: list[str] = []
+    for line in text.splitlines(keepends=True):
+        head = REVIEW_LINE.match(line)
+        if head:
+            current = head.group("id")
+            seen.add(current)
+            if current in names and head.group("tick").lower() == "x":
+                ticked.append(current)
+                current = None
+            elif current in names:
+                applied.append(current)
+        elif current in names and (field := FIELD_LINE.match(line)) and field.group("key") != "out-of-scope":
+            name, intent = names[current]
+            value = name if field.group("key") == "name" else intent
+            line = f"{line[:line.index('- ') + 2]}{field.group('key')}: {value} _(inferred)_\n"
+        elif line.strip() and not line.startswith(" "):
+            current = None
+        out.append(line)
+    unknown = sorted(set(names) - seen)
+    return "".join(out), sorted(applied), unknown, sorted(ticked)
+
+
 def previous_review(ctx: object) -> dict[str, dict]:
     """Review state of this sidecar if it has one, else of the newest sibling run."""
     own: Path = ctx.rel("rules/review.md")  # type: ignore[attr-defined]
@@ -397,13 +486,14 @@ def _rule_line(rule: dict) -> str:
     flags = "".join(
         f" · {label}" for label, on in (
             ("divergent", rule["divergent"]), ("repeated", rule["repeated"]),
-            ("possibly-dead", rule.get("possiblyDead")),
+            ("possibly-dead", rule.get("possiblyDead")), ("unreferenced", rule.get("unreferenced")),
         ) if on
     )
     named = f" — {rule['name']} _(inferred)_" if rule.get("name") else ""
+    dead = f" · DEAD at `{rule['deadAt']}` ({rule['deadReason']})" if rule.get("dead") else ""
     return (
         f"- `{rule['id']}` `{rule['source']}` · {rule['bucket']} (score {rule['score']}: {signals})"
-        f"{flags} — `{rule['expression']}`{named}"
+        f"{flags}{dead} — `{rule['expression']}`{named}"
     )
 
 
@@ -524,6 +614,7 @@ class ViewRulesStep:
         rules = build_rules(templates, components, types, _contexts(ctx))
         groups = group_rules(rules)
         attach_samples(rules, sampled_values(ctx))
+        mark_unreferenced(rules, unreferenced_functions(ctx.source))  # type: ignore[attr-defined]
         removed = apply_review(rules, previous_review(ctx))
         payload = {
             "schema": SCHEMA_ID,

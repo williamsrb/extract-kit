@@ -206,7 +206,7 @@ class RulesPipelineTests(unittest.TestCase):
         self.assertIn("| `150` |", text)
 
     def test_spec_cites_rule_ids_and_asks_about_divergent_groups(self) -> None:
-        spec = (self.out / "spec-kit" / "specs" / "presentation" / "spec.md").read_text(encoding="utf-8")
+        spec = (self.out / "spec-kit" / "evidence" / "presentation.md").read_text(encoding="utf-8")
         business = [r for r in self.payload["rules"] if r["bucket"] == "business"]
         for rule in business:
             self.assertIn(rule["id"], spec)
@@ -218,7 +218,7 @@ class RulesPipelineTests(unittest.TestCase):
     def test_check_passes_and_fails_closed_on_an_uncited_business_rule(self) -> None:
         self.assertEqual(run("check", "--out", str(self.out)).returncode, 0)
         target = next(r for r in self.payload["rules"] if r["bucket"] == "business" and r["source"].startswith("vue/"))
-        spec_path = self.out / "spec-kit" / "specs" / "presentation" / "spec.md"
+        spec_path = self.out / "spec-kit" / "evidence" / "presentation.md"
         review_path = self.out / "rules" / "review.md"
         spec, review = spec_path.read_text(encoding="utf-8"), review_path.read_text(encoding="utf-8")
         try:

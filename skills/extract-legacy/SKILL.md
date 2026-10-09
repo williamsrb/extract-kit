@@ -104,11 +104,13 @@ deterministic kit steps (including CMS HTTP).
 Impeccable `init` / `document` may replace the as-is PRODUCT/DESIGN the
 kit already wrote. Do not invent an XP8 visual world.
 
-## Spec enrich (optional, after `spec.kit`)
+## Capability specs (after `spec.kit`)
 
-The prompt moved into the agent task registry. Run
-`extractkit agent show spec.enrich --out <sidecar>` and follow it, through
-the `extract-agentic` skill.
+`spec.kit` writes the per-surface evidence specs to `spec-kit/evidence/`.
+The specs to plan from are written by the agent tasks `domain.behavior`,
+`donotport` and `spec.capabilities`: run them through the `extract-agentic`
+skill. `promote` copies only `spec-kit/specs/<capability>/spec.md` and the
+constitution. `spec.enrich` is retired.
 
 ## Optional slots
 

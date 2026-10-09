@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,7 +11,7 @@ from pathlib import Path
 from extractkit_cli.check import check_tree
 from extractkit_cli.schema import validate
 from steps.enonic.descriptors import collect_resources
-from tests.support import FIXTURE, STATIC_UNTIL, copy_fixture, run, sidecar_run_dir
+from tests.support import FIXTURE, REPO, STATIC_UNTIL, copy_fixture, run, sidecar_run_dir
 
 RES = "xp/src/main/resources/"
 
@@ -119,7 +120,7 @@ class SidecarTests(unittest.TestCase):
             self.assertIn("com.example.mini:admin-widget:mini-widget", {r["id"] for r in routes["routes"]})
             site = by_id["com.example.mini:site:site"]
             self.assertEqual(site["configKeys"], ["fallback", "miniMode"])
-            self.assertEqual(site["listeners"], ["node.pushed"])
+            self.assertEqual(site["listeners"], ["custom.booking.paid", "node.pushed"])
             self.assertEqual(by_id["com.example.mini:error:site-error"]["behavior"]["methods"][0]["name"], "handle404")
             self.assertEqual(by_id["com.example.mini:filter:mini-filter"]["behavior"]["methods"][0]["name"], "filter")
             mapping = next(
@@ -129,6 +130,52 @@ class SidecarTests(unittest.TestCase):
             self.assertEqual(mapping["stackRef"]["enonic"]["filter"], "/site/filters/mini-filter.js")
             gaps = [p for p in check_tree(out) if "but not in maps" in p]
             self.assertEqual(gaps, [])
+
+
+class JobSurfaceTests(unittest.TestCase):
+    def _static(self, raw: str, overlay: str | None = None) -> tuple[Path, dict]:
+        source = copy_fixture(Path(raw))
+        if overlay:
+            shutil.copytree(REPO / "tests" / "fixtures" / overlay, source, dirs_exist_ok=True)
+        result = run("run", "--profile", "enonic", "--source", str(source), *STATIC_UNTIL)
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        out = sidecar_run_dir(source)
+        project = json.loads((out / "map/project-map.json").read_text())
+        return out, {s["id"]: s for s in project["surfaces"]}
+
+    def test_cron_and_init_are_surfaces_in_the_routing_context(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            out, by_id = self._static(raw)
+            merged = run(
+                "run", "--profile", "enonic", "--source", str(out.parent.parent), "--out", str(out),
+                "--from", "maps.merge", "--until", "maps.merge",
+            )
+            self.assertEqual(merged.returncode, 0, merged.stderr + merged.stdout)
+            cron = by_id["com.example.mini:cron:mini-cron"]
+            self.assertEqual(cron["schedule"]["key"], "miniCron")
+            self.assertEqual(cron["tasks"][0]["description"], "MINI_SWEEP")
+            self.assertIn("/lib/mini-booking#sweep", [c["call"] for c in cron["starts"]])
+            self.assertNotIn("/lib/cron#schedule", [c["call"] for c in cron["starts"]])
+            init = by_id["com.example.mini:init:main"]
+            self.assertEqual([a["action"] for a in init["actions"]], ["eventLib.listener", "eventLib.listener"])
+            listeners = init["behavior"]["listeners"]
+            self.assertEqual(listeners[1], {"type": "custom.booking.paid", "line": 11, "calls": ["Booking.sweep"]})
+            contexts = {c["id"]: c for c in json.loads((out / "map/bounded-contexts.json").read_text())["contexts"]}
+            routing = contexts["routing"]["surfaces"]
+            self.assertIn("com.example.mini:cron:mini-cron", routing)
+            self.assertIn("com.example.mini:init:main", routing)
+            routes = json.loads((out / "map/route-map.json").read_text())
+            validate(routes, "route-map")
+            self.assertIn("com.example.mini:cron:mini-cron", {r["id"] for r in routes["routes"]})
+
+    def test_a_non_xp_caller_is_a_surface_with_its_crontab_schedule(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            _out, by_id = self._static(raw, overlay="external-caller")
+            caller = by_id["com.example.mini:external-caller:mini-sweep"]
+            self.assertEqual(caller["entry"], "external/mini-sweep.php")
+            self.assertEqual(caller["callers"][0]["service"], "mini-service")
+            self.assertEqual(caller["schedules"][0]["cron"], "*/15 * * * *")
+            self.assertEqual(caller["schedules"][0]["source"], "external/mini.crontab:1")
 
 
 if __name__ == "__main__":

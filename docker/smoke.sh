@@ -59,7 +59,9 @@ check "graphify" "[a-z]" "$(docker run --rm "$image" graphify --help 2>&1 || tru
 if [ "${SMOKE_WITHOUT_CLAUDE:-}" = 1 ]; then
 	echo "skip  claude-extract (built without claude)"
 else
-	check "claude profile wrapper" "[0-9]\.[0-9]" "$(docker run --rm "$image" claude-extract --version 2>&1 || true)"
+	# the version the Dockerfile pins (a build with another CLAUDE_CODE_VERSION sets SMOKE_CLAUDE_VERSION)
+	pinned="${SMOKE_CLAUDE_VERSION:-$(sed -n 's/^ARG CLAUDE_CODE_VERSION=//p' "$(dirname "$0")/Dockerfile")}"
+	check "claude profile wrapper" "^$pinned (Claude Code)" "$(docker run --rm "$image" claude-extract --version 2>&1 || true)"
 fi
 code=0
 docker run --rm "$image" sh -c 'ls /home/extract/.local/share/applications' > /dev/null 2>&1 || code=$?

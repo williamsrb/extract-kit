@@ -131,10 +131,33 @@ class NextPromoteTests(unittest.TestCase):
                 (source / "BUSINESS.md").read_text(), (out / "business" / "BUSINESS.md").read_text(),
             )
             self.assertTrue((source / ".impeccable" / "design.json").is_file())
-            self.assertTrue(list((source / "specs").glob("*/spec.md")))
+            self.assertFalse((source / "specs").exists(), "evidence specs are not promoted")
             self.assertNotEqual(porcelain(source), "")
             self.assertFalse((source / ".gitignore").exists())
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PromoteCapabilitySpecsTests(unittest.TestCase):
+    def test_only_capability_specs_and_the_constitution_are_promoted(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            source = copy_fixture(Path(raw))
+            git_init(source)
+            static = run("run", "--profile", "enonic", "--source", str(source), *STATIC_UNTIL)
+            self.assertEqual(static.returncode, 0, static.stderr + static.stdout)
+            out = sidecar_run_dir(source)
+            docs = run(
+                "run", "--profile", "enonic", "--source", str(source), "--out", str(out),
+                "--from", "maps.merge", "--until", "spec.kit",
+            )
+            self.assertEqual(docs.returncode, 0, docs.stderr + docs.stdout)
+            self.assertTrue(list((out / "spec-kit" / "evidence").glob("*.md")))
+            (out / "spec-kit" / "specs" / "booking").mkdir(parents=True)
+            (out / "spec-kit" / "specs" / "booking" / "spec.md").write_text("# Booking\n", encoding="utf-8")
+            applied = run("promote", "--source", str(source), "--out", str(out))
+            self.assertEqual(applied.returncode, 0, applied.stderr + applied.stdout)
+            self.assertEqual((source / "specs" / "booking" / "spec.md").read_text(), "# Booking\n")
+            self.assertEqual([p.name for p in (source / "specs").iterdir()], ["booking"])
+            self.assertTrue((source / ".specify" / "memory" / "constitution.md").is_file())

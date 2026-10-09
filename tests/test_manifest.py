@@ -135,3 +135,23 @@ class OverlayTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CarrySkipsTests(unittest.TestCase):
+    def test_a_partial_rerun_keeps_the_skips_of_steps_it_did_not_run(self) -> None:
+        from extractkit_cli.outtree import carry_skips
+
+        earlier = [
+            {"step": "enonic.cms", "reason": "no login", "fix": "pass --storage-state"},
+            {"step": "enonic.baseline", "reason": "old", "fix": "old fix"},
+        ]
+        fresh = [{"step": "enonic.baseline", "reason": "new", "fix": "new fix"}]
+        kept = carry_skips(earlier, fresh, {"enonic.baseline"})
+        self.assertEqual([s["step"] for s in kept], ["enonic.cms", "enonic.baseline"])
+        self.assertEqual(kept[1]["reason"], "new")
+
+    def test_a_step_that_ran_clean_drops_its_old_skip(self) -> None:
+        from extractkit_cli.outtree import carry_skips
+
+        earlier = [{"step": "enonic.baseline", "reason": "old", "fix": "f"}]
+        self.assertEqual(carry_skips(earlier, [], {"enonic.baseline"}), [])

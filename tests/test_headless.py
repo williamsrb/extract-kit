@@ -93,6 +93,26 @@ class UsageTests(unittest.TestCase):
                            "usage": {"input_tokens": 10, "output_tokens": 5, "cache_read_input_tokens": 100}})
         self.assertEqual(headless.agent_usage(text, USAGE_JSON), {"tokens": 115, "cost_usd": 0.1235})
 
+    def test_the_model_a_result_reports_is_the_keys_of_model_usage(self) -> None:
+        spec = {**USAGE_JSON, "model": "modelUsage"}
+        text = '{"usage": {"input_tokens": 1}, "modelUsage": {"claude-sonnet-5-5": {"inputTokens": 1}}}'
+        self.assertEqual(headless.agent_usage(text, spec)["model"], "claude-sonnet-5-5")
+        two = '{"modelUsage": {"b": {}, "a": {}}}'
+        self.assertEqual(headless.agent_usage(two, spec), {"model": "a, b"})
+        self.assertNotIn("model", headless.agent_usage('{"usage": {"input_tokens": 1}}', spec))
+
+    def test_model_warnings_name_an_unrecognized_model_and_a_mismatch(self) -> None:
+        ok = headless.model_warnings("fine", {"model": "claude-sonnet-5-5"}, "claude-sonnet-5-5")
+        self.assertEqual(ok, [])
+        unknown = headless.model_warnings("[claude-code:unrecognized_model] x", {}, "claude-sonnet-5-5")
+        self.assertIn("unrecognized_model", unknown[0])
+        mismatch = headless.model_warnings("fine", {"model": "claude-haiku-5-5"}, "claude-sonnet-5-5")
+        self.assertEqual(mismatch, ["the agent ran claude-haiku-5-5, not the configured model claude-sonnet-5-5"])
+        self.assertEqual(headless.model_warnings("fine", {"model": "x"}, None), [])
+
+    def test_the_run_line_shows_the_model(self) -> None:
+        self.assertIn("model claude-sonnet-5-5", headless._spent({"model": "claude-sonnet-5-5", "tokens": 3}))
+
     def test_a_regex_reads_plain_text(self) -> None:
         spec = {"tokens_regex": r"tokens used\W+([\d,]+)"}
         self.assertEqual(headless.agent_usage("done\ntokens used\n12,345\n", spec), {"tokens": 12345})
@@ -575,30 +595,15 @@ class LoopTests(unittest.TestCase):
         ):
             driver._loop("agent", only_context=False)
 
-    def test_the_agent_stage_runs_spec_enrich_after_the_required_tasks(self) -> None:
-        driver = self._driver()
-        with (
-            mock.patch.object(driver, "_loop", return_value="ok: ran business") as loop,
-            mock.patch.object(driver, "_kit", return_value={"state": "pending"}),
-            mock.patch.object(driver, "_run_task") as task,
-        ):
-            self.assertEqual(driver._agent_stage(), "ok: ran business, spec.enrich")
-        loop.assert_called_once_with("agent", only_context=False)
-        task.assert_called_once_with("agent", "spec.enrich")
-
-    def test_a_failed_spec_enrich_does_not_stop_the_agent_stage(self) -> None:
-        for failure in (
-            headless.StageFailed("agent_timeout", "claude ran over 5s on spec.enrich"),
-            headless.Blocked("task_blocked", "spec.enrich wrote a blocker"),
-        ):
-            driver = self._driver()
+    def test_the_agent_stage_is_the_required_loop_and_no_enrich_is_a_no_op(self) -> None:
+        for driver in (self._driver(), self._driver(no_enrich=True)):
             with (
-                mock.patch.object(driver, "_loop", return_value="ok: ran business"),
-                mock.patch.object(driver, "_kit", return_value={"state": "pending"}),
-                mock.patch.object(driver, "_run_task", side_effect=failure),
+                mock.patch.object(driver, "_loop", return_value="ok: ran business") as loop,
+                mock.patch.object(driver, "_run_task") as task,
             ):
-                message = driver._agent_stage()
-            self.assertEqual(message, f"ok: ran business; spec.enrich failed and was skipped: {failure}")
+                self.assertEqual(driver._agent_stage(), "ok: ran business")
+            loop.assert_called_once_with("agent", only_context=False)
+            task.assert_not_called()
 
     def test_a_failed_required_task_still_stops_the_agent_stage(self) -> None:
         driver = self._driver()
@@ -611,15 +616,64 @@ class LoopTests(unittest.TestCase):
             driver._agent_stage()
         task.assert_not_called()
 
-    def test_the_agent_stage_skips_spec_enrich_when_done_or_turned_off(self) -> None:
-        for driver, state in ((self._driver(), "done"), (self._driver(no_enrich=True), "pending")):
-            with (
-                mock.patch.object(driver, "_loop", return_value="ok (already done)"),
-                mock.patch.object(driver, "_kit", return_value={"state": state}),
-                mock.patch.object(driver, "_run_task") as task,
-            ):
-                self.assertEqual(driver._agent_stage(), "ok (already done)")
-            task.assert_not_called()
+    def _run_with(self, states: list[tuple[int, list[str], str | None]]) -> tuple[headless.Headless, list[str], list[str]]:
+        """Drive `_run_task` with scripted check results: (exit, problems, not-done reason, None when done)."""
+        driver = self._driver()
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        driver.out = Path(tmp.name)
+        log: list[str] = []
+        prompts: list[str] = []
+        script = iter(states)
+        current = {"reason": None}
+
+        def kit(*argv: str, **_kw: object) -> dict:
+            if argv[0] == "agent":
+                reason = current["reason"]
+                return {"state": "done" if reason is None else "pending", "not_done_reason": reason,
+                        "prompt": "TASK", "rerun": []}
+            code, problems, current["reason"] = next(script)
+            return {"exit": code, "problems": problems}
+
+        with (
+            mock.patch.object(driver, "_kit", side_effect=kit),
+            mock.patch.object(driver, "_agent", side_effect=lambda _s, _t, _a, prompt, _tools: prompts.append(prompt)),
+            mock.patch.object(driver, "_say", side_effect=lambda text, **_kw: log.append(text)),
+            mock.patch.object(driver, "_rerun"),
+            mock.patch.object(headless, "render_prompt", return_value="PREAMBLE"),
+        ):
+            try:
+                driver._run_task("agent", "business")
+            except headless.Blocked:
+                pass
+        return driver, log, prompts
+
+    def test_a_task_that_passes_check_but_is_not_done_is_not_called_a_check_failure(self) -> None:
+        _driver, log, prompts = self._run_with([
+            (0, [], "missing `business/capabilities.json`"),
+            (0, [], None),
+        ])
+        text = "\n".join(log)
+        self.assertIn("task business: check passed, but business is not done: missing `business/capabilities.json`", text)
+        self.assertIn("attempt 2/", text)
+        self.assertIn(", fixing: business not done", text)
+        self.assertNotIn("check problem(s)", text)
+        self.assertIn("## business is not done after your last attempt", prompts[1])
+        self.assertIn("missing `business/capabilities.json`", prompts[1])
+        self.assertNotIn("`extractkit check` failed", prompts[1])
+
+    def test_a_real_check_failure_keeps_its_wording(self) -> None:
+        _driver, log, prompts = self._run_with([(1, ["a problem"], None), (0, [], None)])
+        self.assertIn(", fixing 1 check problem(s)", "\n".join(log))
+        self.assertIn("## `extractkit check` failed after your last attempt", prompts[1])
+        self.assertIn("- a problem", prompts[1])
+
+    def test_running_out_of_attempts_on_not_done_names_that_reason_in_the_blocker(self) -> None:
+        driver, _log, _prompts = self._run_with([(0, [], "missing `x`")] * 3)
+        blocker = driver._blocker("business").read_text(encoding="utf-8")
+        self.assertIn("business is not done", blocker)
+        self.assertIn("though extractkit check passes", blocker)
+        self.assertIn("Evidence: missing `x`", blocker)
 
     def test_cms_flags_are_carried_only_online_and_never_include_allow_production(self) -> None:
         offline = self._driver(branch="draft", project="en")

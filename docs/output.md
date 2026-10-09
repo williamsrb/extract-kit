@@ -40,8 +40,13 @@ Canonical extract tree. Enonic details live only under `stackRef`.
   integrations/swagger-ui/        # read-only Swagger UI; Try it out disabled
   spec-kit/constitution.md        # composed by spec.kit
   spec-kit/constitution/project.md   # agent task `constitution`
-  spec-kit/specs/<context>/spec.md
-  spec-kit/specs/<context>/tasks.md   # only with --tasks
+  spec-kit/evidence/<context>.md      # per-surface index, written by spec.kit
+  spec-kit/evidence/<context>.tasks.md   # only with --tasks
+  spec-kit/specs/<capability>/spec.md   # agent task `spec.capabilities`
+  domain/packet/<module>.json     # domain.packet: facts per source module
+  domain/<capability>.md          # agent task `domain.behavior`
+  reports/do-not-port.md          # agent task `donotport`
+  business/capabilities.json      # agent task `business`
   hygiene/dead-code.md
 ```
 
@@ -157,7 +162,7 @@ validates it only when it exists: the H1 `# Spec review`, then either
 `No findings.` or findings whose `### SR-<n>` block has `Spec:` (a
 `spec-kit/specs/<slug>/spec.md` in the sidecar), `Severity:` (`high`,
 `medium` or `low`), `Fix in:` (`extractor`, `rules/review.md`,
-`spec.enrich` or `source`) and `Evidence:` (every ref resolves like in
+`spec.capabilities` or `source`) and `Evidence:` (every ref resolves like in
 `BUSINESS.md`). The FR id after a `Spec:` path is not validated, and the
 findings never fail `check`.
 
@@ -174,7 +179,7 @@ staged, untracked, ignored, or a source outside git). `--force`
 overwrites anyway.
 
 - `spec-kit/constitution.md` → `.specify/memory/constitution.md`
-- `spec-kit/specs/<ctx>/spec.md` → `specs/<ctx>/spec.md`
+- `spec-kit/specs/<capability>/spec.md` → `specs/<capability>/spec.md`
 - `product/PRODUCT.md` → `PRODUCT.md`
 - `design/DESIGN.md` → `DESIGN.md`
 - `design/design.json` → `.impeccable/design.json`

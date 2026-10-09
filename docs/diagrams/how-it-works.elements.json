@@ -120,7 +120,7 @@
    "type": 3
   },
   "label": {
-   "text": "4  Write the documents\nspecs, rules, API, design",
+   "text": "4  Write the documents\nevidence, rules, API,\ndesign, domain facts",
    "fontSize": 16,
    "fontFamily": 5
   },
@@ -148,8 +148,8 @@
    "type": 3
   },
   "label": {
-   "text": "5  AI steps\ndecide the context, name\nrules, write the overview\nand the constitution",
-   "fontSize": 16,
+   "text": "5  AI steps\ncontext, rule names, overview,\nconstitution, behavior and\ncapability specs",
+   "fontSize": 14,
    "fontFamily": 5
   },
   "boundElements": [
@@ -176,7 +176,7 @@
    "type": 3
   },
   "label": {
-   "text": "6  Validate\nrequirements and rules\ncite their evidence",
+   "text": "6  Validate\nspecs, behavior and rules\ncite their evidence",
    "fontSize": 16,
    "fontFamily": 5
   },

@@ -1,0 +1,1 @@
+*/15 * * * * php /srv/mini/external/mini-sweep.php

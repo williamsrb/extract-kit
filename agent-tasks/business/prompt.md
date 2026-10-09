@@ -39,8 +39,9 @@ Run: `{run_id}`
 - Never pass `--allow-production`, and use `--force` on `promote` only when
   the operator says so.
 
-Write `{sidecar}/business/BUSINESS.md`: what the extracted project does for
-its users and operators, in business terms. Build it from what the kit already
+Write `{sidecar}/business/BUSINESS.md` and `{sidecar}/business/capabilities.json`:
+what the extracted project does for its users and operators, in business terms,
+and the list of capabilities it names. Build it from what the kit already
 extracted. The kit does not know the business; you infer it from evidence, and
 an analyst confirms it.
 
@@ -60,6 +61,11 @@ Read these, in this order. Paths are under `{sidecar}`.
   `product.impeccable` re-runs and fills its users, jobs and capabilities from
   your file.
 - `docs/harvest/`: Enonic product docs, when the folder exists.
+- `domain/packet/INDEX.json`, when it exists (Enonic profile): the source
+  modules (`lib.modules.<name>`, `services`, `tasks`, `cron`, `main`) and, in
+  each packet, the jobs, listeners and external callers that start them. Use
+  it to find the capabilities the view layer does not show: booking
+  lifecycle, payments, pricing, emails, scheduled jobs.
 
 Read the source under `{source}` only to confirm a claim at a `path:line`.
 
@@ -71,7 +77,11 @@ Write exactly these H2 sections, in this order, and no other H2:
 - `## Actors`: who uses or operates it (visitors, editors, administrators,
   scheduled jobs, external systems).
 - `## Capabilities`: one `###` entry per capability, grouped by bounded
-  context. Each entry cites at least one rule id or surface id.
+  context. Each entry cites at least one rule id or surface id. Include the
+  domain capabilities the server code carries (booking, payment, pricing,
+  email, jobs), not only what the pages show. Include one `### Platform and
+  operations` entry for the cross-cutting facts: URL and locale scheme,
+  market map, i18n, roles, CSP, caching, scheduled jobs.
 - `## Business flow`: the general flow across contexts, step by step, from
   first contact to outcome. Name the context that owns each step.
 - `## Business rules by capability`: the named business rules under the
@@ -80,6 +90,42 @@ Write exactly these H2 sections, in this order, and no other H2:
   labels.
 - `## Integrations`: external systems and how the project reaches them.
 - `## Open questions`: what the evidence does not settle (see below).
+
+## Capability list
+
+Also write `{sidecar}/business/capabilities.json`, one row per `###` capability
+of `## Capabilities`, with the same title:
+
+The file is one JSON object: `schema` is `99x.extract.capabilities/v1`, and
+`capabilities` is a list of objects with `id`, `title` and, optionally,
+`modules`. For example one row has `id` `booking-lifecycle`, `title`
+`Booking lifecycle` and `modules` listing `lib.modules.bookings`; another has
+`id` `platform-and-operations` and `title` `Platform and operations`.
+
+`id` is lowercase words joined by hyphens and is never `packet`. `modules` is
+optional: the `domain/packet/` module ids the capability rests on. The
+`domain.behavior` and `spec.capabilities` tasks read this file, one output per
+row, so keep it in step with the headings. `check` fails when a row has no
+heading, or a heading has no row, or `platform-and-operations` is missing.
+
+## Business flow honesty
+
+- Build the Business flow from entry points that are wired: a page, a service
+  a page or a job calls, a `cron` job with a schedule, an `external-caller`
+  with a crontab line, an `init` listener. Do not describe a flow from a
+  function nothing calls. A rule marked `dead: true` in
+  `rules/view-rules.json`, or a surface `unobserved` with no content, is not
+  live behavior: list it under Open questions instead.
+- Say what a job, service or callback does from its code, never from its
+  name. A job called sync, import, cleanup or refresh can read, push, update,
+  skip, release or delete: open the function and write the verb the code
+  performs, with the direction of data (who sends to whom) and what happens
+  to a record that already exists. When you did not open the code, take the
+  statement from `domain/<capability>.md` or list it under Open questions.
+- A runtime value (a count, a URL, a configured endpoint) names the
+  environment it came from (`env` in `inventory/runtime.json`, `x-observed-endpoints`
+  in `integrations/openapi.yaml`). Write `review` or `local` as that; never
+  write it as production. Production values are not in the extract.
 
 ## Evidence contract
 

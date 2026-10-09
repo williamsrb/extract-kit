@@ -43,6 +43,11 @@ def _load_runtime(ctx: object) -> dict | None:
     return load_json(path, "inventory/runtime.json")
 
 
+def _load_volume(ctx: object) -> dict | None:
+    path: Path = ctx.rel("inventory/content-volume.json")  # type: ignore[attr-defined]
+    return load_json(path, "inventory/content-volume.json") if path.is_file() else None
+
+
 def _ensure_maps(ctx: object) -> dict:
     path: Path = ctx.rel("map/project-map.json")  # type: ignore[attr-defined]
     if not path.is_file():
@@ -117,11 +122,50 @@ def _status_from_usage(row: dict, key: str, count: object) -> None:
         row["status"] = "dead"
 
 
+def _volume_counts(volume: dict | None) -> dict[str, int]:
+    """`<app>:<type>` to total, for the types the volume survey could count."""
+    counts: dict[str, int] = {}
+    for row in (volume or {}).get("types") or []:
+        total = row.get("total") if isinstance(row, dict) else None
+        if isinstance(total, int) and not isinstance(total, bool):
+            counts[str(row.get("type"))] = total
+    return counts
+
+
+def _apply_volume(rows: list[dict], volume: dict | None) -> list[dict]:
+    """A content type with content is live, one without is unobserved; a failed count says nothing."""
+    counts = _volume_counts(volume)
+    if not counts:
+        return rows
+    for row in rows:
+        if row.get("kind") != "content-type":
+            continue
+        key = _descriptor_key(row)
+        if key not in counts:
+            continue
+        row["volume"] = counts[key]
+        if counts[key] > 0:
+            row["status"] = "live"
+            row["evidence"] = [*(row.get("evidence") or []), f"volume:{key}:{counts[key]}"]
+        else:
+            row["status"] = "unobserved"
+    return rows
+
+
 def merge_surfaces(
     surfaces: list[dict],
     runtime: dict | None,
+    volume: dict | None = None,
 ) -> tuple[list[dict], list[dict]]:
-    """Return (updated surfaces, contradictions). Runtime beats static."""
+    """Return (updated surfaces, contradictions). Runtime beats static; volume sets content-type liveness."""
+    updated, contradictions = _merge_runtime(surfaces, runtime)
+    return _apply_volume(updated, volume), contradictions
+
+
+def _merge_runtime(
+    surfaces: list[dict],
+    runtime: dict | None,
+) -> tuple[list[dict], list[dict]]:
     if runtime is None:
         updated = []
         for surface in surfaces:
@@ -251,10 +295,41 @@ def _rewrite_maps(ctx: object, surfaces: list[dict]) -> None:
     })
 
 
+_PATTERN_CHARS = set("*?()|[]$^\\")
+
+
+def selector_problems(surfaces: list[dict], references: list[dict]) -> list[str]:
+    """Selector fields that allow a content type this extract's apps do not define."""
+    types = {_descriptor_key(s) for s in surfaces if s.get("kind") == "content-type"}
+    apps = {key.split(":", 1)[0] for key in types}
+    problems: list[str] = []
+    for ref in references:
+        owner = str(ref.get("from") or "")
+        app = owner.split(":", 1)[0]
+        for target in ref.get("to") or []:
+            resolved = str(target).replace("${app}", app)
+            head = resolved.split(":", 1)[0]
+            if _PATTERN_CHARS & set(resolved) or ":" not in resolved:
+                continue
+            if head in apps and resolved not in types:
+                problems.append(
+                    f"- `{owner}` field `{ref.get('field')}` allows content type `{resolved}`, "
+                    "which no descriptor in this extract defines."
+                )
+    return problems
+
+
+def _problem_lines(problems: list[str] | None) -> list[str]:
+    if not problems:
+        return []
+    return ["## Problems", "", *problems, ""]
+
+
 def _merge_report(
     runtime: dict | None,
     surfaces: list[dict],
     contradictions: list[dict],
+    problems: list[str] | None = None,
 ) -> str:
     lines = [
         "# Merge report (runtime vs static)",
@@ -267,6 +342,7 @@ def _merge_report(
             "No `inventory/runtime.json`. Every surface stays `unverified-live`."
         )
         lines.append("")
+        lines += _problem_lines(problems)
         return "\n".join(lines)
     counts: dict[str, int] = {}
     for surface in surfaces:
@@ -304,6 +380,7 @@ def _merge_report(
                 f"- `{row.get('id')}` ({row.get('descriptor')}): {row.get('detail')}"
             )
     lines.append("")
+    lines += _problem_lines(problems)
     return "\n".join(lines)
 
 
@@ -331,7 +408,7 @@ class MergeStep:
             dict(s) for s in (project.get("surfaces") or []) if isinstance(s, dict)
         ]
         runtime = _load_runtime(ctx)
-        merged, contradictions = merge_surfaces(surfaces, runtime)
+        merged, contradictions = merge_surfaces(surfaces, runtime, _load_volume(ctx))
         contexts = split_contexts(merged, runtime)
         payload = {
             "schema": "extractkit.bounded-contexts/v1",
@@ -342,7 +419,10 @@ class MergeStep:
         ctx.write_json("map/bounded-contexts.json", payload)  # type: ignore[attr-defined]
         ctx.write_text(  # type: ignore[attr-defined]
             "inventory/merge-report.md",
-            _merge_report(runtime, merged, contradictions),
+            _merge_report(
+                runtime, merged, contradictions,
+                selector_problems(merged, _existing_references(ctx)),
+            ),
         )
 
     def check(self, _ctx: object) -> list[str]:

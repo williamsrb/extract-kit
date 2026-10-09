@@ -1,4 +1,8 @@
-"""core.speckit — as-is constitution + per-context spec.md. No tasks by default.
+"""core.speckit — as-is constitution + per-context evidence specs. No tasks by default.
+
+The per-context files are an index of the extract (`spec-kit/evidence/<context>.md`), one
+requirement per surface. They are evidence for the capability specs the `spec.capabilities`
+task writes to `spec-kit/specs/<capability>/spec.md`; only those are promoted.
 
 The constitution's project part comes from the `constitution` agent task
 (`spec-kit/constitution/project.md`), so a re-run of this step keeps it.
@@ -177,7 +181,7 @@ class SpeckitStep:
         n = len(_contexts(ctx))
         actions = [
             "write spec-kit/constitution.md (as-is, from spec-kit/constitution/project.md when present)",
-            f"write {n} spec-kit/specs/<context>/spec.md file(s)",
+            f"write {n} spec-kit/evidence/<context>.md file(s)",
         ]
         if getattr(ctx, "tasks", False):
             actions.append("write tasks.md (--tasks)")
@@ -190,7 +194,7 @@ class SpeckitStep:
         contexts = _contexts(ctx)
         if not contexts:
             ctx.write_text(  # type: ignore[attr-defined]
-                "spec-kit/specs/default/spec.md",
+                "spec-kit/evidence/default.md",
                 "# Default (as-is)\n\n### FR-1 Maps exist\n\n"
                 "See `map/project-map.json`.\n\nEvidence: `map/project-map.json`\n",
             )
@@ -198,12 +202,12 @@ class SpeckitStep:
         for context in contexts:
             slug = _slug(str(context.get("id") or "context"))
             ctx.write_text(  # type: ignore[attr-defined]
-                f"spec-kit/specs/{slug}/spec.md",
+                f"spec-kit/evidence/{slug}.md",
                 _spec_md(context, index, rules),
             )
             if getattr(ctx, "tasks", False):
                 ctx.write_text(  # type: ignore[attr-defined]
-                    f"spec-kit/specs/{slug}/tasks.md",
+                    f"spec-kit/evidence/{slug}.tasks.md",
                     f"# Tasks for {slug}\n\nOptional. Off by default.\n",
                 )
 

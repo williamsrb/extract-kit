@@ -133,7 +133,7 @@ variable meant for headless
 | `EXTRACTKIT_DEVKIT_PROFILE` | `--devkit-profile` | `headless`. The image sets it to `extract` |
 | `EXTRACTKIT_MAX_FIX_ATTEMPTS`, `EXTRACTKIT_TASK_TIMEOUT` | `--max-fix-attempts` (0 or more), `--task-timeout` (1 or more) | `headless` |
 | `EXTRACTKIT_PROMOTE` | `--promote` | `headless` |
-| `EXTRACTKIT_NO_ENRICH` | `--no-enrich` | `headless` |
+| `EXTRACTKIT_NO_ENRICH` | `--no-enrich` | `headless`. Accepted and ignored: `spec.enrich` is retired |
 | `EXTRACTKIT_ASSETS_DIR`, `EXTRACTKIT_OP_VAULT`, `EXTRACTKIT_OP_ITEM`, `EXTRACTKIT_ASSETS_PASSWORD_ENV` | `--assets-dir`, `--op-vault`, `--op-item`, `--assets-password-env` | `assets`, `headless` |
 | `EXTRACTKIT_STORAGE_STATE_OUT` | `--storage-state-out` | `assets` |
 | `EXTRACTKIT_STORAGE_STATE_JSON` | storage-state contents | commands with `--storage-state` |
@@ -159,7 +159,7 @@ the entries of `stages[]` in the result.
 | `cms` | `resume --until cms`, only when a storage state is resolved; otherwise `skipped` |
 | `agent:live_config` | The same `context.*` loop, after the CMS slot |
 | `synthesis` | `run --from merge --until synthesis` |
-| `agent` | The full agent loop, then the optional `spec.enrich` unless `--no-enrich` (its failure is reported in the stage message, not as a stop); `task_inputs_missing` when a task waits on a file nothing wrote |
+| `agent` | The full agent loop over the required tasks; `task_inputs_missing` when a task waits on a file nothing wrote |
 | `check` | `check`; `check_failed` with the problems |
 | `promote` | Only with `--promote`; never `--force` |
 <!-- markdownlint-enable MD013 -->
@@ -180,16 +180,22 @@ folder. Scans skip `<source>/extract/` once it holds a run.
 The required tasks are `rules.name`, `business` (it re-runs
 `product.impeccable`, which takes PRODUCT.md's users, jobs and capabilities
 from `BUSINESS.md`) and `constitution` (it re-runs `spec.kit`, which composes
-`spec-kit/constitution.md` from it). Then `spec.enrich` rewrites the spec and
-use-case prose; it is done while `reports/spec-enrich.md` says `Status: complete`
-and is newer than every `spec.md`. The report is also its progress ledger: the
-agent adds a bullet after each file, so a run that stopped midway (see
-[Several credentials](#several-credentials)) is continued, not redone. On a
-large project it can need more than the default `--task-timeout` of 1800
-seconds. It is optional, so a timeout, a blocker or
-fix attempts that ran out do not stop the run: the `agent` stage message says
-`spec.enrich failed and was skipped`, the agent log and any blocker file stay
-in the sidecar, and `check` still runs and fails if enrich left a spec invalid.
+`spec-kit/constitution.md` from it). Then `domain.behavior`, `donotport` and
+`spec.capabilities` write the domain files, `reports/do-not-port.md` and one
+spec per capability. All are required: a blocker or fix attempts that ran out
+stop the run.
+
+A task whose `check` passes but whose output is not done (a missing file, a
+done check that is not met) is told apart from a check failure. The log says
+`check passed, but <id> is not done: <reason>`, the next attempt line says
+`fixing: <id> not done`, the retry prompt is headed
+`## <id> is not done after your last attempt`, and the blocker file says which
+of the two cases failed.
+
+The agent log and `reports/headless.jsonl` record the model each agent run
+reports (the keys of `modelUsage` for `claude`). Headless warns when the log
+holds `unrecognized_model`, or when the reported model differs from
+`ANTHROPIC_MODEL`.
 
 Re-running headless on the same source resumes the latest sidecar. A stage
 whose outputs exist reports `ok (already done)` and starts no agent. The
@@ -204,7 +210,7 @@ is set, for example `claude-{profile}`, the devkit profile wrapper that exports
 `CLAUDE_CONFIG_DIR` and `AGENTS_HOME`), the flags for
 `allowlist` and `bypass` permissions and a default tool allowlist.
 `claude`, `codex` and `cursor` ship, with argv checked against `claude`
-2.1.280, `codex-cli` 0.151.0 and `cursor-agent` 2026.10.01. Another CLI is a
+2.1.284, `codex-cli` 0.151.0 and `cursor-agent` 2026.10.01. Another CLI is a
 new entry, no code change; `--agent` and `agent.cli` are checked against the
 block when the command runs. The block is read by one function, so no flag or
 env var can point headless at another binary.
@@ -538,15 +544,14 @@ lower first, default 100; equal values keep the order the files were read in).
   complete the files, not start over. The switch is printed and logged as
   `credential_switched` in `reports/headless.jsonl`.
 - When none answers, the run stops with `credentials_exhausted`. Run headless
-  again later: finished tasks are not run again, and `spec.enrich` goes on from
-  its ledger.
+  again later: finished tasks are not run again.
 - Probing a credential that answers never changes it; a credential is only
   left behind in the order, never retried within the same run.
 
 What is lost when a credential runs out is the one task in flight. Required
 tasks each write one document from fixed inputs (`context.*`, `rules.name`,
-`business`, `constitution`), so redoing one is a short run. `spec.enrich` is the
-open-ended one and works file by file against its ledger.
+`business`, `constitution`, `domain.behavior`, `donotport`, `spec.capabilities`),
+so redoing one is a short run.
 
 An agent that reports a spent quota in a JSON result and still exits 0 is
 only caught by the probe at the start of a run, not during a task.

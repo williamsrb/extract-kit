@@ -1,0 +1,7 @@
+<layout>
+  <display-name>Booking page</display-name>
+  <form/>
+  <regions>
+    <region name="main"/>
+  </regions>
+</layout>

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 import shutil
 import tempfile
@@ -12,7 +11,13 @@ from pathlib import Path
 
 from extractkit_cli import agent_tasks, check, manifest, schema
 from extractkit_cli.errors import ExtractkitError
-from tests.support import REPO, build_sidecar, run, write_agent_outputs
+from tests.support import (
+    REPO,
+    build_sidecar,
+    run,
+    valid_capabilities,
+    write_agent_outputs,
+)
 
 LLM = REPO / "docs" / "llm.md"
 RULE = "VR-0123456789"
@@ -39,7 +44,7 @@ class RegistryTests(unittest.TestCase):
         tasks = agent_tasks.load()
         self.assertEqual({t.id for t in tasks}, {
             "context.exclude", "context.live_config", "rules.name", "business",
-            "constitution", "spec.enrich", "spec.review",
+            "constitution", "domain.behavior", "donotport", "spec.capabilities", "spec.review",
         })
         for task in tasks:
             with self.subTest(task=task.id):
@@ -52,7 +57,7 @@ class RegistryTests(unittest.TestCase):
         self.assertEqual(
             [t.id for t in agent_tasks.ordered(manifest.load("enonic"))],
             ["context.exclude", "context.live_config", "rules.name", "business",
-             "constitution", "spec.enrich", "spec.review"],
+             "constitution", "domain.behavior", "donotport", "spec.capabilities", "spec.review"],
         )
 
     def test_context_tasks_sit_after_the_slots_they_wait_for(self) -> None:
@@ -72,8 +77,16 @@ class RegistryTests(unittest.TestCase):
         self.assertEqual(by_id["rules.name"].done_check, "rules_named")
         self.assertEqual(by_id["rules.name"].rerun, ("run", "--from", "merge", "--until", "synthesis"))
         self.assertEqual(by_id["business"].promote, (("business/BUSINESS.md", "BUSINESS.md"),))
-        self.assertEqual(by_id["business"].writes, ("business/BUSINESS.md",))
-        self.assertTrue(by_id["spec.enrich"].optional)
+        self.assertEqual(by_id["business"].writes, ("business/BUSINESS.md", "business/capabilities.json"))
+        self.assertEqual(by_id["business"].done, ("business/BUSINESS.md", "business/capabilities.json"))
+        for task_id in ("domain.behavior", "donotport", "spec.capabilities"):
+            self.assertEqual(by_id[task_id].after, "spec.kit")
+            self.assertFalse(by_id[task_id].optional)
+        self.assertEqual(by_id["domain.behavior"].done_check, "domain_files_written")
+        self.assertEqual(by_id["spec.capabilities"].done_check, "capability_specs_written")
+        self.assertEqual(by_id["donotport"].done, ("reports/do-not-port.md",))
+        self.assertEqual(by_id["donotport"].checks, ("do_not_port", "secrets"))
+        self.assertNotIn("spec.enrich", by_id)
         self.assertTrue(by_id["spec.review"].optional)
         self.assertEqual(by_id["spec.review"].writes, ("reports/spec-review.md",))
         self.assertEqual(by_id["spec.review"].promote, ())
@@ -220,37 +233,41 @@ class DoneStateTests(unittest.TestCase):
         self.assertFalse(agent_tasks.is_done(self.by_id["business"], self.out))
         (self.out / "business").mkdir()
         (self.out / "business" / "BUSINESS.md").write_text("# x\n", encoding="utf-8")
+        (self.out / "business" / "capabilities.json").write_text(valid_capabilities(), encoding="utf-8")
         self.assertTrue(agent_tasks.is_done(self.by_id["business"], self.out))
 
-    def test_spec_enrich_is_optional_and_never_pending(self) -> None:
-        self.assertFalse(agent_tasks.is_done(self.by_id["spec.enrich"], self.out))
-        self.assertNotIn("spec.enrich", [t.id for t in agent_tasks.pending(self.out)])
+    def test_business_needs_both_files(self) -> None:
+        (self.out / "business").mkdir(exist_ok=True)
+        (self.out / "business" / "BUSINESS.md").write_text("# x\n", encoding="utf-8")
+        self.assertFalse(agent_tasks.is_done(self.by_id["business"], self.out))
+        self.assertEqual(
+            agent_tasks.not_done_reason(self.by_id["business"], self.out), "missing `business/capabilities.json`",
+        )
 
-    def test_spec_enrich_is_done_while_its_report_is_newer_than_every_spec(self) -> None:
-        task = self.by_id["spec.enrich"]
-        spec = self.out / "spec-kit" / "specs" / "content" / "spec.md"
-        spec.parent.mkdir(parents=True)
-        spec.write_text("# x\n", encoding="utf-8")
-        report = self.out / "reports" / "spec-enrich.md"
-        report.parent.mkdir()
-        report.write_text("# Spec enrich\nStatus: complete\n", encoding="utf-8")
-        os.utime(spec, (1000, 1000))
-        os.utime(report, (2000, 2000))
-        self.assertTrue(agent_tasks.is_done(task, self.out))
-        os.utime(spec, (3000, 3000))
-        self.assertFalse(agent_tasks.is_done(task, self.out))
+    def test_domain_and_capability_tasks_are_done_per_capability(self) -> None:
+        business = self.out / "business"
+        business.mkdir(exist_ok=True)
+        (business / "capabilities.json").write_text(valid_capabilities(), encoding="utf-8")
+        domain, specs = self.by_id["domain.behavior"], self.by_id["spec.capabilities"]
+        self.assertFalse(agent_tasks.is_done(domain, self.out))
+        self.assertIn("domain_files_written", agent_tasks.not_done_reason(domain, self.out))
+        (self.out / "domain").mkdir(exist_ok=True)
+        for capability in ("article-publishing", "page-rendering", "platform-and-operations"):
+            (self.out / "domain" / f"{capability}.md").write_text("# x\n", encoding="utf-8")
+            (self.out / "spec-kit" / "specs" / capability).mkdir(parents=True, exist_ok=True)
+            self.assertFalse(agent_tasks.is_done(domain, self.out) and capability != "platform-and-operations")
+        self.assertTrue(agent_tasks.is_done(domain, self.out))
+        self.assertFalse(agent_tasks.is_done(specs, self.out))
+        for capability in ("article-publishing", "page-rendering", "platform-and-operations"):
+            (self.out / "spec-kit" / "specs" / capability / "spec.md").write_text("# x\n", encoding="utf-8")
+        self.assertTrue(agent_tasks.is_done(specs, self.out))
 
-    def test_a_spec_enrich_report_without_the_complete_line_is_a_ledger_not_a_finish(self) -> None:
-        task = self.by_id["spec.enrich"]
-        spec = self.out / "spec-kit" / "specs" / "content" / "spec.md"
-        spec.parent.mkdir(parents=True)
-        spec.write_text("# x\n", encoding="utf-8")
-        report = self.out / "reports" / "spec-enrich.md"
-        report.parent.mkdir()
-        report.write_text("# Spec enrich\nStatus: in progress\n- content/spec.md FR-1\n", encoding="utf-8")
-        os.utime(spec, (1000, 1000))
-        os.utime(report, (2000, 2000))
-        self.assertFalse(agent_tasks.is_done(task, self.out))
+    def test_the_not_done_reason_names_the_done_check_or_the_missing_file(self) -> None:
+        reason = agent_tasks.not_done_reason(self.by_id["rules.name"], self.out)
+        self.assertIn("`rules_named`", reason)
+        self.assertEqual(
+            agent_tasks.not_done_reason(self.by_id["donotport"], self.out), "missing `reports/do-not-port.md`",
+        )
 
     def test_spec_review_is_optional_and_never_pending(self) -> None:
         task = self.by_id["spec.review"]
@@ -294,23 +311,71 @@ class AgentCommandTests(unittest.TestCase):
         rows = {t["id"]: t for t in payload["tasks"]}
         self.assertEqual(list(rows), [
             "context.exclude", "context.live_config", "rules.name", "business",
-            "constitution", "spec.enrich", "spec.review",
+            "constitution", "domain.behavior", "donotport", "spec.capabilities", "spec.review",
         ])
         self.assertEqual(rows["context.exclude"]["state"], "done")
         self.assertEqual(rows["context.live_config"]["state"], "done")
         self.assertEqual(rows["rules.name"]["state"], "done")
         self.assertEqual(rows["business"]["state"], "pending")
         self.assertEqual(rows["business"]["missing_reads"], [])
-        self.assertTrue(rows["spec.enrich"]["optional"])
+        for task_id in ("domain.behavior", "donotport", "spec.capabilities"):
+            self.assertEqual(rows[task_id]["state"], "pending")
+        self.assertIn("business/capabilities.json", rows["business"]["writes"])
+        # php leaves domain.packet unbound; business must not wait on it.
+        self.assertNotIn("domain/packet/INDEX.json", rows["business"]["reads"])
+        self.assertIn("`business/BUSINESS.md`", rows["business"]["not_done_reason"])
         self.assertTrue(rows["spec.review"]["optional"])
         self.assertEqual(rows["rules.name"]["rerun"], ["run", "--from", "merge", "--until", "synthesis"])
+
+    def _review(self, *ids: str) -> tuple[Path, Path]:
+        out = self._copy()
+        review = out / "rules" / "review.md"
+        review.write_text("# Rule review\n\n" + "".join(
+            f"- [ ] `{i}` `a.html:{n}` · eligibility · `x == {n}`\n  - name:\n  - intent:\n  - out-of-scope: no\n\n"
+            for n, i in enumerate(ids)
+        ), encoding="utf-8")
+        return out, review
+
+    def test_name_rules_applies_a_batch_and_the_next_run_would_carry_it(self) -> None:
+        ids = ["VR-00000000a1", "VR-00000000a2"]
+        out, review = self._review(*ids)
+        batch = out / "rules" / "names-1.json"
+        batch.write_text(json.dumps([{"id": i, "name": f"Rule {n}", "intent": f"Intent {n}."} for n, i in enumerate(ids)]), encoding="utf-8")
+        result = run("agent", "name-rules", str(batch), "--out", str(out), "--json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["applied"], 2)
+        text = review.read_text(encoding="utf-8")
+        self.assertIn("  - name: Rule 0 _(inferred)_", text)
+        from steps.core.view_rules import parse_review
+        self.assertEqual(parse_review(text)[ids[1]]["intent"], "Intent 1.")
+
+    def test_name_rules_applies_the_known_ids_and_fails_on_an_unknown_one(self) -> None:
+        known = "VR-00000000b1"
+        out, review = self._review(known)
+        batch = out / "names.json"
+        batch.write_text(json.dumps([
+            {"id": known, "name": "Known", "intent": "Known one."},
+            {"id": "VR-ffffffffff", "name": "Ghost", "intent": "Not in the file."},
+        ]), encoding="utf-8")
+        result = run("agent", "name-rules", str(batch), "--out", str(out))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("VR-ffffffffff", result.stderr)
+        self.assertIn("  - name: Known _(inferred)_", review.read_text(encoding="utf-8"))
+
+    def test_name_rules_refuses_an_entry_with_no_intent(self) -> None:
+        out = self._copy()
+        batch = out / "names.json"
+        batch.write_text(json.dumps([{"id": "VR-0123456789", "name": "Only a name"}]), encoding="utf-8")
+        result = run("agent", "name-rules", str(batch), "--out", str(out))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("`id`, `name` and `intent`", result.stderr)
 
     def test_list_text(self) -> None:
         result = run("agent", "list", "--out", str(self.out))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertRegex(result.stdout, r"rules\.name\s+done")
         self.assertRegex(result.stdout, r"business\s+pending, next")
-        self.assertRegex(result.stdout, r"spec\.enrich\s+optional")
+        self.assertRegex(result.stdout, r"spec\.review\s+optional")
 
     def test_show_prints_the_prompt_with_real_paths_and_inputs(self) -> None:
         result = run("agent", "show", "business", "--out", str(self.out))
@@ -325,12 +390,12 @@ class AgentCommandTests(unittest.TestCase):
         self.assertEqual(payload["id"], "business")
         self.assertIn("## Invariants", payload["prompt"])
         self.assertTrue(all(i["exists"] for i in payload["inputs"]))
-        self.assertEqual(payload["writes"], ["business/BUSINESS.md"])
+        self.assertEqual(payload["writes"], ["business/BUSINESS.md", "business/capabilities.json"])
 
     def test_show_unknown_task_names_the_available_ones(self) -> None:
         result = run("agent", "show", "nope", "--out", str(self.out))
         self.assertEqual(result.returncode, 1)
-        self.assertIn("rules.name, business, constitution, spec.enrich, spec.review", result.stderr)
+        self.assertIn("rules.name, business, constitution, domain.behavior, donotport, spec.capabilities, spec.review", result.stderr)
 
     def test_show_spec_review_renders_and_lists_the_missing_business_input(self) -> None:
         result = run("agent", "show", "spec.review", "--out", str(self.out))
@@ -349,7 +414,9 @@ class AgentCommandTests(unittest.TestCase):
         out = self._copy()
         first = json.loads(run("agent", "next", "--out", str(out), "--json").stdout)
         self.assertEqual(first["next"]["id"], "business")
-        self.assertEqual(first["pending"], ["business", "constitution"])
+        self.assertEqual(
+            first["pending"], ["business", "constitution", "domain.behavior", "donotport", "spec.capabilities"],
+        )
         write_agent_outputs(out)
         done = json.loads(run("agent", "next", "--out", str(out), "--json").stdout)
         self.assertEqual((done["next"], done["pending"], done["blocked"]), (None, [], []))
@@ -362,10 +429,12 @@ class AgentCommandTests(unittest.TestCase):
         (out / "map" / "route-map.json").unlink()
         payload = json.loads(run("agent", "next", "--out", str(out), "--json").stdout)
         self.assertIsNone(payload["next"])
-        self.assertEqual(payload["blocked"], [
-            {"id": "business", "missing_reads": ["map/route-map.json"]},
-            {"id": "constitution", "missing_reads": ["business/BUSINESS.md", "map/route-map.json"]},
-        ])
+        blocked = {row["id"]: row["missing_reads"] for row in payload["blocked"]}
+        self.assertEqual(blocked["business"], ["map/route-map.json"])
+        self.assertEqual(blocked["constitution"], ["business/BUSINESS.md", "map/route-map.json"])
+        self.assertIn("map/route-map.json", blocked["domain.behavior"])
+        self.assertIn("business/capabilities.json", blocked["donotport"])
+        self.assertIn("reports/do-not-port.md", blocked["spec.capabilities"])
         text = run("agent", "next", "--out", str(out))
         self.assertEqual(text.returncode, 0)
         self.assertIn("business is waiting on map/route-map.json", text.stdout)
@@ -373,7 +442,7 @@ class AgentCommandTests(unittest.TestCase):
     def test_status_shows_nine_phases_with_the_agent_phase_current(self) -> None:
         result = run("status", "--out", str(self.out))
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertRegex(result.stdout, r"→ 7 agent\s+pending business, constitution · skills: extract-agentic")
+        self.assertRegex(result.stdout, r"→ 7 agent\s+pending business, constitution, domain.behavior, donotport, spec.capabilities · skills: extract-agentic")
         self.assertRegex(result.stdout, r"· 8 check")
         self.assertRegex(result.stdout, r"· 9 promote")
         self.assertIn("next  [7/9] Agent is next:", result.stdout)

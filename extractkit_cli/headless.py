@@ -15,12 +15,12 @@ stages that needed it are skipped.
 Preflight builds the graft index directly and asks the agent CLI for Serena
 onboarding and the Graphify index. An agent task runs in a fresh agent process
 in the source folder, with the rendered prompt behind `headless/preamble.md`;
-then its `rerun`, then `check`. After the required tasks the agent stage runs
-the optional `spec.enrich`, unless `--no-enrich`. A `check` failure feeds the
-problems back to a new process, up to `--max-fix-attempts` times. Where a
-prompt says "ask the operator", the agent writes
-`<sidecar>/reports/blockers/<task id>.md` instead, and headless stops with
-exit 3.
+then its `rerun`, then `check`. A `check` failure feeds the problems back to
+a new process, up to `--max-fix-attempts` times; a task whose check passes but
+that is not done gets its own log line and retry prompt. `--no-enrich` is
+accepted and ignored. Where a prompt says "ask the operator", the agent
+writes `<sidecar>/reports/blockers/<task id>.md` instead, and headless stops
+with exit 3.
 
 Exit codes: 0 every stage passed, 1 a stage failed, 3 a blocker file exists
 (a human is needed). Headless never passes `--allow-production` and never runs
@@ -66,7 +66,6 @@ STAGES = (
 )
 HEADLESS_DIR = REPO_ROOT / "headless"
 DEFAULT_AGENT = "claude"
-ENRICH = "spec.enrich"
 GRAFT_TIMEOUT = 600
 HEARTBEAT = 30
 PROGRESS_COMMANDS = ("run", "step", "resume")
@@ -486,8 +485,11 @@ class Headless:
                 "agent_failed", f"{argv[0]} exited {child.returncode} on {task}; see {self.log.where(log)}",
                 "check the agent CLI login or API key in this environment",
             )
-        usage = agent_usage(log.read_text(encoding="utf-8", errors="replace"), self.s.entry.get("usage"))
+        text = log.read_text(encoding="utf-8", errors="replace")
+        usage = agent_usage(text, self.s.entry.get("usage"))
         self.usage.append(usage)
+        for warning in model_warnings(text, usage, os.environ.get("ANTHROPIC_MODEL")):
+            self._say(f"warning: {warning}", indent=1)
         self._say(f"agent finished {task} in {live.duration(time.monotonic() - start)}{_spent(usage)}", indent=1)
         self._line(stage, task, attempt, True, 0, None, "agent finished", start, log, usage, agent=True)
         return log
@@ -763,21 +765,10 @@ class Headless:
         return f"ok: ran {', '.join(ran)}" if ran else "ok (already done)"
 
     def _agent_stage(self) -> str:
-        """The required tasks, then `spec.enrich` unless `--no-enrich`. A failed enrich does not stop the run."""
+        """The required agent tasks. `--no-enrich` is accepted and does nothing: `spec.enrich` is retired."""
         if not self.agent_ready:
             return NO_AGENT_CREDENTIAL
-        message = self._loop("agent", only_context=False)
-        if getattr(self.args, "no_enrich", False):
-            return message
-        if self._kit("agent", "show", ENRICH, *self._out_flag()).get("state") == "done":
-            return message
-        self._say(f"optional agent task: {ENRICH}", indent=1)
-        try:
-            self._run_task("agent", ENRICH)
-        except StageFailed as exc:
-            self._say(f"{ENRICH} failed, going on to check: {exc}", indent=1)
-            return f"{message}; {ENRICH} failed and was skipped: {exc}"
-        return f"{message}, {ENRICH}" if message.startswith("ok: ran") else f"ok: ran {ENRICH}"
+        return self._loop("agent", only_context=False)
 
     def _blocker(self, task_id: str) -> Path:
         return self.out / "reports" / "blockers" / f"{task_id}.md"
@@ -787,15 +778,28 @@ class Headless:
         shown = self._kit("agent", "show", task_id, *self._out_flag())
         preamble = render_prompt(HEADLESS_DIR / "preamble.md", source=str(self.source), sidecar=str(self.out))
         problems: list[str] = []
+        not_done = ""
         attempts = self.s.max_fix + 1
         for attempt in range(1, attempts + 1):
-            self._say(f"task {task_id}: attempt {attempt}/{attempts}" + (f", fixing {len(problems)} check problem(s)" if problems else ""), indent=1)
+            if problems:
+                fixing = f", fixing {len(problems)} check problem(s)"
+            elif not_done:
+                fixing = f", fixing: {task_id} not done"
+            else:
+                fixing = ""
+            self._say(f"task {task_id}: attempt {attempt}/{attempts}{fixing}", indent=1)
             prompt = f"{preamble}\n\n{shown['prompt']}"
             if problems:
                 prompt += (
                     "\n\n## `extractkit check` failed after your last attempt\n\n"
                     + "\n".join(f"- {p}" for p in problems)
                     + "\n\nFix these in the files this task writes, then stop.\n"
+                )
+            elif not_done:
+                prompt += (
+                    f"\n\n## {task_id} is not done after your last attempt\n\n"
+                    f"`extractkit check` passed, but the task is not done: {not_done}.\n\n"
+                    "Write what the task asks for, then stop.\n"
                 )
             self._agent(stage, task_id, attempt, prompt, self.s.allowed_tools)
             blocker = self._blocker(task_id)
@@ -805,26 +809,35 @@ class Headless:
             self._rerun(shown.get("rerun") or [])
             check = self._kit("check", *self._out_flag(), allow_fail=True)
             problems = list(check.get("problems") or [])
-            self._say(f"task {task_id}: check " + ("passed" if check.get("exit") == 0 else f"found {len(problems)} problem(s): {'; '.join(problems[:2])[:200]}"), indent=1)
-            if check.get("exit") == 0 and self._kit("agent", "show", task_id, *self._out_flag()).get("state") == "done":
+            not_done = ""
+            if check.get("exit") != 0:
+                self._say(f"task {task_id}: check found {len(problems)} problem(s): {'; '.join(problems[:2])[:200]}", indent=1)
+                continue
+            state = self._kit("agent", "show", task_id, *self._out_flag())
+            if state.get("state") == "done":
+                self._say(f"task {task_id}: check passed", indent=1)
                 return
-            if check.get("exit") == 0:
-                problems = [f"{task_id} is not done: the file it writes is missing or not valid"]
-        self._write_blocker(task_id, problems)
+            not_done = str(state.get("not_done_reason") or "the file it writes is missing or not valid")
+            self._say(f"task {task_id}: check passed, but {task_id} is not done: {not_done}", indent=1)
+        self._write_blocker(task_id, problems, not_done)
         raise Blocked(
             "task_blocked",
-            f"{task_id} still fails check after {self.s.max_fix} fix attempt(s); blocker at reports/blockers/{task_id}.md",
+            f"{task_id} " + (f"is not done after {self.s.max_fix} fix attempt(s): {not_done}" if not_done
+                            else f"still fails check after {self.s.max_fix} fix attempt(s)")
+            + f"; blocker at reports/blockers/{task_id}.md",
             f"read {self._blocker(task_id)}",
         )
 
-    def _write_blocker(self, task_id: str, problems: list[str]) -> None:
+    def _write_blocker(self, task_id: str, problems: list[str], not_done: str = "") -> None:
         path = self._blocker(task_id)
         path.parent.mkdir(parents=True, exist_ok=True)
-        evidence = "; ".join(problems) or "no detail"
-        path.write_text(
-            f"Reason: extractkit check still fails after {self.s.max_fix} fix attempt(s) (written by headless)\n"
-            f"Evidence: {evidence}\n", encoding="utf-8",
-        )
+        if not_done:
+            reason = f"{task_id} is not done after {self.s.max_fix} fix attempt(s), though extractkit check passes"
+            evidence = not_done
+        else:
+            reason = f"extractkit check still fails after {self.s.max_fix} fix attempt(s)"
+            evidence = "; ".join(problems) or "no detail"
+        path.write_text(f"Reason: {reason} (written by headless)\nEvidence: {evidence}\n", encoding="utf-8")
 
     def _rerun(self, tokens: list[str]) -> None:
         if not tokens:
@@ -924,7 +937,7 @@ def agent_usage(text: str, spec: dict | None) -> dict:
     """
     spec = spec or {}
     found: dict = {}
-    if spec.get("tokens") or spec.get("cost_usd"):
+    if spec.get("tokens") or spec.get("cost_usd") or spec.get("model"):
         for line in reversed([l for l in text.splitlines() if l.strip()][-40:]):
             try:
                 doc = json.loads(line)
@@ -932,8 +945,11 @@ def agent_usage(text: str, spec: dict | None) -> dict:
                 continue
             tokens = [_path(doc, p) for p in spec.get("tokens") or []]
             cost = _path(doc, spec["cost_usd"]) if spec.get("cost_usd") else None
-            if all(t is None for t in tokens) and cost is None:
+            models = _model_names(_path(doc, spec["model"])) if spec.get("model") else []
+            if all(t is None for t in tokens) and cost is None and not models:
                 continue
+            if models:
+                found["model"] = ", ".join(models)
             if any(t is not None for t in tokens):
                 found["tokens"] = sum(int(t or 0) for t in tokens)
             if cost is not None:
@@ -946,8 +962,28 @@ def agent_usage(text: str, spec: dict | None) -> dict:
     return found
 
 
+def _model_names(value: object) -> list[str]:
+    """Models a result reports: the keys of a `modelUsage` mapping, or one name."""
+    if isinstance(value, dict):
+        return sorted(str(k) for k in value)
+    return [value] if isinstance(value, str) and value else []
+
+
+def model_warnings(text: str, usage: dict, wanted: str | None) -> list[str]:
+    """Warnings for a run whose CLI did not know the model, or ran another one than `ANTHROPIC_MODEL`."""
+    found: list[str] = []
+    if "unrecognized_model" in text:
+        found.append("the agent CLI printed unrecognized_model: it does not know the configured model; bump the pinned CLI version")
+    reported = [m for m in str(usage.get("model") or "").split(", ") if m]
+    if wanted and reported and wanted not in reported:
+        found.append(f"the agent ran {', '.join(reported)}, not the configured model {wanted}")
+    return found
+
+
 def _spent(usage: dict) -> str:
     parts = []
+    if usage.get("model"):
+        parts.append(f"model {usage['model']}")
     if usage.get("tokens"):
         parts.append(f"{usage['tokens']:,} tokens")
     if usage.get("cost_usd") is not None:

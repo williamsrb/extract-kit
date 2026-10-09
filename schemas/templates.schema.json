@@ -96,7 +96,14 @@
               "expr": { "type": "string" },
               "line": { "$ref": "#/$defs/line" },
               "construct": { "type": "string" },
-              "effect": { "enum": ["show", "compute", "validate", "format", "select", "route", "css"] }
+              "effect": {
+                "enum": [
+                  "show", "compute", "validate", "format", "select", "route", "css", "authorize", "transition"
+                ]
+              },
+              "dead": { "type": "boolean" },
+              "deadAt": { "type": "string" },
+              "deadReason": { "type": "string" }
             }
           }
         },
@@ -133,6 +140,7 @@
           "signals": { "type": "array", "items": { "$ref": "#/$defs/signal" } },
           "companions": { "type": "array", "items": { "type": "string" } },
           "route": { "type": "string" },
+          "syntax": { "enum": ["none"] },
           "controller": {
             "type": "object",
             "required": ["controller", "line"],
@@ -146,6 +154,36 @@
       }
     },
     "controllers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "predicates"],
+        "properties": {
+          "path": { "type": "string" },
+          "predicates": { "$ref": "#/$defs/scan/properties/predicates" }
+        }
+      }
+    },
+    "static": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "via", "refs"],
+        "properties": {
+          "path": { "type": "string" },
+          "via": { "type": "array", "items": { "enum": ["resolve", "include", "fetch"] } },
+          "refs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["file", "line"],
+              "properties": { "file": { "type": "string" }, "line": { "$ref": "#/$defs/line" } }
+            }
+          }
+        }
+      }
+    },
+    "server": {
       "type": "array",
       "items": {
         "type": "object",

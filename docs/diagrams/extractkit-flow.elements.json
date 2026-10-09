@@ -930,10 +930,10 @@
  {
   "type": "rectangle",
   "id": "op_agent",
-  "x": 770,
-  "y": 1736,
-  "width": 170,
-  "height": 76,
+  "x": 760,
+  "y": 1726,
+  "width": 210,
+  "height": 96,
   "backgroundColor": "#fff3bf",
   "fillStyle": "solid",
   "boundElements": [
@@ -950,15 +950,15 @@
    "type": 3
   },
   "label": {
-   "text": "agent next\nrules.name, business\nconstitution",
-   "fontSize": 16,
+   "text": "agent next (each task)\nrules.name, business,\nconstitution, domain.behavior,\ndonotport, spec.capabilities",
+   "fontSize": 13,
    "fontFamily": 5
   }
  },
  {
   "type": "rectangle",
   "id": "op_chk",
-  "x": 990,
+  "x": 1010,
   "y": 1736,
   "width": 180,
   "height": 76,
@@ -1398,7 +1398,7 @@
   "id": "op_a11",
   "x": 720,
   "y": 1774.0,
-  "width": 50,
+  "width": 40,
   "height": 0,
   "points": [
    [
@@ -1406,7 +1406,7 @@
     0
    ],
    [
-    50,
+    40,
     0.0
    ]
   ],
@@ -1429,9 +1429,9 @@
  {
   "type": "arrow",
   "id": "op_a12",
-  "x": 940,
+  "x": 970,
   "y": 1774.0,
-  "width": 50,
+  "width": 40,
   "height": 0,
   "points": [
    [
@@ -1439,7 +1439,7 @@
     0
    ],
    [
-    50,
+    40,
     0.0
    ]
   ],
@@ -1462,9 +1462,9 @@
  {
   "type": "arrow",
   "id": "op_a13",
-  "x": 1170,
+  "x": 1190,
   "y": 1774.0,
-  "width": 80,
+  "width": 60,
   "height": 0,
   "points": [
    [
@@ -1472,7 +1472,7 @@
     0
    ],
    [
-    80,
+    60,
     0.0
    ]
   ],
@@ -1589,7 +1589,7 @@
  {
   "type": "text",
   "id": "op_l13",
-  "x": 1182,
+  "x": 1194,
   "y": 1714,
   "text": "clean",
   "fontSize": 14,
@@ -1948,8 +1948,8 @@
    }
   ],
   "label": {
-   "text": "agent\nrules.name, business,\nconstitution, spec.enrich",
-   "fontSize": 16,
+   "text": "agent\nrules.name, business, constitution\ndomain.behavior, donotport\nspec.capabilities",
+   "fontSize": 14,
    "fontFamily": 5
   },
   "roundness": {
@@ -1976,7 +1976,7 @@
    }
   ],
   "label": {
-   "text": "check\nrequirements cite evidence",
+   "text": "check\nevidence, spec and secret gates",
    "fontSize": 16,
    "fontFamily": 5
   },
@@ -3237,7 +3237,7 @@
    "type": 3
   },
   "label": {
-   "text": "spec-kit/, PRODUCT.md, DESIGN.md\nuse-cases/, docs/technical, guide\nxp8-compat.md (optional slot)",
+   "text": "spec-kit/evidence/, PRODUCT, DESIGN\nuse-cases/, domain/packet/, docs/technical\nguide, xp8-compat.md (optional slot)",
    "fontSize": 14,
    "fontFamily": 5
   },
@@ -3305,7 +3305,7 @@
    "type": 3
   },
   "label": {
-   "text": "spec.enrich, spec.review",
+   "text": "spec.review",
    "fontSize": 14,
    "fontFamily": 5
   },
@@ -3326,7 +3326,7 @@
    "type": 3
   },
   "label": {
-   "text": "overlay exclude + live_config\nrule names in rules/review.md\nBUSINESS.md, constitution/project.md",
+   "text": "overlay; rule names in rules/review.md\nBUSINESS.md, capabilities.json, constitution\ndomain/*.md, reports/do-not-port.md\nspec-kit/specs/<capability>/",
    "fontSize": 14,
    "fontFamily": 5
   },
@@ -3500,7 +3500,7 @@
    "type": 3
   },
   "label": {
-   "text": "<checkout>: constitution, specs/,\nPRODUCT, DESIGN, BUSINESS.md",
+   "text": "<checkout>: constitution,\ncapability specs/, PRODUCT,\nDESIGN, BUSINESS.md",
    "fontSize": 14,
    "fontFamily": 5
   },
@@ -4214,13 +4214,17 @@
    {
     "id": "ln_a13",
     "type": "arrow"
+   },
+   {
+    "id": "ln_a14",
+    "type": "arrow"
    }
   ],
   "roundness": {
    "type": 3
   },
   "label": {
-   "text": "merge + spec-kit",
+   "text": "merge + spec-kit\n+ domain/packet/",
    "fontSize": 16,
    "fontFamily": 5
   }
@@ -4346,8 +4350,8 @@
    "type": 3
   },
   "label": {
-   "text": "business/BUSINESS.md\nconstitution/project.md",
-   "fontSize": 16,
+   "text": "business/BUSINESS.md\n+ capabilities.json\nconstitution/project.md",
+   "fontSize": 14,
    "fontFamily": 5
   }
  },
@@ -5032,6 +5036,81 @@
   "x": 925,
   "y": 5119,
   "text": "AI review",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "ln_dom",
+  "x": 1100,
+  "y": 5334,
+  "width": 230,
+  "height": 100,
+  "backgroundColor": "#fff3bf",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
+  },
+  "boundElements": [
+   {
+    "id": "ln_a14",
+    "type": "arrow"
+   }
+  ],
+  "label": {
+   "text": "domain/<capability>.md\nreports/do-not-port.md\nspec-kit/specs/<capability>/\n(specs/ promoted)",
+   "fontSize": 14,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "ln_a14",
+  "x": 1030,
+  "y": 5069.0,
+  "width": 70,
+  "height": 315.0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    35,
+    0
+   ],
+   [
+    35,
+    315
+   ],
+   [
+    70,
+    315
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "ln_syn",
+   "fixedPoint": [
+    1,
+    0.94
+   ]
+  },
+  "endBinding": {
+   "elementId": "ln_dom",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "id": "ln_l14",
+  "x": 1075,
+  "y": 5304.0,
+  "text": "AI, from packets",
   "fontSize": 14,
   "strokeColor": "#5f6368",
   "fontFamily": 5

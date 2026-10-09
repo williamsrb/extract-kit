@@ -20,6 +20,7 @@ adapters:
   product.impeccable: product.impeccable
   docs.synthesize: docs.synthesize
   use_cases: use_cases
+  domain.packet: enonic.domain_packet
   spec.kit: spec.kit
   report.compat: enonic.compat
 cms:

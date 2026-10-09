@@ -34,6 +34,10 @@ _SCRIPT_PAIR = re.compile(
     r"""(?P<key>(?P<kq>['"]?)(?P<k>[\w$.-]+)(?P=kq)\s*[:=]\s*)(?P<q>['"])(?P<v>(?:\\.|(?!(?P=q)).)*)(?P=q)""",
 )
 INSTALL_FIX = "npm install -g @playwright/cli, then rerun extractkit step inventory.baseline"
+STATE_FIX = (
+    "check that playwright-cli opens a browser (npm install -g @playwright/cli) and that the "
+    "--storage-state file is a valid Playwright state, then rerun extractkit step inventory.baseline"
+)
 
 
 class CaptureError(Exception):
@@ -148,7 +152,7 @@ def _observed_hosts(pages: list[dict], own: set[str]) -> list[str]:
     return sorted(hosts)
 
 
-def _index(rows: list[dict], base: str) -> str:
+def _index(rows: list[dict], base: str, failure: str | None = None) -> str:
     lines = [
         "# Baseline",
         "",
@@ -156,6 +160,15 @@ def _index(rows: list[dict], base: str) -> str:
         "Screenshots are desktop 1440 and mobile 390; HTML is the rendered DOM.",
         "",
     ]
+    if failure:
+        lines += [
+            "Not captured: the browser session did not start.",
+            "",
+            f"Failure: {failure}",
+            f"Fix: {STATE_FIX}",
+            "",
+        ]
+        return "\n".join(lines)
     if not rows:
         lines += ["No surveyed pages in `inventory/runtime.json`.", ""]
         return "\n".join(lines)
@@ -235,12 +248,12 @@ class EnonicBaselineStep:
                 "pass --storage-state <playwright-state.json>",
             )
             return
-        rows = self._capture(ctx, cfg, base, pages)
-        ctx.write_text("baseline/INDEX.md", _index(rows, base))
+        rows, failure = self._capture(ctx, cfg, base, pages)
+        ctx.write_text("baseline/INDEX.md", _index(rows, base, failure))
         own = {urlsplit(base).hostname or "", urlsplit(cfg.host).hostname or ""}
         _patch_observed_hosts(ctx, _observed_hosts(rows, own))
 
-    def _capture(self, ctx: Any, cfg: CmsConfig, base: str, pages: list[dict]) -> list[dict]:
+    def _capture(self, ctx: Any, cfg: CmsConfig, base: str, pages: list[dict]) -> tuple[list[dict], str | None]:
         rows: list[dict] = []
         used: set[str] = set()
         with tempfile.TemporaryDirectory() as raw:
@@ -249,9 +262,9 @@ class EnonicBaselineStep:
                 _pw(["open"], cwd)
                 _pw(["state-load", str(cfg.storage_state.expanduser().resolve())], cwd)
             except CaptureError as exc:
-                ctx.record_skip(self.id, str(exc), INSTALL_FIX)
+                ctx.record_skip(self.id, str(exc), STATE_FIX)
                 self._close(cwd)
-                return []
+                return [], str(exc)
             for page in pages:
                 slug = _unique(slugify(page["path"]), used)
                 folder = ctx.rel(f"baseline/{slug}")
@@ -264,7 +277,7 @@ class EnonicBaselineStep:
                     )
                 rows.append({**page, "slug": slug, "written": written, "requests": requests})
             self._close(cwd)
-        return rows
+        return rows, None
 
     @staticmethod
     def _close(cwd: Path) -> None:

@@ -939,6 +939,7 @@ class EnonicCmsStep:
             "siteConfig": site_configs,
             "configEnv": config_env,
             "endpoints": endpoints,
+            **_run_mode(config_env),
             **usage,
         }
         schema.validate(payload, "runtime-inventory", what="inventory/runtime.json")
@@ -948,10 +949,17 @@ class EnonicCmsStep:
         schema.validate(volume, "content-volume", what="inventory/content-volume.json")
         ctx.write_json("inventory/content-volume.json", volume)  # type: ignore[attr-defined]
         ctx.write_text("inventory/content-volume.md", render_volume_md(volume))  # type: ignore[attr-defined]
-        _patch_openapi(ctx, endpoints)
+        _patch_openapi(ctx, endpoints, cfg.env)
 
     def check(self, _ctx: object) -> list[str]:
         return []
+
+
+def _run_mode(config_env: list[dict]) -> dict[str, str]:
+    for row in config_env:
+        if str(row.get("key") or "").casefold() == "runmode" and row.get("value") and row.get("redacted") != "true":
+            return {"runMode": str(row["value"])}
+    return {}
 
 
 def _harvest_live_config(
@@ -1047,9 +1055,9 @@ def _live_config_result(
     return site_configs, config_env, live_config.dedupe_endpoints(endpoints), candidates
 
 
-def _patch_openapi(ctx: object, endpoints: list[dict]) -> None:
+def _patch_openapi(ctx: object, endpoints: list[dict], env: str | None = None) -> None:
     path = ctx.rel("integrations/openapi.yaml")  # type: ignore[attr-defined]
-    spec = live_config.patch_openapi(path, endpoints)
+    spec = live_config.patch_openapi(path, endpoints, env)
     if spec is None:
         return
     ctx.write_yaml("integrations/openapi.yaml", spec)  # type: ignore[attr-defined]

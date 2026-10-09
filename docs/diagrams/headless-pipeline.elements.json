@@ -300,8 +300,8 @@
    }
   ],
   "label": {
-   "text": "agent\nrules.name, business,\nconstitution, spec.enrich",
-   "fontSize": 16,
+   "text": "agent\nrules.name, business, constitution\ndomain.behavior, donotport\nspec.capabilities",
+   "fontSize": 14,
    "fontFamily": 5
   },
   "roundness": {
@@ -328,7 +328,7 @@
    }
   ],
   "label": {
-   "text": "check\nrequirements cite evidence",
+   "text": "check\nevidence, spec and secret gates",
    "fontSize": 16,
    "fontFamily": 5
   },

@@ -137,6 +137,8 @@ class UseCasesStep:
         pages = _runtime_pages(ctx)
         slugs = _baseline_slugs(ctx)
         rules = behavior.rules_by_component(ctx)
+        shown: set[int] = set()
+        written: set[str] = set()
         for context in contexts:
             ctx_id = str(context.get("id") or "context")
             title = str(context.get("title") or ctx_id)
@@ -151,6 +153,7 @@ class UseCasesStep:
                 for page in pages:
                     if str(page.get("context") or "runtime") == name:
                         body += _page_journey(page, ctx, slugs)
+                        shown.add(id(page))
             else:
                 for ident in context.get("surfaces") or []:
                     journey = _surface_journey(surfaces.get(str(ident)) or {"id": ident}, rules.get(str(ident)))
@@ -163,10 +166,33 @@ class UseCasesStep:
                     "no fields, config, regions or controller behavior were extracted for it",
                     ["map/bounded-contexts.json"],
                 )
+            written.add(_slug(ctx_id))
             ctx.write_text(  # type: ignore[attr-defined]
                 f"use-cases/{_slug(ctx_id)}.md",
                 "\n".join(body),
             )
+        self._uncovered(ctx, pages, shown, written, slugs)
+
+    @staticmethod
+    def _uncovered(ctx: object, pages: list[dict], shown: set[int], written: set[str],
+                   slugs: dict[str, str]) -> None:
+        """Pages no runtime context claimed (no matched template) get their own journeys."""
+        groups: dict[str, list[dict]] = {}
+        for page in pages:
+            if id(page) not in shown:
+                groups.setdefault(str(page.get("context") or "runtime"), []).append(page)
+        for name, group in groups.items():
+            slug = _slug(f"runtime-{name}")
+            body = [
+                f"# Use cases: Runtime: {name}",
+                "",
+                "Surveyed pages with no component composition recorded. Journeys as Given/When/Then.",
+                "",
+            ]
+            for page in group:
+                body += _page_journey(page, ctx, slugs)
+            target = slug if slug not in written else f"{slug}-uncovered"
+            ctx.write_text(f"use-cases/{target}.md", "\n".join(body))  # type: ignore[attr-defined]
 
     def check(self, _ctx: object) -> list[str]:
         return []

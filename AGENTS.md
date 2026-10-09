@@ -23,7 +23,7 @@ kit checkout can be deleted afterwards.
 | Skill | Use it to |
 | --- | --- |
 | [extract-legacy](skills/extract-legacy/SKILL.md) | Walk the deterministic pipeline, resume a sidecar, promote Spec Kit files |
-| [extract-agentic](skills/extract-agentic/SKILL.md) | Run the agent tasks: decide the context (`context.exclude`, `context.live_config`), name the rules, write `BUSINESS.md`, enrich specs |
+| [extract-agentic](skills/extract-agentic/SKILL.md) | Run the agent tasks: decide the context (`context.exclude`, `context.live_config`), name the rules, write `BUSINESS.md`, domain behavior, do-not-port, capability specs |
 <!-- markdownlint-enable MD013 -->
 
 An assistant that does not load skills reads the `SKILL.md` file and

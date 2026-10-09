@@ -1,0 +1,14 @@
+id: spec.capabilities
+title: Write one spec-kit spec per business capability, independent of the legacy stack
+after: spec.kit
+reads:
+  - business/capabilities.json
+  - business/BUSINESS.md
+  - reports/do-not-port.md
+  - spec-kit/evidence/
+  - rules/view-rules.json
+writes:
+  - spec-kit/specs/
+done_check: capability_specs_written
+checks:
+  - capability_spec

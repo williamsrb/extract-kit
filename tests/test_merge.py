@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 from extractkit_cli.schema import validate
-from steps.core.merge import _merge_report, merge_surfaces
+from steps.core.merge import _merge_report, merge_surfaces, selector_problems
 from tests.support import STATIC_UNTIL, copy_fixture, run, sidecar_run_dir
 
 RUNTIME = {
@@ -150,6 +150,54 @@ class StatusRuleTests(unittest.TestCase):
         self.assertIn("| `a:part:p` | part | live | 2 |", report)
         self.assertIn("| `a:part:q` | part | unobserved | - |", report)
         self.assertIn("Usage probe: `unsupported`", report)
+
+
+def _type(name: str, app: str = "a") -> dict:
+    return {
+        "id": f"{app}:content-type:{name}", "kind": "content-type", "entry": "x", "evidence": [],
+        "status": "unverified-live", "stackRef": {"enonic": {"app": app}},
+    }
+
+
+class VolumeLivenessTests(unittest.TestCase):
+    def _merge(self, total: object) -> dict:
+        volume = {"types": [{"type": "a:booking", "total": total}]}
+        merged, _ = merge_surfaces([_type("booking")], None, volume)
+        return merged[0]
+
+    def test_a_type_with_content_is_live(self) -> None:
+        row = self._merge(12)
+        self.assertEqual((row["status"], row["volume"]), ("live", 12))
+        self.assertIn("volume:a:booking:12", row["evidence"])
+
+    def test_a_type_with_no_content_is_unobserved(self) -> None:
+        self.assertEqual(self._merge(0)["status"], "unobserved")
+
+    def test_a_failed_count_says_nothing(self) -> None:
+        self.assertEqual(self._merge(None)["status"], "unverified-live")
+
+    def test_volume_applies_with_a_survey_too(self) -> None:
+        runtime = _runtime(pages=[{"key": "/", "round": 1, "context": "page", "templateOrder": ["a:p"]}])
+        merged, _ = merge_surfaces(
+            [_component("p"), _type("booking")], runtime, {"types": [{"type": "a:booking", "total": 3}]},
+        )
+        self.assertEqual([r["status"] for r in merged], ["live", "live"])
+
+
+class SelectorProblemTests(unittest.TestCase):
+    def test_a_selector_to_a_missing_type_is_listed(self) -> None:
+        refs = [{"from": "a:content-type:booking", "field": "room", "to": [
+            "a:room", "${app}:booking", "a:gone", "media:image", "a:(x|y)$",
+        ]}]
+        problems = selector_problems([_type("booking"), _type("room")], refs)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("`a:gone`", problems[0])
+        self.assertIn("`a:content-type:booking` field `room`", problems[0])
+
+    def test_the_report_lists_the_problems(self) -> None:
+        report = _merge_report(None, [], [], ["- a problem"])
+        self.assertIn("## Problems", report)
+        self.assertIn("- a problem", report)
 
 
 if __name__ == "__main__":

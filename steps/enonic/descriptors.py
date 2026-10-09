@@ -8,6 +8,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from extractkit_cli import scope
+from steps.core.viewscan.base import Lines, strip_comments
 from steps.enonic.forms import parse_form, parse_regions
 
 # FR-10 coverage kinds. Sibling folders (services/, tasks/, admin/) sit beside site/,
@@ -118,10 +119,28 @@ def _rel(source: Path, path: Path) -> str:
 def collect_xdata_applicability(root: ET.Element) -> list[dict]:
     """`site.xml` `<x-data name allowContentTypes>` entries."""
     return [
-        {"name": node.get("name") or "", "allowContentTypes": node.get("allowContentTypes") or ""}
+        {
+            "name": node.get("name") or "",
+            "allowContentTypes": node.get("allowContentTypes") or "",
+            "optional": (node.get("optional") or "").lower() == "true",
+        }
         for node in root.iter("x-data")
         if node.get("name")
     ]
+
+
+def _type_facts(root: ET.Element) -> dict:
+    """`description`, `display-name-expression` and `super-type` of a content type descriptor."""
+    facts: dict = {}
+    for key, tag in (
+        ("description", "description"),
+        ("displayNameExpression", "display-name-expression"),
+        ("superType", "super-type"),
+    ):
+        value = root.findtext(tag)
+        if value and value.strip():
+            facts[key] = value.strip()
+    return facts
 
 
 def collect_resources(source: Path, exclude: Iterable[str] = ()) -> list[dict]:
@@ -140,6 +159,7 @@ def collect_resources(source: Path, exclude: Iterable[str] = ()) -> list[dict]:
             }
             if site_root is not None:
                 site_row["xData"] = collect_xdata_applicability(site_root)
+                site_row["form"] = parse_form(site_root)
             resources.append(site_row)
         for rel, kind in (*SITE_KINDS, *SIBLING_KINDS):
             for xml_path in _xml_files_in(root / rel):
@@ -156,9 +176,13 @@ def collect_resources(source: Path, exclude: Iterable[str] = ()) -> list[dict]:
                         row["form"] = parse_form(xml_root)
                     if kind in REGION_KINDS:
                         row["regions"] = parse_regions(xml_root)
+                    if kind == "content-type":
+                        row.update(_type_facts(xml_root))
                 resources.append(row)
         resources.extend(_script_only(root, source, app))
         resources.extend(_collect_extra(root, source, app))
+        resources.extend(_cron_jobs(root, source, app))
+        resources.extend(_init_rows(root, source, app))
     return resources
 
 
@@ -176,6 +200,111 @@ def _script_only(root: Path, source: Path, app: str) -> list[dict]:
             if script:
                 rows.append(_extra(kind, folder.name, script, source, app))
     return rows
+
+
+_CRON_EXPR = re.compile(r"\bcron\s*:\s*(?P<v>[^,\n}]+)")
+_CRON_KEY = re.compile(r"""(?:\.(?P<dot>[A-Za-z_$][\w$]*)|\[\s*['"](?P<key>[^'"]+)['"]\s*\])\s*$""")
+_DESCRIPTION = re.compile(r"""\bdescription\s*:\s*(?P<q>['"])(?P<v>[^'"]+)(?P=q)""")
+_REQUIRE_LIB = re.compile(
+    r"""(?:const|let|var)\s+(?P<alias>[\w$]+)\s*=\s*require\(\s*['"](?P<module>/lib/[^'"]+)['"]\s*\)""",
+)
+_INLINE_REQUIRE = re.compile(r"""require\(\s*['"](?P<module>/lib/[^'"]+)['"]\s*\)\s*\.(?P<fn>[A-Za-z_$][\w$]*)\s*\(""")
+_TOP_CALL = re.compile(r"^(?P<call>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\s*\(", re.MULTILINE)
+_LIB_PREFIXES = ("/lib/xp/", "/lib/cron")
+
+
+def _cron_schedule(text: str, lines: Lines) -> dict | None:
+    match = _CRON_EXPR.search(text)
+    if match is None:
+        return None
+    expr = match.group("v").strip()
+    literal = re.fullmatch(r"""(['"])(.*)\1""", expr)
+    if literal:
+        schedule = {"literal": literal.group(2)}
+    else:
+        key = _CRON_KEY.search(expr)
+        schedule = {"key": (key.group("dot") or key.group("key")) if key else expr, "expression": expr}
+    return {**schedule, "line": lines.at(match.start())}
+
+
+def _lib_calls(text: str, lines: Lines) -> list[dict]:
+    """Calls into the app's own `/lib/**` modules (not `/lib/xp/*`): what a job or `main.js` starts."""
+    aliases = {
+        m.group("alias"): m.group("module") for m in _REQUIRE_LIB.finditer(text)
+        if not m.group("module").startswith(_LIB_PREFIXES)
+    }
+    rows: list[dict] = []
+    for alias, module in aliases.items():
+        for call in re.finditer(rf"(?<![\w$.]){re.escape(alias)}\.([A-Za-z_$][\w$]*)\s*\(", text):
+            rows.append({"call": f"{module}#{call.group(1)}", "line": lines.at(call.start())})
+    for call in _INLINE_REQUIRE.finditer(text):
+        if not call.group("module").startswith(_LIB_PREFIXES):
+            rows.append({"call": f"{call.group('module')}#{call.group('fn')}", "line": lines.at(call.start())})
+    return sorted(rows, key=lambda r: (r["line"], r["call"]))
+
+
+def _cron_jobs(root: Path, source: Path, app: str) -> list[dict]:
+    """`cron/<name>/index.js` jobs: the schedule key and the functions or tasks they start."""
+    base = root / "cron"
+    if not base.is_dir():
+        return []
+    rows: list[dict] = []
+    for folder in sorted(p for p in base.iterdir() if p.is_dir()):
+        script = _script(folder / "index") or _script(folder / folder.name)
+        if script is None:
+            continue
+        text = strip_comments(script.read_text(encoding="utf-8", errors="replace"))
+        lines = Lines(text)
+        more: dict = {"starts": _lib_calls(text, lines)}
+        schedule = _cron_schedule(text, lines)
+        if schedule:
+            more["schedule"] = schedule
+        tasks = [
+            {"description": m.group("v"), "line": lines.at(m.start())}
+            for m in _DESCRIPTION.finditer(text)
+        ]
+        if tasks:
+            more["tasks"] = tasks
+        rows.append(_extra("cron", folder.name, script, source, app, **more))
+    return rows
+
+
+def _top_level_actions(text: str, lines: Lines) -> list[dict]:
+    """Statements at brace depth 0 that call something: what `main.js` does when the app starts."""
+    depth_at: list[int] = []
+    depth, quote, escaped = 0, "", False
+    for ch in text:
+        depth_at.append(depth)
+        if quote:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == quote:
+                quote = ""
+        elif ch in "'\"`":
+            quote = ch
+        elif ch in "({[":
+            depth += 1
+        elif ch in ")}]":
+            depth -= 1
+    rows: list[dict] = []
+    for match in _TOP_CALL.finditer(text):
+        if depth_at[match.start()] == 0 and match.group("call") not in {"require", "function", "if", "for", "while"}:
+            rows.append({"action": match.group("call"), "line": lines.at(match.start())})
+    return rows
+
+
+def _init_rows(root: Path, source: Path, app: str) -> list[dict]:
+    main = _script(root / "main")
+    if main is None:
+        return []
+    text = strip_comments(main.read_text(encoding="utf-8", errors="replace"))
+    lines = Lines(text)
+    return [_extra(
+        "init", "main", main, source, app,
+        actions=_top_level_actions(text, lines), starts=_lib_calls(text, lines),
+    )]
 
 
 def _script(base: Path) -> Path | None:

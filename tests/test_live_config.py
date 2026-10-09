@@ -127,7 +127,7 @@ class LiveConfigTests(unittest.TestCase):
             path = Path(raw) / "openapi.yaml"
             path.write_text(
                 "openapi: '3.1.0'\ninfo: {title: t, version: v}\n"
-                "x-production-endpoints: []\npaths: {}\n",
+                "x-observed-endpoints: []\npaths: {}\n",
                 encoding="utf-8",
             )
             spec = live_config.patch_openapi(path, [{
@@ -135,13 +135,41 @@ class LiveConfigTests(unittest.TestCase):
                 "direction": "outbound",
                 "url": "https://tourplan.example.test/api",
                 "source": "siteConfig:/en:tourplanUrl",
-            }])
+            }], "review")
             self.assertIsNotNone(spec)
             assert spec is not None
-            self.assertEqual(
-                spec["x-production-endpoints"][0]["url"],
-                "https://tourplan.example.test/api",
-            )
+            self.assertNotIn("x-production-endpoints", spec)
+            row = spec["x-observed-endpoints"][0]
+            self.assertEqual(row["url"], "https://tourplan.example.test/api")
+            self.assertEqual(row["env"], "review")
+            self.assertNotIn("dangling", row)
+
+    def test_a_review_value_is_never_labeled_production(self) -> None:
+        rows = live_config.mark_observed(
+            [{"provider": "p", "url": "https://x.test/a", "source": "s"}], "review", {},
+        )
+        self.assertEqual(rows[0]["env"], "review")
+        self.assertNotIn("production", str(rows))
+
+    def test_an_endpoint_without_an_inbound_route_is_dangling(self) -> None:
+        paths = {"/_/service/com.example/known": {"get": {}}}
+        rows = live_config.mark_observed([
+            {"provider": "a", "url": "https://h.test/_/service/com.example/known", "source": "s"},
+            {"provider": "b", "url": "https://h.test/_/service/com.example/missing", "source": "s"},
+            {"provider": "c", "url": "https://api.test/v1", "source": "s"},
+            {"provider": "d", "url": "https://h.test/_/service/com.example/known/sub?x=1", "source": "s"},
+            {"provider": "e", "url": "https://h.test/_/image/abc/full", "source": "s"},
+        ], "review", paths)
+        self.assertEqual([bool(r.get("dangling")) for r in rows], [False, True, False, False, False])
+
+
+class RunModeTests(unittest.TestCase):
+    def test_run_mode_comes_from_the_config_env_and_never_from_a_redacted_row(self) -> None:
+        from steps.enonic.cms import _run_mode
+
+        self.assertEqual(_run_mode([{"key": "runMode", "value": "dev"}]), {"runMode": "dev"})
+        self.assertEqual(_run_mode([{"key": "runMode", "value": "x", "redacted": "true"}]), {})
+        self.assertEqual(_run_mode([]), {})
 
 
 if __name__ == "__main__":

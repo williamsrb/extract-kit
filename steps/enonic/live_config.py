@@ -18,7 +18,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from html import unescape
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 from extractkit_cli.common import load_yaml
 from extractkit_cli.errors import ExtractkitError
@@ -282,6 +282,7 @@ def dedupe_endpoints(rows: list[dict[str, str]]) -> list[dict[str, str]]:
     return out
 
 
+SERVICE_ROUTE = re.compile(r"/_/service/[^/]+/[^/?#]+")
 _HOSTMAP_PAIR = re.compile(r"^[^=,\s]+=(?:https?://)?[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+(?::\d+)?(?:/\S*)?$")
 
 
@@ -395,11 +396,32 @@ def site_config_record(
     }
 
 
-def patch_openapi(path, endpoints: list[dict[str, str]]) -> dict | None:
+def _service_path(url: str) -> str | None:
+    """The `/_/service/<app>/<name>` route a URL addresses, when it addresses one."""
+    match = SERVICE_ROUTE.search(urlsplit(url).path)
+    return match.group(0) if match else None
+
+
+def mark_observed(endpoints: list[dict[str, str]], env: str | None, paths: object) -> list[dict]:
+    """Stamp each endpoint with the env it came from, and flag inbound routes the source lacks."""
+    known = set(paths) if isinstance(paths, dict) else set()
+    rows: list[dict] = []
+    for row in endpoints:
+        marked: dict = {**row}
+        if env:
+            marked["env"] = env
+        route = _service_path(row.get("url") or "")
+        if route and known and route not in known:
+            marked["dangling"] = True
+        rows.append(marked)
+    return rows
+
+
+def patch_openapi(path, endpoints: list[dict[str, str]], env: str | None = None) -> dict | None:
     if not path.is_file():
         return None
     spec = load_yaml(path, "integrations/openapi.yaml")
-    spec["x-production-endpoints"] = endpoints
+    spec["x-observed-endpoints"] = mark_observed(endpoints, env, spec.get("paths"))
     info = spec.get("info")
     description = info.get("description") if isinstance(info, dict) else None
     if (
@@ -409,7 +431,7 @@ def patch_openapi(path, endpoints: list[dict[str, str]]) -> dict | None:
     ):
         info["description"] = (
             description.rstrip()
-            + " Production URLs are metadata only. Do not use Try it out "
-            "against production.\n"
+            + " Observed URLs are metadata only, each tagged with the env it came from. "
+            "Do not use Try it out against production.\n"
         )
     return spec

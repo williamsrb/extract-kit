@@ -149,6 +149,7 @@ def template_block(entry: dict, file_ids: dict[str, str], resolver: _Resolver, d
         "assets": scan["assets"],
         "dom": scan["dom"],
         "dataSource": data_source,
+        **({"syntax": entry["syntax"]} if entry.get("syntax") else {}),
     }
 
 
@@ -173,7 +174,7 @@ def _view_files(surface: dict, by_folder: dict[str, list[dict]], by_path: dict[s
         siblings = [e for e in by_folder.get(folder, []) if e["role"] == "template"]
         name = posixpath.basename(folder)
         found = [e for e in siblings if _stem(e["path"]) == name] or siblings[:1]
-    return found[:1]
+    return found
 
 
 def apply(templates: dict, surfaces: list[dict]) -> tuple[list[dict], list[dict]]:
@@ -194,7 +195,10 @@ def apply(templates: dict, surfaces: list[dict]) -> tuple[list[dict], list[dict]
     for surface in surfaces:
         if surface.get("kind") not in DESCRIPTOR_VIEW_KINDS:
             continue
-        for entry in _view_files(surface, by_folder, by_path):
+        views = _view_files(surface, by_folder, by_path)
+        if views:
+            surface["templates"] = [_template_ref(e) for e in dict(((e["path"], e) for e in views)).values()]
+        for entry in views[:1]:
             if entry["path"] in joined:
                 continue
             joined[entry["path"]] = surface["id"]
@@ -225,6 +229,13 @@ def apply(templates: dict, surfaces: list[dict]) -> tuple[list[dict], list[dict]
                     child["surface"] = owner
         components.append(component)
     return components, routes
+
+
+def _template_ref(entry: dict) -> dict:
+    ref = {"file": entry["path"], "engine": entry["engine"]}
+    if entry.get("syntax"):
+        ref["syntax"] = entry["syntax"]
+    return ref
 
 
 def _stack_ref(entry: dict) -> dict:

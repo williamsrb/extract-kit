@@ -1,9 +1,13 @@
 <content-type>
   <display-name>Mini article</display-name>
+  <description>A short article</description>
+  <display-name-expression>${title}</display-name-expression>
   <super-type>base:structured</super-type>
   <form>
     <input name="title" type="TextLine">
       <label>Title</label>
+      <help-text>Shown as the headline</help-text>
+      <default>Untitled</default>
       <occurrences minimum="1" maximum="1"/>
     </input>
     <field-set>

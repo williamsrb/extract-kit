@@ -91,8 +91,10 @@ def acceptance(surface: dict) -> list[str]:
     bullets += _behavior_bullets(surface.get("behavior") or {})
     for key in surface.get("configKeys") or []:
         bullets.append(f"The app reads config key `{key}`.")
+    cited = {r["type"]: r["source"] for r in reversed(surface.get("listenerRefs") or [])}
     for event in surface.get("listeners") or []:
-        bullets.append(f"The app listens for `{event}` events.")
+        where = f" (`{cited[event]}`)" if event in cited else ""
+        bullets.append(f"The app listens for `{event}` events{where}.")
     if surface.get("composition"):
         bullets.append(f"Renders as the composition {_ticks(surface['composition'])}.")
     return bullets
@@ -106,6 +108,8 @@ EFFECT_THEN = {
     "select": "the matching branch is chosen",
     "route": "the visitor is routed",
     "css": "its presentation state changes",
+    "authorize": "access is granted or refused by role",
+    "transition": "the record moves to, or stays in, the state it names",
 }
 
 
@@ -129,6 +133,10 @@ def rule_bullets(rules: list[dict]) -> list[str]:
     for rule in rules:
         name = f" {rule['name']} _(inferred)_." if rule.get("name") else ""
         flag = " Diverges from another copy of this rule." if rule.get("divergent") else ""
+        if rule.get("dead"):
+            flag += f" Dead code: never runs ({rule['deadAt']}, {rule['deadReason']})."
+        if rule.get("unreferenced"):
+            flag += " Unreferenced: its function has no callers."
         out.append(
             f"Rule `{rule['id']}` ({rule['kind']}): `{rule['expression']}` ({rule['source']}).{name}{flag}"
         )
@@ -142,6 +150,7 @@ def evidence_refs(surface: dict) -> list[str]:
     behavior = surface.get("behavior") or {}
     if behavior.get("file"):
         refs.append(str(behavior["file"]))
+    refs += [str(r["source"]) for r in surface.get("listenerRefs") or []]
     return [r for i, r in enumerate(refs) if r and r not in refs[:i]]
 
 

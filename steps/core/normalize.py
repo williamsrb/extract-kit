@@ -9,14 +9,23 @@ from extractkit_cli.common import load_json
 from steps.core.behavior import walk_fields
 from steps.core.viewscan import components as view_components
 from steps.enonic.descriptors import collect_site_mappings
+from steps.enonic.integrations import collect_external_callers
 
 COMPONENT_KINDS = {"page", "layout", "part", "macro", "component", "partial"}
 MODEL_KINDS = {"content-type", "mixin", "x-data", "i18n-bundle"}
 ROUTE_KINDS = {
     "service", "task", "site", "filter", "response-processor", "error", "webapp",
-    "id-provider", "route",
+    "id-provider", "route", "cron", "init", "external-caller",
 }
 ADMIN_KINDS = {"admin-tool", "admin-widget"}
+# Facts a `cron` or `init` resource carries beyond its descriptor: schedule, what it starts.
+JOB_KEYS = ("schedule", "starts", "tasks", "actions")
+
+
+def mixin_id(app: str, ref: str) -> str:
+    """The one id form for a mixin: `<app>:mixin:<name>`. `ref` is `<name>` or `<app>:<name>`."""
+    owner, _, name = ref.rpartition(":")
+    return f"{owner or app}:mixin:{name}"
 
 
 def _mixin_index(resources: list[dict]) -> dict[str, list[dict]]:
@@ -32,13 +41,13 @@ def _expand_field(field: dict, app: str, mixins: dict[str, list[dict]], trail: t
     if ref and "name" not in field:
         key = ref if ":" in ref else f"{app}:{ref}"
         if key not in mixins or key in trail:
-            return [field]
+            return [{**field, "mixin": mixin_id(app, ref)}]
         owner = key.split(":", 1)[0]
         out: list[dict] = []
         for child in mixins[key]:
             for item in _expand_field(child, owner, mixins, (*trail, key)):
                 tagged = dict(item)
-                tagged.setdefault("fromMixin", key)
+                tagged.setdefault("fromMixin", mixin_id(owner, key.split(":", 1)[1]))
                 out.append(tagged)
         return out
     row = dict(field)
@@ -70,7 +79,34 @@ def _surface(resource: dict, mixins: dict[str, list[dict]] | None = None) -> dic
         surface["fields" if kind in MODEL_KINDS else "config"] = form
     if "regions" in resource:
         surface["regions"] = list(resource["regions"])
+    for key in JOB_KEYS:
+        if key in resource:
+            surface[key] = resource[key]
     return surface
+
+
+def _bind_xdata(surfaces: list[dict], resources: list[dict]) -> None:
+    """Attach each x-data surface's `site.xml` binding: which content types it applies to."""
+    bindings: dict[str, dict] = {}
+    for resource in resources:
+        if not isinstance(resource, dict) or resource.get("kind") != "site":
+            continue
+        app = resource.get("app") or "unknown"
+        for item in resource.get("xData") or []:
+            name = item.get("name") or ""
+            key = name if ":" in name else f"{app}:{name}"
+            bindings[key] = {
+                "allowContentTypes": (item.get("allowContentTypes") or "").replace("${app}", app),
+                "optional": bool(item.get("optional")),
+                "source": resource.get("path") or "",
+            }
+    for surface in surfaces:
+        if surface["kind"] != "x-data":
+            continue
+        app = surface["stackRef"]["enonic"]["app"]
+        name = surface["id"].rsplit(":", 1)[-1]
+        binding = bindings.get(f"{app}:{name}")
+        surface["binding"] = binding if binding else {"unbound": True}
 
 
 def _surface_base(kind: str, name: str, app: str, path: str) -> dict:
@@ -104,6 +140,7 @@ def build_references(types: list[dict]) -> list[dict]:
 
 BEHAVIOR_KEYS = (
     "file", "imports", "calls", "queries", "methods", "views", "i18n", "configKeys", "listeners",
+    "inputs", "responses", "auth",
 )
 
 
@@ -173,6 +210,7 @@ class NormalizeStep:
         by_folder = _controllers_by_folder(rows)
         by_file = {r.get("file"): r for r in rows}
         surfaces = [_surface(r, mixins) for r in resources if isinstance(r, dict)]
+        _bind_xdata(surfaces, resources)
         for surface in surfaces:
             folder = Path(surface["entry"]).parent.as_posix()
             match = by_file.get(surface["entry"]) or by_folder.get(folder)
@@ -182,6 +220,18 @@ class NormalizeStep:
                 app = surface["stackRef"]["enonic"]["app"]
                 surface["configKeys"] = _app_signals(rows, app, "configKeys", "key")
                 surface["listeners"] = _app_signals(rows, app, "listeners", "type")
+                surface["listenerRefs"] = sorted(
+                    ({"type": item["type"], "source": f"{row['file']}:{item['line']}"}
+                     for row in rows if row.get("app") == app for item in row.get("listeners") or []),
+                    key=lambda r: (r["type"], r["source"]),
+                )
+        for caller in collect_external_callers(ctx.source, scope.of(ctx)):  # type: ignore[attr-defined]
+            surface = _surface_base("external-caller", caller["name"], caller["app"], caller["path"])
+            surface["callers"] = caller["targets"]
+            surface["schedules"] = caller["schedules"]
+            if caller.get("includedBy"):
+                surface["includedBy"] = caller["includedBy"]
+            surfaces.append(surface)
         template_components, template_routes = view_components.apply(_load_templates(ctx), surfaces)
         surfaces += template_components + template_routes
         components = [s for s in surfaces if s["kind"] in COMPONENT_KINDS]

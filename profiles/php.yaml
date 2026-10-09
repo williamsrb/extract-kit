@@ -25,6 +25,7 @@ adapters:
   product.impeccable: product.impeccable
   docs.synthesize: docs.synthesize
   use_cases: use_cases
+  domain.packet: null
   spec.kit: spec.kit
   report.compat: null
 deps:

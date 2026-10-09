@@ -78,7 +78,7 @@ The file opens with the H1 `# Spec review`. Each finding is an H3
 - `Spec:` a `spec-kit/specs/<slug>/spec.md` path, optionally followed by an FR
   id.
 - `Severity:` one of `high`, `medium`, `low`.
-- `Fix in:` one of `extractor`, `rules/review.md`, `spec.enrich`, `source`.
+- `Fix in:` one of `extractor`, `rules/review.md`, `spec.capabilities`, `source`.
 - `Evidence:` at least one ref: a source `path:line`, a map id, a context id
   or a rule id.
 

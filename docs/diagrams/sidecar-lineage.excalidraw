@@ -387,6 +387,10 @@
           "type": "arrow"
         },
         {
+          "id": "a14",
+          "type": "arrow"
+        },
+        {
           "id": "syn_label",
           "type": "text"
         }
@@ -403,7 +407,7 @@
       "y": 380,
       "width": 210,
       "height": 70,
-      "text": "merge + spec-kit",
+      "text": "merge + spec-kit\n+ domain/packet/",
       "fontSize": 16,
       "fontFamily": 5,
       "textAlign": "center",
@@ -599,8 +603,8 @@
       "y": 276,
       "width": 220,
       "height": 54,
-      "text": "business/BUSINESS.md\nconstitution/project.md",
-      "fontSize": 16,
+      "text": "business/BUSINESS.md\n+ capabilities.json\nconstitution/project.md",
+      "fontSize": 14,
       "fontFamily": 5,
       "textAlign": "center",
       "verticalAlign": "middle",
@@ -1303,6 +1307,96 @@
       "x": 825,
       "y": 505,
       "text": "AI review",
+      "fontSize": 14,
+      "strokeColor": "#5f6368",
+      "fontFamily": 5
+    },
+    {
+      "type": "rectangle",
+      "id": "dom",
+      "x": 1000,
+      "y": 720,
+      "width": 230,
+      "height": 100,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "roundness": {
+        "type": 3
+      },
+      "boundElements": [
+        {
+          "id": "a14",
+          "type": "arrow"
+        },
+        {
+          "id": "dom_label",
+          "type": "text"
+        }
+      ],
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "dom_label",
+      "x": 1010,
+      "y": 730,
+      "width": 210,
+      "height": 80,
+      "text": "domain/<capability>.md\nreports/do-not-port.md\nspec-kit/specs/<capability>/\n(specs/ promoted)",
+      "fontSize": 14,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "dom"
+    },
+    {
+      "type": "arrow",
+      "id": "a14",
+      "x": 930,
+      "y": 455,
+      "width": 70,
+      "height": 315,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          35,
+          0
+        ],
+        [
+          35,
+          315
+        ],
+        [
+          70,
+          315
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "startBinding": {
+        "elementId": "syn",
+        "fixedPoint": [
+          1,
+          0.94
+        ]
+      },
+      "endBinding": {
+        "elementId": "dom",
+        "fixedPoint": [
+          0,
+          0.5
+        ]
+      },
+      "roughness": 2
+    },
+    {
+      "type": "text",
+      "id": "l14",
+      "x": 975,
+      "y": 690,
+      "text": "AI, from packets",
       "fontSize": 14,
       "strokeColor": "#5f6368",
       "fontFamily": 5

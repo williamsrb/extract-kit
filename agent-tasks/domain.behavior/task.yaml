@@ -1,0 +1,16 @@
+id: domain.behavior
+title: Write the domain behavior of each business capability (states, formulas, calls, emails, jobs)
+after: spec.kit
+reads:
+  - business/capabilities.json
+  - business/BUSINESS.md
+  - domain/packet/INDEX.json
+  - rules/view-rules.json
+  - map/route-map.json
+  - integrations/openapi.yaml
+writes:
+  - domain/
+done_check: domain_files_written
+rerun: step spec.kit
+checks:
+  - domain_behavior

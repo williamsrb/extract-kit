@@ -9,7 +9,7 @@ from typing import ClassVar
 
 from extractkit_cli.schema import validate
 from steps.core import templates, view_rules
-from steps.core.viewscan import expr as ex
+from steps.core.viewscan import dead, expr as ex
 from tests.support import REPO
 
 MINI = REPO / "tests" / "fixtures" / "templates-mini"
@@ -249,6 +249,31 @@ class ReviewCarryOverTests(unittest.TestCase):
         self.assertTrue(view_rules.parse_review(text)["VR-abcdef0123"]["outOfScope"])
 
 
+class NameBatchTests(unittest.TestCase):
+    REVIEW = (
+        "# Rule review\n\n"
+        "- [ ] `VR-aaaaaaaaaa` `a.html:1` · eligibility · `x == 1`\n  - name:\n  - intent:\n  - out-of-scope: no\n\n"
+        "- [x] `VR-bbbbbbbbbb` `b.html:2` · eligibility · `y == 2`\n  - name: kept\n  - intent: kept it\n  - out-of-scope: no\n\n"
+        "- [ ] `VR-cccccccccc` `c.html:3` · eligibility · `z == 3`\n  - name:\n  - intent:\n  - out-of-scope: yes\n"
+    )
+
+    def test_names_go_in_by_id_and_survive_a_re_parse(self) -> None:
+        names = {"VR-aaaaaaaaaa": ("Open order", "An order is open."), "VR-cccccccccc": ("Gate", "Gate rule.")}
+        text, applied, unknown, ticked = view_rules.apply_names(self.REVIEW, names)
+        self.assertEqual((applied, unknown, ticked), (["VR-aaaaaaaaaa", "VR-cccccccccc"], [], []))
+        state = view_rules.parse_review(text)
+        self.assertEqual(state["VR-aaaaaaaaaa"]["name"], "Open order")
+        self.assertEqual(state["VR-aaaaaaaaaa"]["intent"], "An order is open.")
+        self.assertIn("  - name: Open order _(inferred)_\n", text)
+        self.assertTrue(state["VR-cccccccccc"]["outOfScope"])
+
+    def test_a_ticked_rule_and_an_unknown_id_are_reported_not_applied(self) -> None:
+        names = {"VR-bbbbbbbbbb": ("New", "New words."), "VR-dddddddddd": ("Ghost", "No such rule.")}
+        text, applied, unknown, ticked = view_rules.apply_names(self.REVIEW, names)
+        self.assertEqual((applied, unknown, ticked), ([], ["VR-dddddddddd"], ["VR-bbbbbbbbbb"]))
+        self.assertEqual(text, self.REVIEW)
+
+
 class SampleTests(unittest.TestCase):
     def test_samples_are_capped_and_always_empty_business_rules_are_possibly_dead(self) -> None:
         rules, _ = rules_in(MINI / "react")
@@ -279,3 +304,160 @@ class CoverageTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DeadCodeTests(unittest.TestCase):
+    def test_markup_spans_cover_comments_and_constant_false_blocks(self) -> None:
+        from steps.core.viewscan import dead
+
+        text = (
+            "<div th:text=\"${a}\"></div>\n"
+            "<!-- <div data-th-if=\"${booking.status == 'paid'}\">x</div> -->\n"
+            "<div data-th-if=\"false\"><span th:if=\"${x > 3}\">no</span>\n</div>\n"
+            "<!--/*/ <p th:if=\"${live}\">proto</p> /*/-->\n"
+        )
+        spans = dead.markup_spans(text)
+        self.assertEqual([(s.start, s.end, s.gate) for s in spans], [(2, 2, 2), (3, 4, 3)])
+        self.assertEqual(spans[0].reason, "html-comment")
+
+    def test_js_spans_follow_module_constants(self) -> None:
+        from steps.core.viewscan import dead
+
+        text = (
+            "const DISABLED = true\nconst ON = false\n"
+            "function a(x) {\n  if (DISABLED) return 1\n  if (x > 3) { go() }\n}\n"
+            "function b() {\n  if (ON) { foo() }\n  else { keep() }\n  if (!ON) { fine() } else { gone() }\n}\n"
+        )
+        got = [(s.start, s.end, s.gate) for s in dead.js_spans(text)]
+        self.assertEqual(got, [(5, 5, 4), (8, 8, 8), (10, 10, 10)])
+
+    def test_js_spans_stay_off_live_code(self) -> None:
+        from steps.core.viewscan import dead
+
+        conditional_exit = "const FLAG = true\nfunction f(a) {\n  if (FLAG) {\n    if (a)\n      return\n  }\n  live(a)\n}\n"
+        reassigned = "let ON = false\nfunction f() {\n  ON = true\n  if (ON) { go() }\n}\n"
+        self.assertEqual(dead.js_spans(conditional_exit), [])
+        self.assertEqual(dead.js_spans(reassigned), [])
+
+    def test_js_spans_cover_a_whole_else_if_chain(self) -> None:
+        from steps.core.viewscan import dead
+
+        text = "const T = true\nfunction f(x) {\n  if (T) {\n    a()\n  } else if (x) {\n    b()\n  } else {\n    c()\n  }\n  d()\n}\n"
+        self.assertEqual([(s.start, s.end, s.gate) for s in dead.js_spans(text)], [(5, 9, 3)])
+
+    def test_a_rule_in_a_commented_block_is_dead_with_its_gate_line(self) -> None:
+        rules, _groups = rules_in(REPO / "tests" / "fixtures" / "dead-code")
+        commented = [r for r in rules if r["source"].startswith("xp/") and r["expression"].count("paid")]
+        self.assertEqual(len(commented), 1)
+        self.assertTrue(commented[0]["dead"])
+        self.assertEqual(commented[0]["deadAt"], "xp/src/main/resources/site/parts/mini-dead/mini-dead.html:2")
+        self.assertEqual(commented[0]["deadReason"], "html-comment")
+
+    def test_a_rule_behind_a_constant_gate_is_dead_and_the_gate_is_not(self) -> None:
+        rules, _groups = rules_in(REPO / "tests" / "fixtures" / "dead-code")
+        by_expr = {r["expression"]: r for r in rules if r["source"].startswith("web/")}
+        late = by_expr["booking.status === 'late'"]
+        paid = by_expr["booking.status === 'paid' && booking.total > 500"]
+        live = by_expr["booking.total > 500"]
+        self.assertEqual((late["deadAt"], paid["deadAt"]), ("web/src/Gated.tsx:7", "web/src/Gated.tsx:14"))
+        self.assertEqual(paid["deadReason"], "DISABLED is always true")
+        self.assertNotIn("dead", live)
+        self.assertNotIn("dead", by_expr["!(DISABLED)"])
+
+    def test_live_rules_carry_no_dead_flag(self) -> None:
+        rules, _groups = rules_in(MINI)
+        self.assertFalse(any(r.get("dead") for r in rules))
+
+
+class UnreferencedTests(unittest.TestCase):
+    def test_an_exported_lib_function_without_callers_marks_the_rules_inside_it(self) -> None:
+        import json
+
+        with tempfile.TemporaryDirectory() as raw:
+            source = Path(raw)
+            (source / "graft/.graph").mkdir(parents=True)
+            nodes = [
+                {"id": "a/lib/x.js#used", "name": "used", "kind": "function", "path": "a/lib/x.js",
+                 "span": "L1-L5", "exported": True},
+                {"id": "a/lib/x.js#orphan", "name": "orphan", "kind": "function", "path": "a/lib/x.js",
+                 "span": "L7-L12", "exported": True},
+                {"id": "a/site/p.js#get", "name": "get", "kind": "function", "path": "a/site/p.js",
+                 "span": "L1-L9", "exported": True},
+            ]
+            edges = [
+                {"source": "a/site/p.js", "target": "a/lib/x.js#used", "relation": "calls"},
+                {"source": "a/lib/x.js", "target": "a/lib/x.js#orphan", "relation": "contains"},
+            ]
+            (source / "graft/.graph/wiring.json").write_text(json.dumps({"nodes": nodes, "edges": edges}))
+            found = view_rules.unreferenced_functions(source)
+            self.assertEqual([f["name"] for f in found], ["orphan"])
+            rules = [{"source": "a/lib/x.js:9"}, {"source": "a/lib/x.js:3"}, {"source": "a/lib/y.js:9"}]
+            view_rules.mark_unreferenced(rules, found)
+            self.assertEqual([bool(r.get("unreferenced")) for r in rules], [True, False, False])
+
+    def test_without_a_graft_index_nothing_is_marked(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            self.assertEqual(view_rules.unreferenced_functions(Path(raw)), [])
+
+
+class LiteralHyphenTests(unittest.TestCase):
+    def test_a_hyphen_inside_a_string_literal_is_kept(self) -> None:
+        self.assertEqual(ex.shape("type == 'booking-contact'"), '$type == "booking-contact"')
+        self.assertEqual(ex.shape("type == `pre-paid`"), '$type == "pre-paid"')
+        self.assertEqual(ex.literals("type == `pre-${kind}`"), [])
+        self.assertEqual(ex.shape("a-b > 3 && x == 'pre-paid'"), '$a - $b > 3 && $x == "pre-paid"')
+
+
+class ServerRuleTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        import shutil
+
+        cls._tmp = tempfile.TemporaryDirectory()
+        source = Path(cls._tmp.name) / "legacy"
+        shutil.copytree(REPO / "tests" / "fixtures" / "enonic-mini", source)
+        shutil.copytree(REPO / "tests" / "fixtures" / "server-rules", source, dirs_exist_ok=True)
+        lib = source / "xp/src/main/resources/lib"
+        (lib / "vendor.min.js").write_text("if (a.status === 'x' && b.price > 1) { go() }\n", encoding="utf-8")
+        cls.templates = scan(source)
+        cls.rules = view_rules.build_rules(cls.templates, [], [], {})
+        validate(cls.templates, "templates", what="templates.json")
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls._tmp.cleanup()
+
+    def _server(self) -> dict[str, dict]:
+        return {r["expression"]: r for r in self.rules if r["scope"] == "server"}
+
+    def test_status_comparison_role_check_and_amount_arithmetic_are_server_rules(self) -> None:
+        rules = self._server()
+        gate = rules["booking.status === STATUS_OPEN && Auth.hasRole('role:system.admin')"]
+        self.assertEqual((gate["effect"], gate["kind"], gate["bucket"]), ("authorize", "authorization", "business"))
+        deposit = rules["total * DEPOSIT_RATE"]
+        self.assertEqual((deposit["effect"], deposit["kind"]), ("compute", "calculation"))
+        self.assertEqual(deposit["source"], "xp/src/main/resources/lib/mini-pricing.js:7")
+        self.assertIn("booking.dueDate < now", rules)
+
+    def test_a_status_only_comparison_is_a_lifecycle_rule(self) -> None:
+        from steps.core.viewscan import server
+
+        found = server.scan("if (booking.status === 'paid') { x() }\nif (a.name === 'b') { y() }\n")
+        self.assertEqual([(p["expr"], p["effect"]) for p in found], [("booking.status === 'paid'", "transition")])
+        rule = view_rules.build_rules(
+            {"files": [], "controllers": [], "server": [{"path": "lib/x.js", "predicates": found}], "coverage": {}},
+            [], [], {},
+        )[0]
+        self.assertEqual((rule["kind"], rule["scope"], rule["bucket"]), ("lifecycle", "server", "business"))
+
+    def test_view_rules_say_so_and_vendored_minified_files_are_skipped(self) -> None:
+        self.assertTrue(all(r["scope"] in ("view", "server") for r in self.rules))
+        self.assertFalse(any("vendor.min.js" in r["source"] for r in self.rules))
+
+    def test_a_dead_server_branch_is_marked(self) -> None:
+        from steps.core.viewscan import server
+
+        text = "const OFF = true\nfunction f(b) {\n  if (OFF) return 1\n  if (b.status === 'x') { go() }\n}\n"
+        found = server.scan(text)
+        dead.mark(found, dead.js_spans(text), "lib/f.js")
+        self.assertEqual(found[0]["deadAt"], "lib/f.js:3")

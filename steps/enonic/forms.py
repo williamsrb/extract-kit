@@ -20,6 +20,11 @@ def _label(element: ET.Element) -> str | None:
     return text.strip() if text and text.strip() else None
 
 
+def _text(element: ET.Element, tag: str) -> str | None:
+    value = element.findtext(tag)
+    return value.strip() if value and value.strip() else None
+
+
 def _occurrences(element: ET.Element) -> dict:
     node = element.find("occurrences")
     if node is None:
@@ -57,6 +62,10 @@ def _field(element: ET.Element, field_set: str | None) -> dict:
     label = _label(element)
     if label:
         field["label"] = label
+    for key, tag in (("helpText", "help-text"), ("default", "default")):
+        value = _text(element, tag)
+        if value is not None:
+            field[key] = value
     field["occurrences"] = _occurrences(element)
     config = _config(element)
     if config:
@@ -69,6 +78,9 @@ def _field(element: ET.Element, field_set: str | None) -> dict:
 def _option_set(element: ET.Element, field_set: str | None) -> dict:
     field = _field(element, field_set)
     field["type"] = "option-set"
+    expanded = _text(element, "expanded")
+    if expanded is not None:
+        field["expanded"] = expanded.lower() == "true"
     options_node = element.find("options")
     options: list[dict] = []
     if options_node is not None:
@@ -81,6 +93,9 @@ def _option_set(element: ET.Element, field_set: str | None) -> dict:
             label = _label(option)
             if label:
                 row["label"] = label
+            default = _text(option, "default")
+            if default is not None:
+                row["default"] = default
             row["items"] = _items(option, field_set)
             options.append(row)
     field["options"] = options

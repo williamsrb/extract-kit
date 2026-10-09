@@ -287,13 +287,17 @@
    {
     "id": "a13",
     "type": "arrow"
+   },
+   {
+    "id": "a14",
+    "type": "arrow"
    }
   ],
   "roundness": {
    "type": 3
   },
   "label": {
-   "text": "merge + spec-kit",
+   "text": "merge + spec-kit\n+ domain/packet/",
    "fontSize": 16,
    "fontFamily": 5
   }
@@ -419,8 +423,8 @@
    "type": 3
   },
   "label": {
-   "text": "business/BUSINESS.md\nconstitution/project.md",
-   "fontSize": 16,
+   "text": "business/BUSINESS.md\n+ capabilities.json\nconstitution/project.md",
+   "fontSize": 14,
    "fontFamily": 5
   }
  },
@@ -1105,6 +1109,81 @@
   "x": 825,
   "y": 505,
   "text": "AI review",
+  "fontSize": 14,
+  "strokeColor": "#5f6368",
+  "fontFamily": 5
+ },
+ {
+  "type": "rectangle",
+  "id": "dom",
+  "x": 1000,
+  "y": 720,
+  "width": 230,
+  "height": 100,
+  "backgroundColor": "#fff3bf",
+  "fillStyle": "solid",
+  "roundness": {
+   "type": 3
+  },
+  "boundElements": [
+   {
+    "id": "a14",
+    "type": "arrow"
+   }
+  ],
+  "label": {
+   "text": "domain/<capability>.md\nreports/do-not-port.md\nspec-kit/specs/<capability>/\n(specs/ promoted)",
+   "fontSize": 14,
+   "fontFamily": 5
+  }
+ },
+ {
+  "type": "arrow",
+  "id": "a14",
+  "x": 930,
+  "y": 455.0,
+  "width": 70,
+  "height": 315.0,
+  "points": [
+   [
+    0,
+    0
+   ],
+   [
+    35,
+    0
+   ],
+   [
+    35,
+    315
+   ],
+   [
+    70,
+    315
+   ]
+  ],
+  "endArrowhead": "arrow",
+  "startBinding": {
+   "elementId": "syn",
+   "fixedPoint": [
+    1,
+    0.94
+   ]
+  },
+  "endBinding": {
+   "elementId": "dom",
+   "fixedPoint": [
+    0,
+    0.5
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "id": "l14",
+  "x": 975,
+  "y": 690.0,
+  "text": "AI, from packets",
   "fontSize": 14,
   "strokeColor": "#5f6368",
   "fontFamily": 5

@@ -110,6 +110,13 @@ def _capability_outline(section: str) -> list[str]:
     return outline
 
 
+def _engine_label(template: dict) -> str:
+    """`thymeleaf`, or `static HTML via thymeleaf` for a file the controller renders with no engine syntax."""
+    if template.get("syntax") == "none":
+        return f"static HTML via {template['engine']}"
+    return str(template["engine"])
+
+
 def _design_md(surfaces: list[dict]) -> str:
     components = [
         s for s in surfaces
@@ -137,7 +144,9 @@ def _design_md(surfaces: list[dict]) -> str:
                 lines.append("- Template order: " + ", ".join(f"`{c}`" for c in composition))
             template = surface.get("template")
             if template:
-                lines.append(f"- Template: `{template['file']}` ({template['engine']})")
+                lines.append(f"- Template: `{template['file']}` ({_engine_label(template)})")
+                for other in (surface.get("templates") or [])[1:]:
+                    lines.append(f"- Template: `{other['file']}` ({_engine_label(other)})")
                 if template["inputs"]:
                     lines.append("- Inputs: " + ", ".join(f"`{i['name']}`" for i in template["inputs"]))
                 kids = [c["surface"] or f"{c['ref']} (unresolved)" for c in template["children"]]

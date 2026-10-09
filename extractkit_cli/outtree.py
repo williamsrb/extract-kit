@@ -143,5 +143,15 @@ def build_manifest(
     }
 
 
+def carry_skips(previous: list[dict], current: list[dict], ran: set[str]) -> list[dict]:
+    """Skips of steps this run did not execute, then this run's own.
+
+    A partial rerun (`extractkit step ...`) must not erase what an earlier run
+    skipped; a step that did run replaces its own earlier skips.
+    """
+    kept = [skip for skip in previous if isinstance(skip, dict) and skip.get("step") not in ran]
+    return kept + list(current)
+
+
 def manifest_text(payload: dict) -> str:
     return dump_yaml(payload)

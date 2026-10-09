@@ -15,7 +15,8 @@ from pathlib import Path
 
 from extractkit_cli import schema, scope
 from extractkit_cli.common import load_json
-from steps.core.viewscan import controller, detect, markup, script
+from steps.enonic.descriptors import iter_resources_roots
+from steps.core.viewscan import controller, dead, detect, markup, script, server
 
 RENDER_LIBS = ("thymeleaf", "mustache", "freemarker", "handlebars", "pebble")
 SCHEMA_ID = "extractkit.templates/v1"
@@ -87,6 +88,18 @@ def _tagged(scan: dict, path: str) -> dict:
     return scan
 
 
+def _mark_dead(detection: detect.Detection, rel: str, text: str, scan: dict) -> None:
+    """Flag predicates inside comments, constant-false branches and `th:if="false"` blocks."""
+    if (
+        detection.engine in markup.MARKUP_ENGINES and not rel.endswith((".ts", ".js", ".vue"))
+        or detection.engine == "jquery" and rel.endswith((".html", ".htm"))
+    ):
+        spans = dead.markup_spans(text)
+    else:
+        spans = dead.js_spans(text)
+    dead.mark(scan["predicates"], spans, rel)
+
+
 def _id_markers(selector: str) -> list[re.Pattern[str]]:
     patterns: list[re.Pattern[str]] = []
     for sign, name in re.findall(r"([#.])([\w-]+)", selector):
@@ -125,9 +138,105 @@ def _controller_predicates(source: Path, rows: list[dict]) -> list[dict]:
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
         predicates = controller.scan(text, max(int(v["line"]) for v in views))
+        dead.mark(predicates, dead.js_spans(text), str(row["file"]))
         if predicates:
             found.append({"path": row["file"], "predicates": predicates})
     return found
+
+
+# What a file written for each engine contains. A bound `.html` without any of it is static HTML
+# the controller passes through the engine, not a template of that engine.
+SYNTAX = {
+    "thymeleaf": re.compile(r"(?<![\w-])th:\w+|\bdata-th-\w+|\[\[|\$\{|\*\{|#\{"),
+    "freemarker": re.compile(r"<#|</#|<@|\$\{"),
+    "mustache": re.compile(r"\{\{"),
+    "handlebars": re.compile(r"\{\{"),
+    "pebble": re.compile(r"\{\{|\{%"),
+}
+STATIC_REF = re.compile(r"""(?P<q>['"`])(?P<ref>[^'"`\s]+\.html?)(?:\?[^'"`]*)?(?P=q)""")
+FETCH_HINT = re.compile(r"fetch|\.get\s*\(|\.load\s*\(|ajax|\burl\b|template|href|src|getResource|readText", re.IGNORECASE)
+
+SERVER_DIRS = ("lib", "services", "tasks", "cron")
+SERVER_SUFFIXES = {".js", ".es6", ".ts"}
+
+
+def _server_predicates(source: Path, exclude: Iterable[str]) -> list[dict]:
+    """Business conditions in server-side JS under each resources root's `lib`, `services`, `tasks`, `cron`."""
+    found: list[dict] = []
+    for root in iter_resources_roots(source, exclude):
+        for name in SERVER_DIRS:
+            base = root / name
+            if not base.is_dir():
+                continue
+            for path in sorted(base.rglob("*")):
+                if (
+                    path.suffix not in SERVER_SUFFIXES or not path.is_file() or ".min." in path.name
+                    or path.name.endswith(".d.ts") or scope.SKIP_DIRS.intersection(path.parts)
+                    or path.stat().st_size > detect.MAX_BYTES
+                ):
+                    continue
+                text = path.read_text(encoding="utf-8", errors="replace")
+                predicates = server.scan(text)
+                if not predicates:
+                    continue
+                rel = detect.rel_path(source, path)
+                dead.mark(predicates, dead.js_spans(text), rel)
+                found.append({"path": rel, "predicates": predicates})
+    return sorted(found, key=lambda row: row["path"])
+
+
+def _static_html(
+    source: Path, paths: list[Path], entries: list[dict], controllers: list[dict],
+) -> list[dict]:
+    """HTML files no engine owns but the code still loads: `resolve()`, includes, frontend fetches."""
+    owned = {e["path"] for e in entries}
+    html = {detect.rel_path(source, p): p for p in paths if p.suffix.lower() in (".html", ".htm")}
+    found: dict[str, dict] = {}
+
+    def add(path: str, via: str, file: str, line: int) -> None:
+        row = found.setdefault(path, {"path": path, "via": [], "refs": []})
+        if via not in row["via"]:
+            row["via"].append(via)
+        row["refs"].append({"file": file, "line": line})
+
+    for row in controllers:
+        folder = posixpath.dirname(str(row.get("file") or ""))
+        for view in row.get("views") or []:
+            ref = view.get("ref")
+            target = posixpath.normpath(posixpath.join(folder, str(ref))) if ref else ""
+            if view.get("via") == "resolve" and target in html and target not in owned:
+                add(target, "resolve", str(row["file"]), int(view["line"]))
+    for entry in entries:
+        for child in entry["scan"]["children"]:
+            ref = str(child["ref"]).strip("/")
+            base = posixpath.dirname(entry["path"])
+            for candidate in (posixpath.normpath(posixpath.join(base, ref + ".html")), ref + ".html"):
+                hit = candidate if candidate in html else next(
+                    (h for h in html if h.endswith("/" + candidate)), None,
+                )
+                if hit and hit not in owned:
+                    add(hit, "include", entry["path"], int(child["line"]))
+                    break
+    by_name: dict[str, list[str]] = {}
+    for rel in html:
+        by_name.setdefault(posixpath.basename(rel), []).append(rel)
+    for path in paths:
+        if path.suffix.lower() not in (".js", ".ts", ".jsx", ".tsx", ".vue", ".html", ".htm"):
+            continue
+        if path.stat().st_size > detect.MAX_BYTES:
+            continue
+        rel = detect.rel_path(source, path)
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for match in STATIC_REF.finditer(text):
+            line_start = text.rfind("\n", 0, match.start()) + 1
+            context = text[max(line_start, match.start() - 80):match.start()]
+            names = by_name.get(posixpath.basename(match.group("ref")), [])
+            if len(names) == 1 and names[0] not in owned and names[0] != rel and FETCH_HINT.search(context):
+                add(names[0], "fetch", rel, text.count("\n", 0, match.start()) + 1)
+    for row in found.values():
+        row["refs"] = [{"file": f, "line": n} for f, n in sorted({(r["file"], r["line"]) for r in row["refs"]})]
+        row["via"].sort()
+    return sorted(found.values(), key=lambda r: r["path"])
 
 
 def collect(
@@ -168,6 +277,10 @@ def collect(
             "role": found.role, "confidence": found.confidence, "signals": found.signals,
             "scan": _scan(found, rel, texts[rel]),
         }
+        _mark_dead(found, rel, texts[rel], entry["scan"])
+        pattern = SYNTAX.get(found.engine)
+        if rel in bindings and rel.endswith((".html", ".htm")) and pattern and not pattern.search(texts[rel]):
+            entry["syntax"] = "none"
         if rel in bindings:
             entry["controller"] = {
                 key: bindings[rel][key] for key in ("controller", "line")
@@ -196,6 +309,8 @@ def collect(
         "engines": detect.engines_report(detections, project),
         "files": entries,
         "controllers": _controller_predicates(source, controllers or []),
+        "server": _server_predicates(source, exclude),
+        "static": _static_html(source, paths, entries, controllers or []),
         "coverage": {
             "scanned": scanned,
             "detected": len(entries),

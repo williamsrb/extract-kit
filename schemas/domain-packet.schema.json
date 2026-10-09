@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "99x.extract.domain-packet/v1",
+  "title": "domain packet v1",
+  "type": "object",
+  "required": [
+    "schema", "module", "files", "exports", "uses", "platform", "http", "configKeys", "i18n",
+    "requests", "jobs", "listeners", "externalCallers", "rules"
+  ],
+  "$defs": {
+    "line": { "type": "integer", "minimum": 1 },
+    "sources": { "type": "array", "items": { "type": "string", "pattern": ":[0-9]+$" } }
+  },
+  "properties": {
+    "schema": { "const": "99x.extract.domain-packet/v1" },
+    "module": { "type": "string", "minLength": 1 },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "lines"],
+        "properties": { "path": { "type": "string" }, "lines": { "type": "integer", "minimum": 1 } }
+      }
+    },
+    "exports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "name", "line"],
+        "properties": {
+          "file": { "type": "string" }, "name": { "type": "string" }, "line": { "$ref": "#/$defs/line" }
+        }
+      }
+    },
+    "uses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["module", "packet", "sources"],
+        "properties": {
+          "module": { "type": "string" }, "packet": { "type": "string" }, "sources": { "$ref": "#/$defs/sources" }
+        }
+      }
+    },
+    "platform": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["module", "call", "count", "sources"],
+        "properties": {
+          "module": { "type": "string" }, "call": { "type": "string" },
+          "count": { "type": "integer", "minimum": 1 }, "sources": { "$ref": "#/$defs/sources" }
+        }
+      }
+    },
+    "http": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "line"],
+        "properties": { "file": { "type": "string" }, "line": { "$ref": "#/$defs/line" } }
+      }
+    },
+    "configKeys": { "type": "array", "items": { "type": "string" } },
+    "i18n": { "type": "array", "items": { "type": "string" } },
+    "requests": { "type": "array", "items": { "type": "object", "required": ["file"] } },
+    "jobs": { "type": "array", "items": { "type": "object", "required": ["id", "source"] } },
+    "listeners": { "type": "array", "items": { "type": "object", "required": ["id", "source"] } },
+    "externalCallers": { "type": "array", "items": { "type": "object", "required": ["id", "source"] } },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "bucket", "expression", "source"],
+        "properties": { "source": { "type": "string", "pattern": ":[0-9]+$" } }
+      }
+    }
+  },
+  "additionalProperties": true
+}

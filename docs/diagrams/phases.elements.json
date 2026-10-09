@@ -590,7 +590,7 @@
    "type": 3
   },
   "label": {
-   "text": "spec-kit/, PRODUCT.md, DESIGN.md\nuse-cases/, docs/technical, guide\nxp8-compat.md (optional slot)",
+   "text": "spec-kit/evidence/, PRODUCT, DESIGN\nuse-cases/, domain/packet/, docs/technical\nguide, xp8-compat.md (optional slot)",
    "fontSize": 14,
    "fontFamily": 5
   },
@@ -658,7 +658,7 @@
    "type": 3
   },
   "label": {
-   "text": "spec.enrich, spec.review",
+   "text": "spec.review",
    "fontSize": 14,
    "fontFamily": 5
   },
@@ -679,7 +679,7 @@
    "type": 3
   },
   "label": {
-   "text": "overlay exclude + live_config\nrule names in rules/review.md\nBUSINESS.md, constitution/project.md",
+   "text": "overlay; rule names in rules/review.md\nBUSINESS.md, capabilities.json, constitution\ndomain/*.md, reports/do-not-port.md\nspec-kit/specs/<capability>/",
    "fontSize": 14,
    "fontFamily": 5
   },
@@ -853,7 +853,7 @@
    "type": 3
   },
   "label": {
-   "text": "<checkout>: constitution, specs/,\nPRODUCT, DESIGN, BUSINESS.md",
+   "text": "<checkout>: constitution,\ncapability specs/, PRODUCT,\nDESIGN, BUSINESS.md",
    "fontSize": 14,
    "fontFamily": 5
   },

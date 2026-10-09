@@ -53,8 +53,33 @@ with `name:`, `intent:` and `out-of-scope:` lines.
 Step 3: For each rule, read the source at the `path:line` it cites, under
 `{source}`. Do not rely on the expression alone.
 
+Step 3b: Check the rule against `rules/view-rules.json`. A rule with
+`dead: true` sits in a comment, behind a constant gate or in a `th:if="false"`
+block (`deadAt` names the gate): it never runs. Name it like the others so the
+id is tracked, but say in `intent:` that it is dead and where, and never
+describe it as live behavior. A rule with `unreferenced: true` is in a
+function nothing calls. A rule with `scope: server` is in `lib`, `services`,
+`tasks` or `cron` code. A runtime value you cite names its environment
+(`review` or `local`), never production.
+
 Step 4: Write `name:` as a short label and `intent:` as one sentence about
-the business condition. End both with `_(inferred)_`.
+the business condition. End both with `_(inferred)_`. Do not edit
+`review.md` rule by rule: a run can hold hundreds of rules, and a session has
+no scripting tools. Work in batches of 25 to 40 rules, in file order. For each
+batch, read the source of every rule in it, write one JSON file in the
+sidecar (`{sidecar}/rules/names-<n>.json`, a list of objects with `id`,
+`name` and `intent`, each on one line), and apply it with one command:
+
+```bash
+extractkit agent name-rules --out {sidecar} {sidecar}/rules/names-1.json
+```
+
+The command writes the names into `review.md` by id and puts the
+`_(inferred)_` ending on them. It leaves a rule the analyst already ticked
+as it is, and it reports an id that is not in the file. Keep going until
+`rules/review.md` has no business rule with an empty `name:`. Do not stop
+because the list is long, and do not write a blocker for its size: a blocker
+is for a rule you cannot read or a file you cannot write.
 
 Step 5: For each divergent group in `rules/RULES.md`, name every copy and say
 nothing about which one is right. Do not pick a winner. The group is already

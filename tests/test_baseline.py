@@ -145,6 +145,18 @@ class BaselineStepTests(unittest.TestCase):
                           (ctx.out / "baseline/INDEX.md").read_text())
             self.assertTrue(any("screenshot failed" in s["reason"] for s in ctx.skips))
 
+    def test_a_browser_that_does_not_open_is_written_into_the_index(self) -> None:
+        for verb in ("open", "state-load"):
+            with self.subTest(verb), tempfile.TemporaryDirectory() as raw:
+                ctx = _ctx(Path(raw))
+                self._run(ctx, FakePlaywright(fail_on=verb))
+                index = (ctx.out / "baseline/INDEX.md").read_text()
+                self.assertNotIn("No surveyed pages", index)
+                self.assertIn("did not start", index)
+                self.assertIn("Failure:", index)
+                self.assertIn("Fix:", index)
+                self.assertIn("boom", index)
+
     def test_no_runtime_json_records_skip(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             ctx = _ctx(Path(raw))

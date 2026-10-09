@@ -14,6 +14,7 @@ from .hygiene import after_step
 from .hygiene import flush as flush_hygiene
 from .outtree import (
     build_manifest,
+    carry_skips,
     ensure_self_ignore,
     out_inside_source,
     resolve_out,
@@ -207,10 +208,12 @@ def _execute(ctx: RunContext, rows: list[tuple[str, str]]) -> None:
         )
 
     flush_hygiene(ctx)
+    recorded = ctx.out / "MANIFEST.yaml"
+    earlier = (load_yaml(recorded, "MANIFEST.yaml").get("skips") or []) if recorded.is_file() else []
     payload = build_manifest(
         source=ctx.source,
         profile=ctx.profile,
-        skips=ctx.skips,
+        skips=carry_skips(earlier, ctx.skips, {plugin_id for _, plugin_id in rows}),
         run_id=ctx.run_id,
         maps=ctx.map_pointers,
         exclude=ctx.exclude,

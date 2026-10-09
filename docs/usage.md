@@ -242,9 +242,10 @@ confirms them. Details: [steps](steps.md#inventorytemplates-coretemplates),
 `spec.md` states behavior from extracted facts only: fields, config
 inputs, regions, controller calls with `file:line`, and the composition
 runtime saw. Each FR has `Acceptance:` bullets and an `Evidence:` line.
-`check` fails an FR without that line. A model may enrich the prose under
-the contract in `extractkit agent show spec.enrich` (run by the
-[extract-agentic skill](../skills/extract-agentic/SKILL.md)).
+`check` fails an FR without that line. These are the evidence specs in
+`spec-kit/evidence/`. The specs an operator plans from are the capability specs
+the `spec.capabilities` task writes (`extractkit agent show spec.capabilities`,
+run by the [extract-agentic skill](../skills/extract-agentic/SKILL.md)).
 
 ## Promote
 
