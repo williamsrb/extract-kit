@@ -42,7 +42,9 @@ In GitLab CI the `docker-build` job fetches devkit at `DEVKIT_REF` from
 under Settings > CI/CD > Job token permissions. If it does not, an operator
 creates the masked CI variable `CI_DEVKIT_TOKEN` (a token with
 `read_repository` on 99x-dev-kit), which the job uses as a fallback.
-`DEVKIT_REF` is a pinned devkit commit; bump it to take a newer devkit.
+`DEVKIT_REF` is `master`, so each build takes devkit's head and prints the
+commit it got. A devkit change alone does not rebuild the image: run a
+pipeline on the `docker` branch by hand.
 
 ### `latest`
 

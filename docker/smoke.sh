@@ -53,6 +53,13 @@ check "assets command" "agent_api_key" "$(docker run --rm "$image" sh -c 'd=$(mk
 check "devkit doctor" "doctor: clean" "$(docker run --rm --user extract "$image" sh -c 'devkit doctor' 2>&1 || true)"
 check "graft" "[0-9]" "$(docker run --rm "$image" graft --version 2>&1 || true)"
 check "serena" "[0-9]" "$(docker run --rm "$image" serena --version 2>&1 || true)"
+# the Serena MCP command every agent config launches exists; a wrong path only shows as ENOENT in preflight
+check "serena mcp command" "serena-mcp-ok" "$(docker run --rm "$image" sh -c '
+	set -- $(grep -ho "\"[^\"]*serena-mcp\"" "$HOME/.agents-profiles/$EXTRACTKIT_DEVKIT_PROFILE"/*/.claude.json \
+		"$HOME/.agents-profiles/$EXTRACTKIT_DEVKIT_PROFILE"/*/config.toml "$HOME/.agents-profiles/$EXTRACTKIT_DEVKIT_PROFILE"/*/mcp.json 2>/dev/null | tr -d "\"")
+	[ "$#" -gt 0 ] || { echo "no serena entry"; exit 1; }
+	for command in "$@"; do [ -x "$command" ] || { echo "missing $command"; exit 1; }; done
+	echo serena-mcp-ok' 2>&1 || true)"
 check "graphify" "[a-z]" "$(docker run --rm "$image" graphify --help 2>&1 || true)"
 # `claude-extract` is the devkit profile wrapper; a version proves it does not loop into itself
 # (set SMOKE_AGENTS to the AGENTS build-arg of an image built with another agent list)
