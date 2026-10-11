@@ -46,7 +46,7 @@ agents:
     allowed_tools: [Read, Write, Edit, Glob, Grep, "Bash(extractkit *)", mcp__serena]
     preflight_tools: [Read, Write, Edit, Glob, Grep, "Bash(graphify *)", mcp__serena]
     usage:
-      tokens: [usage.input_tokens, usage.output_tokens, usage.cache_creation_input_tokens, usage.cache_read_input_tokens]
+      tokens: [modelUsage.*.inputTokens, modelUsage.*.outputTokens, modelUsage.*.cacheCreationInputTokens, modelUsage.*.cacheReadInputTokens]
       cost_usd: total_cost_usd
       model: modelUsage
   codex:

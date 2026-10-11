@@ -81,9 +81,8 @@ def _pw(args: list[str], cwd: Path, *, session: str = SESSION) -> str:
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise CaptureError(f"{' '.join(args[:2])}: {exc}") from None
     if result.returncode != 0:
-        detail = (result.stdout + result.stderr).strip().splitlines()
-        message = next((ln for ln in detail if ln.startswith("Error")), detail[-1] if detail else "")
-        raise CaptureError(f"{args[0]} failed: {message}")
+        detail = [ln.strip() for ln in (result.stdout + result.stderr).splitlines() if ln.strip()]
+        raise CaptureError(f"{args[0]} failed: {' | '.join(detail[-5:])}")
     return result.stdout
 
 

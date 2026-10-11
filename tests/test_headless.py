@@ -111,6 +111,27 @@ class UsageTests(unittest.TestCase):
         self.assertEqual(mismatch, ["the agent ran claude-haiku-5-5, not the configured model claude-sonnet-5-5"])
         self.assertEqual(headless.model_warnings("fine", {"model": "x"}, None), [])
 
+    def test_a_star_segment_sums_a_counter_over_every_model(self) -> None:
+        spec = {"tokens": ["modelUsage.*.inputTokens", "modelUsage.*.outputTokens"]}
+        one = {"inputTokens": 444, "outputTokens": 307296}
+        two = {"inputTokens": 1, "outputTokens": 2}
+        text = json.dumps({"usage": {"input_tokens": 9}, "modelUsage": {"a": one, "b": two}})
+        self.assertEqual(headless.agent_usage(text, spec), {"tokens": 444 + 307296 + 3})
+
+    def test_domain_behavior_result_sums_model_usage_not_the_last_turn(self) -> None:
+        counters = {"inputTokens": 444, "outputTokens": 307296, "cacheReadInputTokens": 37794754,
+                    "cacheCreationInputTokens": 1478448, "costUSD": 14.38}
+        text = json.dumps({"usage": {"input_tokens": 3, "output_tokens": 195766}, "total_cost_usd": 14.38,
+                           "modelUsage": {"claude-sonnet-5-5": counters}})
+        usage = headless.agent_usage(text, headless.agent_table()["claude"]["usage"])
+        self.assertEqual(usage["tokens"], 39580942)
+        self.assertEqual(usage["cost_usd"], 14.38)
+
+    def test_a_star_over_a_missing_or_non_mapping_value_reads_nothing(self) -> None:
+        spec = {"tokens": ["modelUsage.*.inputTokens"]}
+        self.assertEqual(headless.agent_usage('{"total_cost_usd": 1}', spec), {})
+        self.assertEqual(headless.agent_usage('{"modelUsage": [1, 2]}', spec), {})
+
     def test_the_run_line_shows_the_model(self) -> None:
         self.assertIn("model claude-sonnet-5-5", headless._spent({"model": "claude-sonnet-5-5", "tokens": 3}))
 
@@ -153,6 +174,21 @@ class StageTests(HeadlessCase):
         manifest = yaml.safe_load((self.sidecar() / "MANIFEST.yaml").read_text())
         self.assertEqual(manifest["exclude"], ["prototype"])
         self.assertTrue((self.sidecar() / "inventory" / "static.json").is_file())
+
+    def test_the_result_mirrors_the_skips_of_the_sidecar_manifest(self) -> None:
+        code, doc = self.headless("--until", "synthesis")
+        self.assertEqual(code, 0, doc)
+        path = self.sidecar() / "MANIFEST.yaml"
+        skips = [{"step": "enonic.baseline", "reason": "open failed", "fix": "x"}]
+        path.write_text(yaml.safe_dump({**yaml.safe_load(path.read_text()), "skips": skips}), encoding="utf-8")
+        reader = mock.Mock(out=self.sidecar())
+        self.assertEqual(headless.Headless._sidecar_skips(reader), skips)
+        with mock.patch.object(headless.Headless, "_sidecar_skips", return_value=skips):
+            code, doc = self.headless("--until", "synthesis")
+        self.assertEqual((code, doc["skips"]), (0, skips))
+        path.unlink()
+        self.assertEqual(headless.Headless._sidecar_skips(reader), [])
+        self.assertEqual(headless.Headless._sidecar_skips(mock.Mock(out=None)), [])
 
     def test_the_sidecar_is_a_visible_folder_with_no_gitignore(self) -> None:
         code, doc = self.headless("--until", "synthesis")
@@ -514,6 +550,22 @@ class CredentialFallbackTests(HeadlessCase):
         attempts = [line["attempt"] for line in self.lines() if line.get("task") == "context.exclude" and line["ok"] and line.get("log")]
         self.assertEqual(attempts, [1])  # the run that went on is still attempt 1: no fix attempt was used
         self.assertTrue(any(f.name.endswith("-context.exclude-1-c2.log") for f in (self.sidecar() / "reports" / "headless").iterdir()))
+
+    def test_a_failed_attempt_keeps_the_usage_it_reported(self) -> None:
+        folder = self.keys(a=1, b=2)
+        reported = json.dumps({"total_cost_usd": 0.7467, "modelUsage": {"m": {"inputTokens": 586737}}})
+        table = {"fake": {**FAKE_TABLE["fake"], "usage": {"tokens": ["modelUsage.*.inputTokens"], "cost_usd": "total_cost_usd"}}}
+        env = {"FAKE_AGENT_DIE_ON": "tok-a:context.exclude", "FAKE_AGENT_USAGE": reported}
+        with mock.patch.dict(os.environ, env), mock.patch.object(headless, "agent_table", return_value=table):
+            code, doc = self.headless("--until", "agent:context", "--assets-dir", str(folder))
+        self.assertEqual(code, 0, doc)
+        rows = [l for l in self.lines() if l.get("task") == "context.exclude"]
+        failed = [l for l in rows if not l["ok"] and l.get("code") == "agent_failed"]
+        self.assertEqual([(l["tokens"], l["cost_usd"]) for l in failed], [(586737, 0.7467)])
+        self.assertEqual(len(failed) + len([l for l in rows if l["ok"] and l.get("log")]), 2)
+        # the preflight run, the attempt that ran out, and the one that went on with the next credential
+        self.assertEqual(doc["summary"]["agent_runs"], 3)
+        self.assertEqual(doc["summary"]["usage"]["tokens"], 3 * 586737)
 
     def test_the_run_stops_with_credentials_exhausted_when_the_last_one_runs_out(self) -> None:
         folder = self.keys(a=1, b=2)

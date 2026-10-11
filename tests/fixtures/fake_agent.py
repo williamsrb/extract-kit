@@ -7,6 +7,7 @@ FAKE_AGENT_REPORT_ENV: comma-separated variable names; their values go to `fake-
 FAKE_AGENT_DEAD: comma-separated FAKE_TOKEN values that always exit 1, like a spent quota.
 FAKE_AGENT_DIE_ON: `<token>:<task id>`; that token exits 1 on that task and is dead from then on.
 FAKE_AGENT_REPORT_MODEL: the model the result JSON reports in `modelUsage`.
+FAKE_AGENT_USAGE: a JSON line every run prints first, even one that then exits 1, like a CLI's result.
 Every run appends `<token> <resumed|-> <first prompt line>` to `fake-calls.log`.
 """
 
@@ -32,6 +33,8 @@ if os.environ.get("FAKE_AGENT_REPORT_ENV"):
 token = os.environ.get("FAKE_TOKEN", "")
 with (cwd / "fake-calls.log").open("a", encoding="utf-8") as calls:
     calls.write(f"{token} {'resumed' if '## Resumed' in prompt else '-'} {prompt.splitlines()[0] if prompt else ''}\n")
+if os.environ.get("FAKE_AGENT_USAGE"):
+    print(os.environ["FAKE_AGENT_USAGE"], flush=True)
 spent = cwd / ".fake-dead"
 if token and (token in os.environ.get("FAKE_AGENT_DEAD", "").split(",") or (spent.is_file() and token in spent.read_text().split())):
     sys.exit(1)

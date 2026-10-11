@@ -339,13 +339,19 @@ result and each fix attempt. At the end headless prints a summary with the
 duration of every stage, the total time, and the tokens and money the agent
 runs reported. Each `agents:` entry in `extractkit.yaml` says how to read its
 own log with a `usage:` block: `tokens` (JSON paths, summed), `cost_usd` (one
-JSON path) or `tokens_regex` (one number group, for plain text). `claude`
-runs with `--output-format json` and reads both; Codex reports tokens only;
+JSON path) or `tokens_regex` (one number group, for plain text). A `*` segment
+in a path fans out over the values of a mapping, so `modelUsage.*.inputTokens`
+sums that counter over every model. `claude` runs with `--output-format json`
+and reads both from `modelUsage` (its top-level `usage` covers only the last
+turn); Codex reports tokens only;
 Cursor's `json` and `stream-json` results carry no usage fields
 ([output format](https://cursor.com/docs/cli/reference/output-format)), so it
 has no `usage:` block. An agent that reports nothing prints `the agent reported
 no token or cost data`. The totals are in the envelope as `summary`
-(`duration_s`, `agent_runs`, `usage.tokens`, `usage.cost_usd`), and each agent
+(`duration_s`, `agent_runs`, `usage.tokens`, `usage.cost_usd`); `agent_runs`
+includes a failed attempt that reported usage, because it spent tokens. The
+skips the steps recorded in the sidecar `MANIFEST.yaml` go in `skips` and print
+as `skip <step>: <reason>` lines. Each agent
 line of `headless.jsonl` carries its own `tokens` and `cost_usd`. `-q`
 silences all of it. The full record stays in `reports/headless.jsonl`.
 
@@ -413,7 +419,8 @@ than the one this page names, because its installer is unpinned.
 
 `docker/smoke.sh IMAGE` checks a build. For one with another agent list, set
 `SMOKE_AGENTS` to its `AGENTS` value (`SMOKE_AGENTS=claude` for the slim one
-above); for one built with `WITH_1PASSWORD=0`, set `SMOKE_WITHOUT_1PASSWORD=1`.
+above); for one built with `WITH_1PASSWORD=0`, set `SMOKE_WITHOUT_1PASSWORD=1`;
+for one built with `WITH_PLAYWRIGHT=0`, set `SMOKE_WITHOUT_PLAYWRIGHT=1`.
 
 ### How a pipeline starts the image
 

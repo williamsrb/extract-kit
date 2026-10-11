@@ -96,12 +96,16 @@ RUN --mount=type=bind,from=devkit,target=/opt/devkit \
 RUN ln -sfn "$(ls -d "$HOME"/.nvm/versions/node/*/bin | head -n1)" "$HOME/.local/node-bin"
 
 # Playwright with Chromium. The profile carries only playwright-cli; the browser stays here so WITH_PLAYWRIGHT=0 drops it.
+# playwright-cli bundles its own Playwright, so it installs the browser itself: `playwright install` fetches a
+# different Chromium revision, which playwright-cli then reports as not installed.
 RUN if [ "${WITH_PLAYWRIGHT}" = 1 ]; then \
         npm install -g "playwright@${PLAYWRIGHT_VERSION}" \
         && sudo env "PATH=$PATH" playwright install-deps chromium \
         && sudo install -d -o extract /opt/ms-playwright \
-        && playwright install chromium; \
+        && playwright-cli install-browser chrome-for-testing; \
     fi
+# playwright-cli defaults to the Google Chrome channel, which the image does not have; use the Chromium above.
+ENV PLAYWRIGHT_MCP_BROWSER=chromium
 
 # The selected agent CLIs. They come before devkit's install.py: a profile
 # wrapper bakes in the path of the vendor CLI it finds at that time.

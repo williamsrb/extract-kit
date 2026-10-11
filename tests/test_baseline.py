@@ -157,6 +157,16 @@ class BaselineStepTests(unittest.TestCase):
                 self.assertIn("Fix:", index)
                 self.assertIn("boom", index)
 
+    def test_the_tail_of_the_browser_output_names_the_cause(self) -> None:
+        def broken(command: list[str], **kwargs: object) -> subprocess.CompletedProcess:
+            err = "Error: Daemon exited\n[PlaywrightError: Chromium distribution 'chrome' is not found]\nRun install\n"
+            return subprocess.CompletedProcess(command, 1, "", err)
+
+        with tempfile.TemporaryDirectory() as raw:
+            ctx = _ctx(Path(raw))
+            self._run(ctx, broken)
+            self.assertIn("distribution 'chrome' is not found", ctx.skips[0]["reason"])
+
     def test_no_runtime_json_records_skip(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             ctx = _ctx(Path(raw))

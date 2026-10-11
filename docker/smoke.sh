@@ -36,6 +36,13 @@ if [ "${SMOKE_WITHOUT_1PASSWORD:-}" = 1 ]; then
 else
 	check "1password cli" "[0-9]\\.[0-9]" "$(docker run --rm "$image" op --version 2>&1 || true)"
 fi
+# 6a. playwright-cli opens its browser as the image's start user (the enonic baseline step needs it)
+# (set SMOKE_WITHOUT_PLAYWRIGHT=1 for an image built with WITH_PLAYWRIGHT=0)
+if [ "${SMOKE_WITHOUT_PLAYWRIGHT:-}" = 1 ]; then
+	echo "skip  playwright browser (built without it)"
+else
+	check "playwright browser" "about:blank" "$(docker run --rm "$image" sh -c 'cd "$(mktemp -d)" && playwright-cli -s=smoke open about:blank && playwright-cli -s=smoke close' 2>&1 || true)"
+fi
 # 6b. /filter-by-name.sh turns an `op vault list` table into the ID of the matching vault (needs no op)
 table='ID    NAME
 aaa1  Other

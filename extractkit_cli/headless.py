@@ -57,7 +57,7 @@ from . import (
     result,
     runner,
 )
-from .common import REPO_ROOT, load_kit_identity
+from .common import REPO_ROOT, load_kit_identity, load_yaml
 from .errors import ExtractkitError
 
 STAGES = (
@@ -494,14 +494,16 @@ class Headless:
             self._line(stage, task, attempt, False, 1, "agent_failed", str(exc), start, log, agent=True)
             fix = f"devkit profile create {self.s.profile} --headless --apply" if self.s.profile else f"install {argv[0]}"
             raise StageFailed("agent_failed", f"could not start {argv[0]}: {exc}", fix) from None
+        text = log.read_text(encoding="utf-8", errors="replace")
+        usage = agent_usage(text, self.s.entry.get("usage"))
         if child.returncode != 0:
-            self._line(stage, task, attempt, False, child.returncode, "agent_failed", f"{argv[0]} exited {child.returncode}", start, log, agent=True)
+            if usage:
+                self.usage.append(usage)
+            self._line(stage, task, attempt, False, child.returncode, "agent_failed", f"{argv[0]} exited {child.returncode}", start, log, usage, agent=True)
             raise AgentExit(
                 "agent_failed", f"{argv[0]} exited {child.returncode} on {task}; see {self.log.where(log)}",
                 "check the agent CLI login or API key in this environment",
             )
-        text = log.read_text(encoding="utf-8", errors="replace")
-        usage = agent_usage(text, self.s.entry.get("usage"))
         self.usage.append(usage)
         for warning in model_warnings(text, usage, self.s.model or os.environ.get(self.s.entry.get("model_env") or "")):
             self._say(f"warning: {warning}", indent=1)
@@ -899,8 +901,19 @@ class Headless:
 
     # -- result -----------------------------------------------------------------
 
+    def _sidecar_skips(self) -> list[dict]:
+        """The skips the steps recorded in the sidecar manifest, or [] when there is none to read."""
+        manifest = self.out / "MANIFEST.yaml" if self.out is not None else None
+        if manifest is None or not manifest.is_file():
+            return []
+        try:
+            return [s for s in load_yaml(manifest, "MANIFEST.yaml").get("skips") or [] if isinstance(s, dict)]
+        except ExtractkitError:
+            return []
+
     def _report(self, exit_code: int, failure: StageFailed | None) -> None:
-        result.note_run(sidecar=self.out, source=self.source)
+        skips = self._sidecar_skips()
+        result.note_run(sidecar=self.out, source=self.source, skips=skips)
         result.note_extra(stages=[r.as_dict() for r in self.records])
         summary = self._summary()
         result.note_extra(summary=summary)
@@ -916,6 +929,10 @@ class Headless:
             total += _spent(summary["usage"]) if summary["usage"] else " (the agent reported no token or cost data)"
         print(f"  {total}")
         self._say(total, indent=1)
+        for skip in skips:
+            line = f"skip {skip.get('step')}: {skip.get('reason')}"
+            print(f"  {line}")
+            self._say(line, indent=1)
         if failure is not None:
             result.note_error(failure.code, str(failure), failure.fix)
             print(f"\nheadless: stopped (exit {exit_code}): {failure}")
@@ -930,9 +947,23 @@ class Headless:
 
 
 def _path(doc: object, dotted: str) -> object:
+    """The value at a dotted path. A `*` segment maps over the values of a mapping and yields a list."""
+    fanned = False
     for key in dotted.split("."):
-        doc = doc.get(key) if isinstance(doc, dict) else None
+        if key == "*":
+            doc = list(doc.values()) if isinstance(doc, dict) else None
+            fanned = True
+        elif fanned and isinstance(doc, list):
+            doc = [v.get(key) if isinstance(v, dict) else None for v in doc]
+        else:
+            doc = doc.get(key) if isinstance(doc, dict) else None
     return doc
+
+
+def _numbers(value: object) -> list[int]:
+    """Every number a token path yielded: one value, or the list a `*` path produced."""
+    items = value if isinstance(value, list) else [value]
+    return [int(v) for v in items if isinstance(v, (int, float)) and not isinstance(v, bool)]
 
 
 def _reported_error(text: str) -> bool:
@@ -959,15 +990,15 @@ def agent_usage(text: str, spec: dict | None) -> dict:
                 doc = json.loads(line)
             except ValueError:
                 continue
-            tokens = [_path(doc, p) for p in spec.get("tokens") or []]
+            tokens = [_numbers(_path(doc, p)) for p in spec.get("tokens") or []]
             cost = _path(doc, spec["cost_usd"]) if spec.get("cost_usd") else None
             models = _model_names(_path(doc, spec["model"])) if spec.get("model") else []
-            if all(t is None for t in tokens) and cost is None and not models:
+            if not any(tokens) and cost is None and not models:
                 continue
             if models:
                 found["model"] = ", ".join(models)
-            if any(t is not None for t in tokens):
-                found["tokens"] = sum(int(t or 0) for t in tokens)
+            if any(tokens):
+                found["tokens"] = sum(sum(t) for t in tokens)
             if cost is not None:
                 found["cost_usd"] = round(float(cost), 4)
             return found
