@@ -7,15 +7,12 @@ variables:
   DOCKER_BUILDKIT: "1"
   DOCKERHUB_USER: leanon
   DOCKERHUB_REPO: leanon/extractkit-ci
-  # The image installs devkit (99x-dev-kit) with its `extract` profile, from the
-  # head of DEVKIT_REF at build time; the job prints the commit it got. A devkit
-  # change alone does not start a build: run a pipeline on the docker branch
-  # (CI/CD > Pipelines > Run pipeline). Fetching needs the
-  # job token (CI_JOB_TOKEN), which works when 99x-dev-kit lists this project
-  # under Settings > CI/CD > Job token permissions. If that is refused, the
-  # masked variable CI_DEVKIT_TOKEN (read_repository on 99x-dev-kit) is used.
-  DEVKIT_URL: https://git.seeds.no/williams/99x-dev-kit.git
-  DEVKIT_REF: master
+  # The image installs devkit (dev-kit) with its `extract` profile, from the
+  # commit DEVKIT_REF at build time; the job prints the commit it got. Raise
+  # DEVKIT_REF to take a newer devkit, then run a pipeline on the docker branch
+  # (CI/CD > Pipelines > Run pipeline). The fetch is anonymous.
+  DEVKIT_URL: https://github.com/williamsrb/dev-kit.git
+  DEVKIT_REF: f8ae7c1418b93f214ed36266ac2f5edeb03aafbb
   PYYAML_VERSION: 6.0.2
   JSONSCHEMA_VERSION: 4.23.0
   RUFF_VERSION: 0.16.8
@@ -75,13 +72,7 @@ docker-build:
   before_script:
     - apk add --no-cache git
     - git init -q .devkit
-    - |
-      fetch_devkit() {
-        git -C .devkit fetch -q --depth 1 "$(printf '%s' "$DEVKIT_URL" | sed "s#^https://#https://gitlab-ci-token:${1}@#")" "$DEVKIT_REF"
-      }
-      fetch_devkit "$CI_JOB_TOKEN" 2>/dev/null \
-        || { test -n "${CI_DEVKIT_TOKEN:-}" && fetch_devkit "$CI_DEVKIT_TOKEN"; } \
-        || { echo "cannot fetch devkit: add this project to the job token allowlist of 99x-dev-kit, or set CI_DEVKIT_TOKEN" >&2; exit 1; }
+    - git -C .devkit fetch -q --depth 1 "$DEVKIT_URL" "$DEVKIT_REF"
     - git -C .devkit checkout -q FETCH_HEAD
     - git -C .devkit log -1 --format='devkit %H %s'
   script:

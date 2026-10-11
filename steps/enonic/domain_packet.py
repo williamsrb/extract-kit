@@ -22,8 +22,8 @@ from steps.enonic.controllers import (
 )
 from steps.enonic.descriptors import iter_resources_roots
 
-SCHEMA_ID = "99x.extract.domain-packet/v1"
-INDEX_SCHEMA_ID = "99x.extract.domain-packet-index/v1"
+SCHEMA_ID = "extractkit.domain-packet/v1"
+INDEX_SCHEMA_ID = "extractkit.domain-packet-index/v1"
 GROUPED = ("services", "tasks", "cron")
 SOURCE_CAP = 5
 ENTRY_KINDS = ("service", "task", "cron", "init", "external-caller")

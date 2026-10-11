@@ -29,7 +29,7 @@ the kit and for the rule-naming step.
 ## Install
 
 Python 3.12+ with PyYAML and jsonschema (already on the reference box), and
-[devkit](https://git.seeds.no/williams/99x-dev-kit) on PATH: `deps` and
+[devkit](https://github.com/williamsrb/dev-kit) on PATH: `deps` and
 `doctor` fail with the install steps when `devkit` is missing. From the kit
 repo, once:
 

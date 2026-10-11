@@ -18,7 +18,7 @@ deps:
     pacman: git
   - provides: [devkit]
     probe: [devkit, --help]
-    fix: "install devkit: clone git@git.seeds.no:williams/99x-dev-kit.git, then run ./bootstrap.sh --profile extract --apply and ./install.py --profile extract --headless --apply"
+    fix: "install devkit: clone https://github.com/williamsrb/dev-kit.git, then run ./bootstrap.sh --profile extract --apply and ./install.py --profile extract --headless --apply"
   - provides: [graft]
     optional: true
     probe: [graft, --version]

@@ -209,7 +209,7 @@ None.
 def valid_capabilities() -> str:
     """The business/capabilities.json that goes with `valid_business`."""
     return """{
-  "schema": "99x.extract.capabilities/v1",
+  "schema": "extractkit.capabilities/v1",
   "capabilities": [
     {"id": "article-publishing", "title": "Article publishing"},
     {"id": "page-rendering", "title": "Page rendering"},

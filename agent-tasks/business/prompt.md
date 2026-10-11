@@ -96,7 +96,7 @@ Write exactly these H2 sections, in this order, and no other H2:
 Also write `{sidecar}/business/capabilities.json`, one row per `###` capability
 of `## Capabilities`, with the same title:
 
-The file is one JSON object: `schema` is `99x.extract.capabilities/v1`, and
+The file is one JSON object: `schema` is `extractkit.capabilities/v1`, and
 `capabilities` is a list of objects with `id`, `title` and, optionally,
 `modules`. For example one row has `id` `booking-lifecycle`, `title`
 `Booking lifecycle` and `modules` listing `lib.modules.bookings`; another has

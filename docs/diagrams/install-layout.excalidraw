@@ -718,7 +718,7 @@
       "y": 160,
       "width": 340,
       "height": 70,
-      "text": "devkit on PATH (99x-dev-kit)\ndeps and doctor fail without it",
+      "text": "devkit on PATH (dev-kit)\ndeps and doctor fail without it",
       "fontSize": 16,
       "fontFamily": 5,
       "textAlign": "center",

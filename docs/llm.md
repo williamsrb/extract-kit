@@ -208,7 +208,7 @@ operator asks.
 <!-- markdownlint-disable MD013 -->
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| `devkit` MISSING in `deps`, `doctor` or the headless `doctor` stage | devkit (99x-dev-kit) is not installed | Report the printed `fix:` (clone devkit, run its `bootstrap.sh` and `install.py` with `--profile extract`); installing it is the operator's call |
+| `devkit` MISSING in `deps`, `doctor` or the headless `doctor` stage | devkit (dev-kit) is not installed | Report the printed `fix:` (clone devkit, run its `bootstrap.sh` and `install.py` with `--profile extract`); installing it is the operator's call |
 | `BROKEN` in `deps` | The tool is on PATH but its probe failed (for example `graphify` with a missing package) | Report the printed `fix:`; reinstall is the operator's call |
 | `./extractkit: No such file or directory` or `extractkit: command not found` | The kit is not on PATH; `./extractkit` only works inside the kit repo | Ask the operator to run `./extractkit install` once in a kit checkout, then use `extractkit`. The checkout can be deleted afterwards |
 | `extractkit on PATH` MISSING | `~/.local/bin` is not on PATH | Report the printed `export PATH=` line; editing shell profiles is the operator's call |

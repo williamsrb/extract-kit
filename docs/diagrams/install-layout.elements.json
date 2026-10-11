@@ -565,7 +565,7 @@
   "backgroundColor": "#ffffff",
   "fillStyle": "solid",
   "label": {
-   "text": "devkit on PATH (99x-dev-kit)\ndeps and doctor fail without it",
+   "text": "devkit on PATH (dev-kit)\ndeps and doctor fail without it",
    "fontSize": 16,
    "fontFamily": 5
   },

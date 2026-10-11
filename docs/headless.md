@@ -27,7 +27,7 @@ merge, synthesis, the agent tasks and check.
 
 The default container image ([`docker/Dockerfile`](../docker/Dockerfile))
 bundles the tools: Python 3.12 with `pyyaml` and `jsonschema`, git, and, installed
-by [devkit](https://git.seeds.no/williams/99x-dev-kit) in headless mode with its
+by [devkit](https://github.com/williamsrb/dev-kit) in headless mode with its
 `extract` profile, Node with graft, Graphify, Serena, `playwright-cli` and 7-Zip;
 then Playwright with Chromium, PHP with Composer, the `claude`,
 `codex` and `cursor-agent` CLIs, and for the
@@ -395,10 +395,10 @@ the kit root:
 
 ```bash
 # the default, full image
-docker build -f docker/Dockerfile --build-context devkit=../99x-dev-kit \
+docker build -f docker/Dockerfile --build-context devkit=../dev-kit \
   -t extractkit-ci:latest .
 # a slim image for the core profile, Claude only
-docker build -f docker/Dockerfile --build-context devkit=../99x-dev-kit \
+docker build -f docker/Dockerfile --build-context devkit=../dev-kit \
   -t extractkit-ci:core-claude \
   --build-arg WITH_PLAYWRIGHT=0 --build-arg WITH_PHP=0 \
   --build-arg AGENTS=claude .

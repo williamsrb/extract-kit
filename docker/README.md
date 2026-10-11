@@ -30,21 +30,17 @@ with Chromium, PHP and Composer, the 1Password CLI (`op`), and what devkit's
 `playwright-cli` and 7-Zip (`7z`). The agent starts as the profile wrapper
 (`claude-extract`).
 
-Build it with a checkout of devkit (99x-dev-kit) as the `devkit` build context:
+Build it with a checkout of devkit (dev-kit) as the `devkit` build context:
 
 ```bash
-docker build -f docker/Dockerfile --build-context devkit=<path-to-99x-dev-kit> \
+docker build -f docker/Dockerfile --build-context devkit=<path-to-dev-kit> \
   -t extractkit-ci .
 ```
 
 In GitLab CI the `docker-build` job fetches devkit at `DEVKIT_REF` from
-`DEVKIT_URL` with the job token. That works when 99x-dev-kit lists this project
-under Settings > CI/CD > Job token permissions. If it does not, an operator
-creates the masked CI variable `CI_DEVKIT_TOKEN` (a token with
-`read_repository` on 99x-dev-kit), which the job uses as a fallback.
-`DEVKIT_REF` is `master`, so each build takes devkit's head and prints the
-commit it got. A devkit change alone does not rebuild the image: run a
-pipeline on the `docker` branch by hand.
+`DEVKIT_URL`, anonymously. `DEVKIT_REF` pins one devkit commit and the job
+prints it. To take a newer devkit, raise `DEVKIT_REF`, then run a pipeline on
+the `docker` branch by hand.
 
 ### `latest`
 

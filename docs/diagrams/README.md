@@ -44,7 +44,9 @@ synthesis writes `spec-kit/evidence/` and `domain/packet/`; the lineage shows
 `business/capabilities.json`, `domain/`, `reports/do-not-port.md` and the
 capability specs that promote copies; `check` names its spec and secret
 gates. Every drawing but the install panel was re-exported that day; the
-install panel opens the 9 Oct version. After a rebuild, re-export with
+install panel opens the 9 Oct version. On 11 Oct the devkit text in the install panel and the combined canvas
+reads "dev-kit"; their PNGs were re-rendered and the excalidraw.com links
+stay as they were. After a rebuild, re-export with
 `excalidraw-cli export <file>.excalidraw` (that uploads the drawing) and
 replace the links.
 

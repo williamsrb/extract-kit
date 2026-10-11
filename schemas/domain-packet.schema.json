@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.domain-packet/v1",
+  "$id": "extractkit.domain-packet/v1",
   "title": "domain packet v1",
   "type": "object",
   "required": [
@@ -12,7 +12,7 @@
     "sources": { "type": "array", "items": { "type": "string", "pattern": ":[0-9]+$" } }
   },
   "properties": {
-    "schema": { "const": "99x.extract.domain-packet/v1" },
+    "schema": { "const": "extractkit.domain-packet/v1" },
     "module": { "type": "string", "minLength": 1 },
     "files": {
       "type": "array",

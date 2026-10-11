@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
-# Image for `extractkit headless` in a pipeline. devkit (99x-dev-kit) installs
+# Image for `extractkit headless` in a pipeline. devkit (dev-kit) installs
 # the tools, skills, kb and Serena MCP through its `extract` profile, so the
 # image needs a checkout of it as the `devkit` build context. Build from the
 # repo root:
-#   docker build -f docker/Dockerfile --build-context devkit=<path-to-99x-dev-kit> -t extractkit-ci .
+#   docker build -f docker/Dockerfile --build-context devkit=<path-to-dev-kit> -t extractkit-ci .
 # The versions of node, graft, serena, graphify and playwright-cli are pinned in
 # devkit's profiles/extract.json; the rest are build arguments. The last steps
 # fail the build when a required tool is broken. The default build has every

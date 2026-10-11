@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.capabilities/v1",
+  "$id": "extractkit.capabilities/v1",
   "title": "business capabilities v1",
   "type": "object",
   "required": ["schema", "capabilities"],
   "properties": {
-    "schema": { "const": "99x.extract.capabilities/v1" },
+    "schema": { "const": "extractkit.capabilities/v1" },
     "capabilities": {
       "type": "array",
       "minItems": 1,

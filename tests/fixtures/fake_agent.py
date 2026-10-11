@@ -6,6 +6,7 @@ FAKE_AGENT_MODE: `ok` (default) does the work; `block` writes a blocker file;
 FAKE_AGENT_REPORT_ENV: comma-separated variable names; their values go to `fake-env.json`.
 FAKE_AGENT_DEAD: comma-separated FAKE_TOKEN values that always exit 1, like a spent quota.
 FAKE_AGENT_DIE_ON: `<token>:<task id>`; that token exits 1 on that task and is dead from then on.
+FAKE_AGENT_REPORT_MODEL: the model the result JSON reports in `modelUsage`.
 Every run appends `<token> <resumed|-> <first prompt line>` to `fake-calls.log`.
 """
 
@@ -46,6 +47,9 @@ if mode == "crash":
     sys.exit(2)
 if mode == "noop":
     sys.exit(0)
+
+if os.environ.get("FAKE_AGENT_REPORT_MODEL"):
+    print(json.dumps({"usage": {"input_tokens": 1}, "modelUsage": {os.environ["FAKE_AGENT_REPORT_MODEL"]: {}}}))
 
 if "# Headless preflight" in prompt:
     (cwd / ".serena" / "memories").mkdir(parents=True, exist_ok=True)

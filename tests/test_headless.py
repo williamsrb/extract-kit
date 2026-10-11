@@ -203,6 +203,17 @@ class StageTests(HeadlessCase):
         self.assertTrue(warnings.call_args_list)
         self.assertEqual({c.args[2] for c in warnings.call_args_list}, {"env-model"})
 
+    def test_a_reported_model_replaces_the_requested_one_and_the_effort_stays(self) -> None:
+        table = {"fake": {**FAKE_TABLE["fake"], "usage": {"model": "modelUsage"}}}
+        with mock.patch.object(headless, "agent_table", return_value=table), \
+                mock.patch.dict(os.environ, {"FAKE_AGENT_REPORT_MODEL": "reported-model"}):
+            code, _ = self.headless("--until", "agent:context", "--agent-model", "m1", "--agent-effort", "high")
+        self.assertEqual(code, 0)
+        runs = self.agent_runs()
+        self.assertTrue(runs)
+        for line in runs:
+            self.assertEqual((line["model"], line["effort"]), ("reported-model", "high"))
+
     def agent_runs(self) -> list[dict]:
         return [l for l in self.lines() if l["message"] == "agent finished"]
 

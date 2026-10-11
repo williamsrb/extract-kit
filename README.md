@@ -141,7 +141,7 @@ confirms its own work.
 
 ## For operators
 
-Install devkit (99x-dev-kit) first: clone `git@git.seeds.no:williams/99x-dev-kit.git`,
+Install devkit (dev-kit) first: clone `https://github.com/williamsrb/dev-kit.git`,
 then run `./bootstrap.sh --profile extract --apply` and
 `./install.py --profile extract --headless --apply` in it. `extractkit deps`
 and `doctor` fail with that fix when `devkit` is missing. Then install once with

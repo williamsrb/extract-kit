@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "99x.extract.domain-packet-index/v1",
+  "$id": "extractkit.domain-packet-index/v1",
   "title": "domain packet index v1",
   "type": "object",
   "required": ["schema", "modules"],
   "properties": {
-    "schema": { "const": "99x.extract.domain-packet-index/v1" },
+    "schema": { "const": "extractkit.domain-packet-index/v1" },
     "modules": {
       "type": "array",
       "items": {
